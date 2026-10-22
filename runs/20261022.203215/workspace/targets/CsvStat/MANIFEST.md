@@ -1,0 +1,228 @@
+# MANIFEST: CsvStat
+updated:     2026-10-22T20:34:22+00:00
+state:       approved
+blocks:      8
+
+applied_specs: |
+  ARCHITECTURE.md sha256=51d9d1b5870f5f3f788f78d0d7e36e56c24611a4802134386be8de40d49ba705 commit=6b978b48c02af0e66d26abf9fbb0744b208eecc4 applied_by=block-1 applied_at=2026-10-22T20:36:36+00:00 build_sha256=df9ae5e3607a267e4388332f887c3dfaafd0177eaf1d42db78980d805ddc7f63
+
+## story 1: Establish the Go module and application boundaries for csvstat.
+id:           architecture
+finding: ADVISORY: implemented, not verified — no governed acceptance command covers this story. Declare one in ACCEPTANCE.json to gate it.
+evidence: evidence/block-1.md
+summary:      Establish the Go module and application boundaries for csvstat.
+type:         foundational
+kind:         capability
+phase:        1
+block:        1
+implements:   ARCHITECTURE.md
+accepts:      st-003
+scope:        target
+instructions: |
+  Establish the Go 1.22+ module, the ./cmd/csvstat executable boundary, internal package ownership, and the standard-library-only implementation structure. Ensure go build ./cmd/csvstat is the supported build command and only main calls os.Exit.
+stack:        common.md, go.md
+stack_mode:   builder
+size:         7874
+provides:     Go module, ./cmd/csvstat entry point, internal profiling packages
+acceptance:   yes
+state: closed/implemented
+
+## story 2: Parse csvstat commands, options, arguments, and exit-code categories.
+id: cli-contract
+finding: programmatic acceptance failed: cli-contract-usage: AssertionError
+evidence: evidence/block-2.md
+summary: Parse csvstat commands, options, arguments, and exit-code categories.
+type: service
+kind: capability
+phase: 1
+block: 2
+implements: FEATURE-CLI-CONTRACT.md
+covers: CLI-001
+accepts: st-008
+context: ARCHITECTURE_compact.md
+stack: common.md, go.md
+stack_mode: consumer
+size: 4086
+provides: csvstat argument parser and command dispatch
+consumes: Go module, ./cmd/csvstat entry point
+instructions: Implement local flag and argument handling for profiling and frequency commands. Enforce exactly one file, option ordering, mutually exclusive --column and --freq, --top validation, unknown options, and the specified exit codes. Keep diagnostics on stderr and ensure failures emit no stdout.
+acceptance: yes
+depends: architecture
+state: closed/failed
+scope: target
+
+## story 3: Provide usable help and failure diagnostics for csvstat invocations.
+id: cli-help
+finding: programmatic acceptance failed: cli-help-usage-failure: AssertionError
+evidence: evidence/block-2.md
+summary: Provide usable help and failure diagnostics for csvstat invocations.
+type: service
+kind: capability
+phase: 1
+block: 2
+implements: FEATURE-CLI-HELP.md
+covers: CLI-002
+context: ARCHITECTURE_compact.md
+stack: common.md, go.md
+stack_mode: consumer
+size: 3741
+provides: csvstat usage and diagnostic output
+consumes: csvstat argument parser and command dispatch
+instructions: Add concise usage text covering profiling, --column, --freq, --top, file arguments, and exit behavior. Route help and diagnostics to stderr where appropriate, without allowing diagnostics to contaminate successful CSV stdout.
+acceptance: yes
+depends: cli-contract
+state: closed/failed
+scope: target
+
+## story 4: Read RFC 4180 CSV records and normalize headers and values.
+id: csv-ingestion
+summary: Read RFC 4180 CSV records and normalize headers and values.
+type: service
+kind: capability
+phase: 1
+block: 3
+implements: FEATURE-CSV-INGESTION.md
+covers: CSV-001
+context: ARCHITECTURE_compact.md
+stack: common.md, go.md
+stack_mode: consumer
+size: 3850
+provides: normalized CSV document model
+consumes: Go module, ./cmd/csvstat entry point
+instructions: Use encoding/csv to read UTF-8 RFC 4180 input. Trim every header and value after parsing, preserve record order, and retain quoted fields containing commas, quotes, or newlines. Expose a normalized document model to validation and profiling.
+acceptance: yes
+depends: architecture
+state: pending
+scope: target
+
+## story 5: Reject malformed CSV input and normalize null values.
+id: csv-validation
+summary: Reject malformed CSV input and normalize null values.
+type: service
+kind: capability
+phase: 1
+block: 4
+implements: FEATURE-CSV-VALIDATION.md
+covers: CSV-002
+accepts: st-007
+context: ARCHITECTURE_compact.md
+stack: common.md, go.md
+stack_mode: consumer
+size: 4230
+provides: validated CSV documents and null classification
+consumes: normalized CSV document model
+instructions: Validate empty files, empty or repeated headers, ragged records, unreadable files, and missing named columns. Recognize empty, NA, N/A, and NULL case-insensitively as null. Map operational, usage, and rejected-input failures to the specified exit codes and keep stdout empty on failure.
+acceptance: yes
+depends: csv-ingestion
+state: pending
+scope: target
+
+## story 6: Infer ordered column types from normalized non-null values.
+id: type-inference
+summary: Infer ordered column types from normalized non-null values.
+type: service
+kind: capability
+phase: 1
+block: 5
+implements: FEATURE-TYPE-INFERENCE.md
+covers: PROF-001
+accepts: st-004
+context: ARCHITECTURE_compact.md
+stack: common.md, go.md
+stack_mode: consumer
+size: 4048
+provides: ordered integer, number, date, boolean, text, and empty type inference
+consumes: validated CSV documents and null classification
+instructions: Classify each column using the ordered integer, number, date, boolean, text, and empty rules. Validate calendar dates rather than accepting syntactically valid impossible dates. Preserve exact normalized strings for text and boolean values while exposing typed values for statistics.
+acceptance: yes
+depends: csv-validation
+state: pending
+scope: target
+
+## story 7: Compute and serialize complete column profiles with exact decimal arithmetic.
+id: statistics
+summary: Compute and serialize complete column profiles with exact decimal arithmetic.
+type: service
+kind: capability
+phase: 1
+block: 6
+implements: FEATURE-COLUMN-STATISTICS.md
+covers: PROF-002
+accepts: st-005
+context: ARCHITECTURE_compact.md
+stack: common.md, go.md
+stack_mode: consumer
+size: 4198
+provides: profile rows with counts, extrema, sums, means, medians, and CSV serialization
+consumes: validated CSV documents and inferred column types
+instructions: Compute rows, nulls, distinct values, min, max, numeric sum, mean, and median in file order. Use exact decimal arithmetic, round once half away from zero to two decimal places for number outputs, and serialize the required CSV header and rows with encoding/csv. Support profiling all columns or one named column.
+acceptance: yes
+depends: type-inference
+state: pending
+scope: target
+
+## story 8: Produce ordered top-frequency reports for selected columns.
+id: frequencies
+summary: Produce ordered top-frequency reports for selected columns.
+type: service
+kind: capability
+phase: 1
+block: 7
+implements: FEATURE-FREQUENCY.md
+covers: PROF-003
+accepts: st-006
+context: ARCHITECTURE_compact.md
+stack: common.md, go.md
+stack_mode: consumer
+size: 4018
+provides: frequency CSV reports with --top limiting
+consumes: validated CSV documents and null classification
+instructions: Count non-null normalized values for a named column, order by descending count and bytewise ascending value, and emit at most the positive --top limit with the value,count header. Emit only the header when no non-null values exist.
+acceptance: yes
+depends: csv-validation
+state: pending
+scope: target
+
+## story 9: Provide the Go vet and test project gate.
+id: test-gate
+summary: Provide the Go vet and test project gate.
+type: service
+kind: test harness
+phase: 2
+block: 8
+implements: FEATURE-TEST-GATE.md
+covers: VERIFY-001
+accepts: st-002
+context: ARCHITECTURE_compact.md
+stack: common.md, go.md
+stack_mode: consumer
+size: 3808
+provides: bin/test.sh project verification command
+consumes: profile and frequency implementation
+instructions: Add a POSIX-compatible bin/test.sh that runs go vet ./... and go test ./... from the application root, preserves their failure status, and exits zero only when both succeed. Add focused Go tests for parsing, ingestion, validation, inference, exact arithmetic, serialization, frequencies, and exit behavior.
+acceptance: yes
+depends: statistics, frequencies, cli-help
+state: pending
+scope: target
+
+## story 10: Run the supplied CsvStat conformance suite against the completed executable.
+id: conformance
+summary: Run the supplied CsvStat conformance suite against the completed executable.
+type: service
+kind: test harness
+phase: 2
+block: 8
+implements: FEATURE-CONFORMANCE.md
+covers: VERIFY-002
+accepts: st-001
+context: run.sh, employees.csv, sensors.csv, orders.csv, header_only.csv, ragged.csv, ARCHITECTURE_compact.md
+stack: common.md, go.md
+stack_mode: consumer
+size: 6323
+provides: complete supplied CsvStat conformance verification
+consumes: bin/test.sh project verification command
+instructions: Treat sources/run.sh and every staged fixture as read-only. Verify the completed executable with the supplied full conformance suite only after all implementation and project-test stories close. Do not modify or embed the suite, fixtures, or known answers.
+acceptance: yes
+depends: test-gate
+state: pending
+scope: target

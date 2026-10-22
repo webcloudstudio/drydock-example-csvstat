@@ -1,0 +1,22 @@
+<reusable-compact filename="ARCHITECTURE.md">
+- Go 1.22+ standard-library-only CLI module.
+- Executable boundary: `./cmd/csvstat`; only `main` may call `os.Exit`.
+- `internal/cli` owns argument parsing, diagnostics, dispatch, and exit codes.
+- `internal/csvstat` owns CSV profiling and report serialization.
+- Input comes only from the user-supplied path; reports use stdout, diagnostics stderr.
+</reusable-compact>
+
+RESULT: SUCCESS
+
+FILES CHANGED:
+- go.mod
+- cmd/csvstat/main.go
+- internal/cli/cli.go
+- internal/cli/cli_test.go
+- internal/csvstat/csvstat.go
+
+SUMMARY:
+Established the Go module and application package boundaries. `go build ./cmd/csvstat`, `go vet ./...`, formatting, and race-enabled tests pass.
+
+BLOCKERS:
+- None

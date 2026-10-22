@@ -1,0 +1,482 @@
+=== BEGIN ARTIFACT ARCHITECTURE.md ===
+# ARCHITECTURE: CsvStat Application
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261022 V1 |
+| Description | Defines the Go module, executable boundary, and internal ownership for the csvstat CLI. |
+| Depends On  | — |
+| Provides    | Go module, ./cmd/csvstat entry point, internal profiling packages |
+| Consumes    | — |
+
+## Questions
+
+- None.
+
+## Purpose
+
+CsvStat is a standard-library-only Go command-line application. The executable is built from
+`./cmd/csvstat`; reusable behavior belongs in internal packages.
+
+## Module and Boundaries
+
+- `cmd/csvstat` owns process startup and is the only package permitted to call `os.Exit`.
+- `internal/cli` owns argument parsing, command dispatch, diagnostics, and exit-code selection.
+- `internal/csvstat` owns CSV reading, normalization, validation, type inference, statistics,
+  frequencies, and CSV serialization.
+- Input is read from the user-supplied file path only.
+- Successful reports are written to standard output; diagnostics are written to standard error.
+
+## Technology Stack
+
+- Go 1.22 or newer.
+- Standard library only.
+- `encoding/csv` for RFC 4180 parsing and output.
+- `math/big` or equivalent exact standard-library arithmetic for decimal calculations.
+- POSIX shell for the project test launcher.
+
+## Module Ownership
+
+| Boundary | Owner | Allowed low-level APIs |
+|---|---|---|
+| Process startup | `cmd/csvstat` | `os`, `io`, CLI package |
+| CLI behavior | `internal/cli` | `flag`, `os`, `io` |
+| CSV and profiling domain | `internal/csvstat` | `encoding/csv`, `math/big`, `time`, standard library |
+| Persistent state | None | No persistent state |
+| Configuration | None | No configuration store |
+| External services | None | No external services |
+
+## Programmatic Acceptance
+
+=== AC architecture-module ===
+Intent: The application exposes the required Go module and executable source boundary.
+
+import pathlib
+import subprocess
+
+root = pathlib.Path(".")
+assert (root / "go.mod").is_file()
+assert (root / "cmd" / "csvstat").is_dir()
+
+result = subprocess.run(
+    ["go", "build", "./cmd/csvstat"],
+    capture_output=True,
+    text=True,
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0
+=== END AC architecture-module ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Use only the Go standard library.
+- Do not place application logic in `cmd/csvstat`.
+- Do not add persistent storage, network services, or third-party dependencies.
+- Only the process entry point may terminate the process directly.
+
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-CLI-CONTRACT.md ===
+# FEATURE: CLI Contract
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261022 V1 |
+| Description | Defines csvstat command parsing, option validation, dispatch, and exit-code behavior. |
+| Depends On  | ARCHITECTURE.md |
+| Provides    | csvstat argument parser and command dispatch |
+| Consumes    | Go module, ./cmd/csvstat entry point |
+
+## Questions
+
+- None.
+
+## Command Forms
+
+```text
+csvstat [--column <name>] <file>
+csvstat --freq <name> [--top <n>] <file>
+```
+
+Options precede the single required file argument. `--column` and `--freq` are mutually
+exclusive. `--top` is valid only with `--freq` and must be a positive integer.
+
+## Exit Contract
+
+- `0`: successful profile or frequency report.
+- `1`: the file cannot be opened or read.
+- `2`: malformed arguments, unknown options, missing values, extra files, invalid `--top`, or
+  incompatible options.
+- `3`: rejected CSV input or a requested column absent from the header.
+
+Failures write no bytes to standard output. Diagnostics are written to standard error.
+
+## Programmatic Acceptance
+
+=== AC cli-contract-usage ===
+Intent: Malformed invocations return the usage-error exit status and produce no standard output.
+
+import pathlib
+import subprocess
+import tempfile
+
+with tempfile.TemporaryDirectory() as directory:
+    path = pathlib.Path(directory) / "data.csv"
+    path.write_text("a\n1\n", encoding="utf-8")
+
+    cases = [
+        ["go", "run", "./cmd/csvstat"],
+        ["go", "run", "./cmd/csvstat", str(path), str(path)],
+        ["go", "run", "./cmd/csvstat", "--top", "0", str(path)],
+        ["go", "run", "./cmd/csvstat", "--top", "2", str(path)],
+        ["go", "run", "./cmd/csvstat", "--column", "a", "--freq", "a", str(path)],
+        ["go", "run", "./cmd/csvstat", "--unknown", str(path)],
+    ]
+
+    for command in cases:
+        result = subprocess.run(command, capture_output=True, text=True)
+        print(result.stdout)
+        print(result.stderr)
+        assert result.returncode == 2
+        assert result.stdout == ""
+=== END AC cli-contract-usage ===
+
+=== AC cli-contract-dispatch ===
+Intent: Valid profile and frequency command forms dispatch successfully.
+
+import pathlib
+import subprocess
+import tempfile
+
+with tempfile.TemporaryDirectory() as directory:
+    path = pathlib.Path(directory) / "data.csv"
+    path.write_text("a,b\n1,x\n2,y\n", encoding="utf-8")
+
+    profile = subprocess.run(
+        ["go", "run", "./cmd/csvstat", str(path)],
+        capture_output=True,
+        text=True,
+    )
+    print(profile.stdout)
+    print(profile.stderr)
+    assert profile.returncode == 0
+    assert profile.stdout != ""
+
+    frequency = subprocess.run(
+        ["go", "run", "./cmd/csvstat", "--freq", "b", "--top", "1", str(path)],
+        capture_output=True,
+        text=True,
+    )
+    print(frequency.stdout)
+    print(frequency.stderr)
+    assert frequency.returncode == 0
+    assert frequency.stdout != ""
+=== END AC cli-contract-dispatch ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Options must precede the file argument.
+- Exactly one file is accepted.
+- Never write partial or diagnostic content to standard output on failure.
+- Do not silently reinterpret unknown options.
+
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-CLI-HELP.md ===
+# FEATURE: CLI Help
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261022 V1 |
+| Description | Provides concise usage assistance and keeps diagnostics on standard error. |
+| Depends On  | FEATURE-CLI-CONTRACT.md |
+| Provides    | csvstat usage and diagnostic output |
+| Consumes    | csvstat argument parser and command dispatch |
+
+## Questions
+
+- None.
+
+## Help Behavior
+
+The conventional `--help` option succeeds and prints concise usage information to standard error.
+The help describes both command forms, `--column`, `--freq`, `--top`, the required file argument,
+and the principal exit-code categories.
+
+Usage failures also write a diagnostic and usage text to standard error. Successful CSV output is
+never mixed with help or diagnostics.
+
+## Programmatic Acceptance
+
+=== AC cli-help-option ===
+Intent: The help option is accepted and does not emit help text on standard output.
+
+import subprocess
+
+result = subprocess.run(
+    ["go", "run", "./cmd/csvstat", "--help"],
+    capture_output=True,
+    text=True,
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0
+assert result.stdout == ""
+assert result.stderr != ""
+=== END AC cli-help-option ===
+
+=== AC cli-help-usage-failure ===
+Intent: A usage failure returns the usage exit status and keeps all assistance off standard output.
+
+import subprocess
+
+result = subprocess.run(
+    ["go", "run", "./cmd/csvstat", "--help", "--unknown"],
+    capture_output=True,
+    text=True,
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 2
+assert result.stdout == ""
+assert result.stderr != ""
+=== END AC cli-help-usage-failure ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Help and diagnostics are written only to standard error.
+- Help must not cause a successful CSV report to be emitted.
+- Keep usage text concise and aligned with the supported command forms.
+
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-CSV-INGESTION.md ===
+# FEATURE: CSV Ingestion
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261022 V1 |
+| Description | Reads RFC 4180 CSV input and exposes trimmed records in source order. |
+| Depends On  | ARCHITECTURE.md |
+| Provides    | normalized CSV document model |
+| Consumes    | Go module, ./cmd/csvstat entry point |
+
+## Questions
+
+- None.
+
+## Ingestion Rules
+
+- Read the first CSV record as the header.
+- Parse RFC 4180 quoting with `encoding/csv`.
+- Trim leading and trailing spaces from every header and value after parsing.
+- Preserve record order.
+- Preserve commas, quotes, and newlines contained in quoted fields.
+- Pass the normalized document to validation and profiling.
+
+## Programmatic Acceptance
+
+=== AC csv-ingestion-valid ===
+Intent: A valid RFC 4180 document with padded fields and a quoted comma is accepted for profiling.
+
+import pathlib
+import subprocess
+import tempfile
+
+with tempfile.TemporaryDirectory() as directory:
+    path = pathlib.Path(directory) / "quoted.csv"
+    path.write_text(
+        ' name ,note,value\n Alice ,"hello, world", 7 \n',
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        ["go", "run", "./cmd/csvstat", str(path)],
+        capture_output=True,
+        text=True,
+    )
+    print(result.stdout)
+    print(result.stderr)
+    assert result.returncode == 0
+    assert result.stdout != ""
+=== END AC csv-ingestion-valid ===
+
+=== AC csv-ingestion-multiline ===
+Intent: A quoted field containing a newline is parsed as one CSV field rather than a malformed record.
+
+import pathlib
+import subprocess
+import tempfile
+
+with tempfile.TemporaryDirectory() as directory:
+    path = pathlib.Path(directory) / "multiline.csv"
+    path.write_text(
+        'name,note\nAlice,"first line\nsecond line"\n',
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        ["go", "run", "./cmd/csvstat", "--column", "note", str(path)],
+        capture_output=True,
+        text=True,
+    )
+    print(result.stdout)
+    print(result.stderr)
+    assert result.returncode == 0
+    assert result.stdout != ""
+=== END AC csv-ingestion-multiline ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Use `encoding/csv`; do not split records manually on commas or newlines.
+- Normalize only after CSV parsing.
+- Preserve the input record order.
+
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-CSV-VALIDATION.md ===
+# FEATURE: CSV Validation
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261022 V1 |
+| Description | Validates CSV structure, classifies nulls, and maps rejected and operational failures to exit codes. |
+| Depends On  | FEATURE-CSV-INGESTION.md |
+| Provides    | validated CSV documents and null classification |
+| Consumes    | normalized CSV document model |
+
+## Questions
+
+- None.
+
+## Validation Rules
+
+Reject the input with exit code `3` when:
+
+- The file is empty.
+- A header name is empty.
+- A header name is repeated.
+- A record has a different field count from the header.
+- A requested column is absent.
+
+Treat a value as null when it is empty or equals `NA`, `N/A`, or `NULL`, ignoring case, after trimming.
+All other values are non-null.
+
+Return exit code `1` when the file cannot be opened or read. Rejected and operational failures write no
+standard output.
+
+## Programmatic Acceptance
+
+=== AC csv-validation-ragged ===
+Intent: A record with the wrong field count is rejected with exit code 3 and no standard output.
+
+import pathlib
+import subprocess
+import tempfile
+
+with tempfile.TemporaryDirectory() as directory:
+    path = pathlib.Path(directory) / "ragged.csv"
+    path.write_text("a,b\n1,2\n3,4,5\n", encoding="utf-8")
+
+    result = subprocess.run(
+        ["go", "run", "./cmd/csvstat", str(path)],
+        capture_output=True,
+        text=True,
+    )
+    print(result.stdout)
+    print(result.stderr)
+    assert result.returncode == 3
+    assert result.stdout == ""
+=== END AC csv-validation-ragged ===
+
+=== AC csv-validation-column ===
+Intent: A requested column absent from the header is rejected with exit code 3 and no standard output.
+
+import pathlib
+import subprocess
+import tempfile
+
+with tempfile.TemporaryDirectory() as directory:
+    path = pathlib.Path(directory) / "data.csv"
+    path.write_text("a,b\n1,2\n", encoding="utf-8")
+
+    result = subprocess.run(
+        ["go", "run", "./cmd/csvstat", "--column", "missing", str(path)],
+        capture_output=True,
+        text=True,
+    )
+    print(result.stdout)
+    print(result.stderr)
+    assert result.returncode == 3
+    assert result.stdout == ""
+=== END AC csv-validation-column ===
+
+=== AC csv-validation-operational ===
+Intent: An unreadable or missing input path returns the operational-failure exit code and no standard output.
+
+import pathlib
+import subprocess
+import tempfile
+
+with tempfile.TemporaryDirectory() as directory:
+    missing = pathlib.Path(directory) / "does-not-exist.csv"
+
+    result = subprocess.run(
+        ["go", "run", "./cmd/csvstat", str(missing)],
+        capture_output=True,
+        text=True,
+    )
+    print(result.stdout)
+    print(result.stderr)
+    assert result.returncode == 1
+    assert result.stdout == ""
+=== END AC csv-validation-operational ===
+
+=== AC csv-validation-nulls ===
+Intent: Empty and recognized null spellings are accepted as valid input rather than rejected as malformed CSV.
+
+import pathlib
+import subprocess
+import tempfile
+
+with tempfile.TemporaryDirectory() as directory:
+    path = pathlib.Path(directory) / "nulls.csv"
+    path.write_text("a,b,c,d\n,NA,n/A,NULL\n1,2,3,4\n", encoding="utf-8")
+
+    result = subprocess.run(
+        ["go", "run", "./cmd/csvstat", str(path)],
+        capture_output=True,
+        text=True,
+    )
+    print(result.stdout)
+    print(result.stderr)
+    assert result.returncode == 0
+    assert result.stdout != ""
+=== END AC csv-validation-nulls ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Do not treat a ragged record as a usable partial record.
+- Do not classify arbitrary text as null.
+- Do not write partial output before validation completes.
+- Diagnostics may identify the file and rejected record line, but diagnostics are never written to
+  standard output.
+
+=== END ARTIFACT ===

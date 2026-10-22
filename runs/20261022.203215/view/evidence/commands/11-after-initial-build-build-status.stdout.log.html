@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/commands/11-after-initial-build-build-status.stdout.log</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/commands/11-after-initial-build-build-status.stdout.log</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/commands/11-after-initial-build-build-status.stdout.log">Raw file</a></div></header>
+<article class="doc"><pre>Drydock 0.2.0  Copyright (c) 2026 Web Cloud Studio. All rights reserved.
+Next: drydock build CsvStat
+
+Blueprint: CsvStat
+Target: /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261022.203215/workspace/targets/CsvStat
+Rows: &lt;state&gt; &lt;type&gt;  &lt;Name&gt;  [&lt;id&gt;]   — pass [&lt;id&gt;] to --step
+Block: Build Block 1 · Foundational  [block-1]   — [built] story Establish the Go module and application boundaries for csvstat.  [architecture] — complete
+
+Block: Build Block 2 · Service  [block-2]   — 0/2 stories complete
+  [FAILED]  story  Parse csvstat commands, options, arguments, and exit-code categories.  [cli-contract]  &lt;- resume (repairs in place)
+  [FAILED]  story  Provide usable help and failure diagnostics for csvstat invocations.  [cli-help]  &lt;- resume (repairs in place)
+
+Block: Build Block 3 · Service  [block-3]   — 0/1 stories complete
+  [pending] story  Read RFC 4180 CSV records and normalize headers and values.  [csv-ingestion]
+
+Block: Build Block 4 · Service  [block-4]   — 0/1 stories complete
+  [pending] story  Reject malformed CSV input and normalize null values.  [csv-validation]
+
+Block: Build Block 5 · Service  [block-5]   — 0/1 stories complete
+  [pending] story  Infer ordered column types from normalized non-null values.  [type-inference]
+
+Block: Build Block 6 · Service  [block-6]   — 0/1 stories complete
+  [pending] story  Compute and serialize complete column profiles with exact decimal arithmetic.  [statistics]
+
+Block: Build Block 7 · Service  [block-7]   — 0/1 stories complete
+  [pending] story  Produce ordered top-frequency reports for selected columns.  [frequencies]
+
+Block: Build Block 8 · Service  [block-8]   — 0/2 stories complete
+  [pending] story  Provide the Go vet and test project gate.  [test-gate]
+  [pending] story  Run the supplied CsvStat conformance suite against the completed executable.  [conformance]
+
+Steps: 10 total — 0 done, 1 built (await verify), 0 in review, 7 pending, 0 blocked by questions, 2 failed (0% complete)
+Buildable now: block-2
+Failed (resume with drydock build, or --step &lt;id&gt;; --reset discards work instead): cli-contract, cli-help
+Target - committed project workspace git store
+</pre></article>
+</main>
+</body>
+</html>

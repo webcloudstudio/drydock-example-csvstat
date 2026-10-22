@@ -1,0 +1,17 @@
+<requirement name="read-csv-records" stories="csv-ingestion">
+sku,price,in_stock
+A1,9.99,true
+A2,4.50,false
+A4,3.00,false
+</requirement>
+<requirement name="reject-ragged-record" stories="csv-validation">
+A3,1.25,true,extra
+</requirement>
+<unattached story="architecture"/>
+<unattached story="cli-contract"/>
+<unattached story="cli-help"/>
+<unattached story="type-inference"/>
+<unattached story="statistics"/>
+<unattached story="frequencies"/>
+<unattached story="test-gate"/>
+<unattached story="conformance"/>

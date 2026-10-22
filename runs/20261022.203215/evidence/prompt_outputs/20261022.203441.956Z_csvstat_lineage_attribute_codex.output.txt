@@ -1,0 +1,10 @@
+<unattached story="architecture"/>
+<unattached story="cli-contract"/>
+<unattached story="cli-help"/>
+<unattached story="csv-ingestion"/>
+<unattached story="csv-validation"/>
+<unattached story="type-inference"/>
+<unattached story="statistics"/>
+<unattached story="frequencies"/>
+<unattached story="test-gate"/>
+<unattached story="conformance"/>

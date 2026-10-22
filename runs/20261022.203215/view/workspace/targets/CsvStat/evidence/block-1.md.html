@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/evidence/block-1.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/evidence/block-1.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/evidence/block-1.md">Raw file</a></div></header>
+<article class="doc"><h1>Evidence: Block 1 · Foundational (block-1)</h1>
+<ul><li>block type: block</li><li>date: 2026-10-22</li><li>resulting state: closed/verified</li><li>story points (combined assembled cost): 7869</li><li>execution id: 20261022.203556.991Z-81540f24</li></ul>
+<h2>Stories built</h2>
+<ul><li>Establish the Go module and application boundaries for csvstat. (architecture) [story]</li></ul>
+<h2>Reusable compacts</h2>
+<ul><li>ARCHITECTURE_compact.md</li></ul>
+<h2>Stacked context</h2>
+<ul><li>implements: go.md (SP 4743)</li><li>compass: COMPASS.md (SP 628)</li><li>implements: ARCHITECTURE.md (SP 625)</li><li>stack: common.md (SP 1812)</li></ul>
+<h2>Build directory changes</h2>
+<ul><li>cmd/csvstat/main.go</li><li>go.mod</li><li>internal/cli/cli.go</li><li>internal/cli/cli_test.go</li><li>internal/csvstat/csvstat.go</li></ul>
+<h2>Pre-build acceptance observation</h2>
+<ul><li>RED: architecture-module (ARCHITECTURE.md)</li></ul>
+<p>intent: The application exposes the required Go module and executable source boundary. return code: 1 stderr: --- drydock: values at failure --- root = PosixPath(&#x27;.&#x27;) --- drydock: end values --- Traceback (most recent call last): File &quot;architecture-module.py&quot;, line 5, in &lt;module&gt; assert (root / &quot;go.mod&quot;).is_file() ^^^^^^^^^^^^^^^^^^^^^^^^^^^ AssertionError</p>
+<h2>Post-build programmatic acceptance</h2>
+<ul><li>PASS: architecture-module (ARCHITECTURE.md)</li></ul>
+<p>intent: The application exposes the required Go module and executable source boundary. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0</p>
+<h2>Build summary</h2>
+<p>&lt;reusable-compact filename=&quot;ARCHITECTURE.md&quot;&gt;</p>
+<ul><li>Go 1.22+ standard-library-only CLI module.</li><li>Executable boundary: <code>./cmd/csvstat</code>; only <code>main</code> may call <code>os.Exit</code>.</li><li><code>internal/cli</code> owns argument parsing, diagnostics, dispatch, and exit codes.</li><li><code>internal/csvstat</code> owns CSV profiling and report serialization.</li><li>Input comes only from the user-supplied path; reports use stdout, diagnostics stderr.</li></ul>
+<p>&lt;/reusable-compact&gt;</p>
+<p>RESULT: SUCCESS</p>
+<p>FILES CHANGED:</p>
+<ul><li>go.mod</li><li>cmd/csvstat/main.go</li><li>internal/cli/cli.go</li><li>internal/cli/cli_test.go</li><li>internal/csvstat/csvstat.go</li></ul>
+<p>SUMMARY: Established the Go module and application package boundaries. <code>go build ./cmd/csvstat</code>, <code>go vet ./...</code>, formatting, and race-enabled tests pass.</p>
+<p>BLOCKERS:</p>
+<ul><li>None</li></ul></article>
+</main>
+</body>
+</html>

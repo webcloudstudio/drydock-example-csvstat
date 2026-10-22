@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-TEST-GATE.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-TEST-GATE.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-TEST-GATE.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Project Test Gate</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261022 V1</td></tr><tr><td>Description</td><td>Provide the project-wide Go vet and test verification command.</td></tr><tr><td>Depends On</td><td>FEATURE-COLUMN-STATISTICS.md, FEATURE-FREQUENCY.md, FEATURE-CLI-HELP.md</td></tr><tr><td>Provides</td><td>bin/test.sh project verification command</td></tr><tr><td>Consumes</td><td>profile and frequency implementation</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>Provide a POSIX-compatible project gate that runs static analysis and the complete Go test suite from the application root.</p>
+<h2>Behavior</h2>
+<ul><li><code>bin/test.sh</code> runs <code>go vet ./...</code>.</li><li><code>bin/test.sh</code> runs <code>go test ./...</code>.</li><li>The script exits zero only when both commands succeed.</li><li>The script preserves failure visibility and is executable from the project root.</li><li>Focused Go tests cover parsing, ingestion, validation, inference, arithmetic, serialization, frequencies, and exit behavior.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC test-gate-present ===<br>Intent: The project test gate exists at the declared path and is executable. import os from pathlib import Path</p>
+<p>path = Path(&quot;bin/test.sh&quot;) assert path.is_file() assert os.access(path, os.X_OK) === END AC test-gate-present ===</p>
+<p>=== AC test-gate-passes ===<br>Intent: The project test gate completes successfully for the implemented project. import subprocess</p>
+<p>result = subprocess.run([&quot;sh&quot;, &quot;bin/test.sh&quot;], capture_output=True, text=True) print(result.stdout) print(result.stderr) assert result.returncode == 0 === END AC test-gate-passes ===</p>
+<p>=== AC test-gate-builds ===<br>Intent: The declared csvstat package remains buildable by the Go toolchain. import subprocess</p>
+<p>result = subprocess.run( [&quot;go&quot;, &quot;build&quot;, &quot;./cmd/csvstat&quot;], capture_output=True, text=True ) print(result.stdout) print(result.stderr) assert result.returncode == 0 === END AC test-gate-builds ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Do not modify files under <code>sources/</code>.</li><li>The script must use the project toolchain and standard library only.</li><li>A passing script must not mask failures from either <code>go vet</code> or <code>go test</code>.</li></ul></article>
+</main>
+</body>
+</html>

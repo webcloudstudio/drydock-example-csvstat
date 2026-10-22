@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/ERRORS.md</title>
+<link rel="stylesheet" href="../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/ERRORS.md</h1><div class="filenav"><a href="../../../../index.html">&larr; Report</a><a href="../../../../workspace/targets/CsvStat/ERRORS.md">Raw file</a></div></header>
+<article class="doc"><h1>BIG ERRORS — action required</h1>
+<ul><li>Command: <code>build</code></li><li>Phase: build step</li><li>State: Failed</li><li>Timestamp: 2026-10-22T20:39:26+00:00</li><li>Execution ID: 20261022.203854.435Z-44544656</li><li>Challenge Execution ID: -</li><li>Classification: programmatic acceptance failed: cli-contract-usage, cli-help-usage-failure</li><li>Evidence / logs: /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261022.203215/workspace/targets/CsvStat/evidence/block-2.md</li></ul>
+<h2>Diagnostic</h2>
+<p>Block &quot;Block 2 · Service&quot; [block-2] failed its acceptance criteria. Story &quot;Parse csvstat commands, options, arguments, and exit-code categories.&quot; [cli-contract] does not meet its own acceptance criteria:</p>
+<ul><li>AC cli-contract-usage — Malformed invocations return the usage-error exit status and produce no standard output.</li></ul>
+<p>assertion: assert result.returncode == 2 → AssertionError raised at: cli-contract-usage.py:22 process exit code: 1 values at failure: … (44 more lines truncated)</p>
+<h2>Recovery</h2>
+<p>Run: drydock build CsvStat to continue the build. This story resumes where it left off and is retried against the checks it failed.</p></article>
+</main>
+</body>
+</html>

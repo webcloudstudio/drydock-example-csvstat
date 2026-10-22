@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/prompts/20261022.203454.744Z_csvstat_lineage_attribute_codex.prompt.md</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/prompts/20261022.203454.744Z_csvstat_lineage_attribute_codex.prompt.md</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/prompts/20261022.203454.744Z_csvstat_lineage_attribute_codex.prompt.md">Raw file</a></div></header>
+<article class="doc"><h1>Attribute Stories to Source Requirements</h1>
+<p>You are the lineage attribution agent. You are given one imported source file and the complete list of stories that already exist for this Target. Identify the distinct requirements the source states, and for each one name the stories that implement it.</p>
+<p>This is a matching task against a closed set. Every story you may name is listed in <code>&lt;stories&gt;</code>. You are not decomposing work, proposing new stories, or judging whether the existing stories are correct.</p>
+<h2>Method</h2>
+<ol><li>Read the source and identify each distinct requirement it states. A requirement is a thing the</li></ol>
+<p>system must do, at whatever granularity the author wrote it. One sentence may state one requirement that several stories implement — for example &quot;add a table and show it on screen&quot; is one requirement implemented by a schema story, a route story, and a view story. Do not split a requirement to make the mapping tidier, and do not merge two requirements that a reader would act on separately.</p>
+<ol><li>Give each requirement a short kebab-case name that describes it. The name is an identifier, not</li></ol>
+<p>a summary: <code>mark-book-read</code>, not <code>the-reader-can-mark-a-book-as-read</code>.</p>
+<ol><li>For each requirement, list every story that implements any part of it. A story may implement</li></ol>
+<p>more than one requirement; a requirement may need more than one story.</p>
+<ol><li>List any story that implements no requirement in the source as <code>&lt;unattached&gt;</code>. This is expected</li></ol>
+<p>and correct for foundational work — application scaffolding, configuration, shared UI framing, test harnesses — that the author never asked for by name. Do not force such a story onto an unrelated requirement.</p>
+<h2>Rules</h2>
+<ul><li>Use only story ids that appear in <code>&lt;stories&gt;</code>. Never invent one.</li><li>Every story must appear exactly once, either inside a <code>stories</code> attribute or as <code>&lt;unattached&gt;</code>.</li><li>Quote the requirement text verbatim from the source in the tag body. Do not paraphrase it.</li><li>Emit nothing but the tags below. No preamble, no commentary, no explanation.</li></ul>
+<h2>Output</h2>
+<pre><code>&lt;requirement name=&quot;add-remove-books&quot; stories=&quot;add-book,remove-book,database&quot;&gt;
+The reader can add a book with a title and author, view the books in the order added, and remove a book.
+&lt;/requirement&gt;
+&lt;requirement name=&quot;reject-empty-fields&quot; stories=&quot;validate-book&quot;&gt;
+An empty title or author is rejected with a clear error message.
+&lt;/requirement&gt;
+&lt;unattached story=&quot;architecture&quot;/&gt;
+&lt;unattached story=&quot;ui-general&quot;/&gt;</code></pre>
+<h1>Attribution job</h1>
+<p>&lt;source name=&quot;orders.csv&quot;&gt; order_id,order_date,customer,qty,unit_price,coupon,ref,shipped 5000,2025-02-01,Acme Corp ,1,116.70,,A7,2025-03-18 5001,2025-02-14,Acme Corp ,7,195.17,,-3,2025-03-05 5002,2025-02-23,  Globex  ,9,82.61,,12.5,2025-03-02 5003,2025-02-06,Initech,4,120.30,SAVE10,12,2025-03-16 5004,2025-02-05,  Globex  ,6,155.63,SAVE10,7,2025-03-24 5005,2025-02-11,  Globex  ,5,137.64,,A7,2025-03-01 5006,2025-02-27,  Globex  ,11,212.83,SAVE10,12.5,2025-03-01 5007,2025-02-07,Acme Corp ,10,218.65,,12,2025-03-19 5008,2025-02-04,Acme Corp ,4,203.55,,A7,2025-03-09 5009,2025-02-01,Umbrella,1,107.26,,7,2025-03-23 5010,2025-02-11,  Globex  ,4,15.27,WELCOME,7,2025-03-05 5011,2025-02-23,Initech,6,116.93,,12.5,2025-03-03 5012,2025-02-16,Acme Corp,5,209.08,,7,2025-03-13 5013,2025-02-17,  Globex  ,12,95.82,WELCOME,12,2025-03-27 5014,2025-02-12,Umbrella,1,73.61,,12,2025-03-22 5015,2025-02-11,Initech,6,142.57,WELCOME,7,2025-03-08 5016,2025-02-20,Acme Corp,4,203.02,WELCOME,12,2025-03-19 5017,2025-02-05,Umbrella,9,62.85,WELCOME,-3,2025-02-30 5018,2025-02-05,  Globex  ,10,54.32,,-3,2025-03-15 5019,2025-02-17,  Globex  ,4,48.40,SAVE10,-3,2025-03-10 5020,2025-02-02,Acme Corp,4,229.87,,-3,2025-03-26 5021,2025-02-10,  Globex  ,11,224.50,,-3,2025-03-04 5022,2025-02-01,Acme Corp,11,221.74,,12.5,2025-03-05 5023,2025-02-02,Umbrella,7,120.51,,12.5,2025-03-18 5024,2025-02-06,  Globex  ,6,231.18,,-3,2025-03-13 5025,2025-02-25,Hooli,10,139.05,WELCOME,12.5,2025-03-18 5026,2025-02-10,Umbrella,12,52.25,,12,2025-03-14 5027,2025-02-13,Umbrella,6,48.62,SAVE10,12.5,2025-03-14 5028,2025-02-19,Umbrella,10,213.06,,12.5,2025-03-14 5029,2025-02-18,Acme Corp,10,124.98,WELCOME,A7,2025-03-04 &lt;/source&gt;</p>
+<p>&lt;stories&gt; &lt;story id=&quot;architecture&quot; implements=&quot;ARCHITECTURE.md&quot;&gt;Establish the Go module and application boundaries for csvstat.&lt;/story&gt; &lt;story id=&quot;cli-contract&quot; implements=&quot;FEATURE-CLI-CONTRACT.md&quot;&gt;Parse csvstat commands, options, arguments, and exit-code categories.&lt;/story&gt; &lt;story id=&quot;cli-help&quot; implements=&quot;FEATURE-CLI-HELP.md&quot;&gt;Provide usable help and failure diagnostics for csvstat invocations.&lt;/story&gt; &lt;story id=&quot;csv-ingestion&quot; implements=&quot;FEATURE-CSV-INGESTION.md&quot;&gt;Read RFC 4180 CSV records and normalize headers and values.&lt;/story&gt; &lt;story id=&quot;csv-validation&quot; implements=&quot;FEATURE-CSV-VALIDATION.md&quot;&gt;Reject malformed CSV input and normalize null values.&lt;/story&gt; &lt;story id=&quot;type-inference&quot; implements=&quot;FEATURE-TYPE-INFERENCE.md&quot;&gt;Infer ordered column types from normalized non-null values.&lt;/story&gt; &lt;story id=&quot;statistics&quot; implements=&quot;FEATURE-COLUMN-STATISTICS.md&quot;&gt;Compute and serialize complete column profiles with exact decimal arithmetic.&lt;/story&gt; &lt;story id=&quot;frequencies&quot; implements=&quot;FEATURE-FREQUENCY.md&quot;&gt;Produce ordered top-frequency reports for selected columns.&lt;/story&gt; &lt;story id=&quot;test-gate&quot; implements=&quot;FEATURE-TEST-GATE.md&quot;&gt;Provide the Go vet and test project gate.&lt;/story&gt; &lt;story id=&quot;conformance&quot; implements=&quot;FEATURE-CONFORMANCE.md&quot;&gt;Run the supplied CsvStat conformance suite against the completed executable.&lt;/story&gt; &lt;/stories&gt;</p></article>
+</main>
+</body>
+</html>

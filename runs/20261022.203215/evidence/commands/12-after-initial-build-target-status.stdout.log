@@ -1,0 +1,22 @@
+Drydock 0.2.0  Copyright (c) 2026 Web Cloud Studio. All rights reserved.
+Drydock status
+
+  Target          /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261022.203215/workspace/targets/CsvStat
+  Name            drydock CsvStat Uat Case
+  Description     Drydock uat - CsvStat builds a Go CSV column profiler. The source is an original brief: infer each
+                  column's type (integer, number, date, boolean, text, empty), report rows, nulls, distinct, min, max,…
+  Phase           Implement
+  State           Failed: programmatic acceptance failed: cli-contract-usage, cli-help-usage-failure
+  Metadata        building · running
+  Sources         7 imported · 10 authored blueprint files
+  Analysis        Ready · 9 stories · 0 questions · 0 blockers
+  Blueprint       ✓  0 errors · 0 warnings
+  Plan            7 pending · 1 closed/implemented · 2 closed/failed
+  Frontier        csv-ingestion: Read RFC 4180 CSV records and normalize headers and values.
+  Workflow        5 steps
+                  Initialize         complete at 2026-10-22T20:32:18.019+00:00
+                  Import             complete at 2026-10-22T20:32:25.699+00:00
+                  Analyze            complete at 2026-10-22T20:32:54.152+00:00
+                  Plan               complete at 2026-10-22T20:35:30.737+00:00
+                  Build              failed at 2026-10-22T20:39:28.591+00:00
+  Next step       drydock run quarterdeck CsvStat

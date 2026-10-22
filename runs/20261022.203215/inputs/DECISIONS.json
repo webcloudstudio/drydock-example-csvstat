@@ -1,0 +1,25 @@
+[
+  {
+    "id": "Q-001",
+    "type": "choice",
+    "severity": "low",
+    "origin": "plan",
+    "blueprint": "FEATURE-CLI-HELP.md",
+    "story": "cli-help",
+    "status": "recommended",
+    "archived": false,
+    "title": "Help behavior for assistance-required invocations",
+    "description": "The source specifies that help behavior is usable but does not define a dedicated help flag or exact help text. The implementation must choose a conventional response without blocking unattended planning.",
+    "options": [
+      {
+        "value": "usage-on-stderr",
+        "label": "Print concise usage and option help on stderr for --help and usage failures."
+      },
+      {
+        "value": "stdout-help",
+        "label": "Print help on stdout for --help while keeping usage failures on stderr."
+      }
+    ],
+    "system_choice": "usage-on-stderr"
+  }
+]

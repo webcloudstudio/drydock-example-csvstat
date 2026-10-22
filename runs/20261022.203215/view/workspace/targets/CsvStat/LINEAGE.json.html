@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/LINEAGE.json</title>
+<link rel="stylesheet" href="../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/LINEAGE.json</h1><div class="filenav"><a href="../../../../index.html">&larr; Report</a><a href="../../../../workspace/targets/CsvStat/LINEAGE.json">Raw file</a></div></header>
+<article class="doc"><pre>{
+  &quot;version&quot;: 1,
+  &quot;import&quot;: {
+    &quot;root&quot;: &quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261022.203215/sources&quot;,
+    &quot;format&quot;: &quot;markdown&quot;
+  },
+  &quot;sources&quot;: {
+    &quot;INSTRUCTIONS.md&quot;: {
+      &quot;state&quot;: &quot;current&quot;,
+      &quot;versions&quot;: [
+        {
+          &quot;commit&quot;: &quot;aa96087&quot;,
+          &quot;date&quot;: &quot;2026-10-22&quot;,
+          &quot;hash&quot;: &quot;a4a0357965923ada8afb3528e85c937802a26eb02db8685900dbe0e9566c7a57&quot;,
+          &quot;release&quot;: &quot;&quot;,
+          &quot;state&quot;: &quot;consumed&quot;,
+          &quot;via&quot;: &quot;plan&quot;,
+          &quot;ticket&quot;: null,
+          &quot;requirements&quot;: [
+            {
+              &quot;name&quot;: &quot;go-application&quot;,
+              &quot;text&quot;: &quot;Implement in Go 1.22 or newer using only the standard library. The application root is a Go module, and its executable is the main package at `./cmd/csvstat`. Tests run under `go test`.&quot;,
+              &quot;stories&quot;: []
+            },
+            {
+              &quot;name&quot;: &quot;command-options&quot;,
+              &quot;text&quot;: &quot;csvstat [--column &lt;name&gt;] &lt;file&gt;\ncsvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;&quot;,
+              &quot;stories&quot;: []
+            },
+            {
+              &quot;name&quot;: &quot;csv-reading&quot;,
+              &quot;text&quot;: &quot;The file is UTF-8 CSV as RFC 4180 defines it, read with Go&#x27;s `encoding/csv`. The first record is the header.&quot;,
+              &quot;stories&quot;: []
+            },
+            {
+              &quot;name&quot;: &quot;trim-fields&quot;,
+              &quot;text&quot;: &quot;Every header name and every value is trimmed of leading and trailing spaces before any other rule applies.&quot;,
+              &quot;stories&quot;: []
+            },
+            {
+              &quot;name&quot;: &quot;validate-input&quot;,
+              &quot;text&quot;: &quot;The file is **rejected** when it is empty, when a header name is empty or repeated, or when any record has a different number of fields from the header.&quot;,
+              &quot;stories&quot;: []
+            },
+            {
+              &quot;name&quot;: &quot;normalize-nulls&quot;,
+              &quot;text&quot;: &quot;**Null.** A value is null when it is empty, or when it equals `NA`, `N/A`, or `NULL` ignoring case. All other values are non-null.&quot;,
+              &quot;stories&quot;: []
+            },
+            {
+              &quot;name&quot;: &quot;infer-column-types&quot;,
+              &quot;text&quot;: &quot;A column&#x27;s type is the first of these that every non-null value satisfies:&quot;,
+              &quot;stories&quot;: []
+            },
+            {
+              &quot;name&quot;: &quot;profile-columns&quot;,
+              &quot;text&quot;: &quot;For every column it infers a type and reports\nrow, null, and distinct counts, the minimum and maximum, and for numeric columns the sum, mean, and\nmedian.&quot;,
+              &quot;stories&quot;: []
+            },
+            {
+              &quot;name&quot;: &quot;frequency-reports&quot;,
+              &quot;text&quot;: &quot;It also lists the most frequent values of one column.&quot;,
+              &quot;stories&quot;: []
+            },
+            {
+              &quot;name&quot;: &quot;failure-diagnostics&quot;,
+              &quot;text&quot;: &quot;A failing command writes nothing to standard output and one diagnostic line to standard error naming the file and, for a rejected record, its line number.&quot;,
+              &quot;stories&quot;: []
+            },
+            {
+              &quot;name&quot;: &quot;exit-codes&quot;,
+              &quot;text&quot;: &quot;| Code | Meaning |\n|---|---|\n| `0` | Success. |\n| `1` | Operational failure: the file cannot be opened or read. |\n| `2` | Usage error: missing or extra file, unknown option, missing option value, `--top` not a positive integer, `--top` without `--freq`, `--column` with `--freq`. |\n| `3` | Rejected: empty file, empty or repeated header name, ragged record, or a column name that is not in the header. |&quot;,
+              &quot;stories&quot;: []
+            },
+            {
+              &quot;name&quot;: &quot;test-gate&quot;,
+              &quot;text&quot;: &quot;The completed application provides a POSIX-compatible `bin/test.sh` that runs `go vet ./...` and\n`go test ./...` from the application root and exits zero only when both pass.&quot;,
+              &quot;stories&quot;: []
+            },
+            {
+              &quot;name&quot;: &quot;conformance-suite&quot;,
+              &quot;text&quot;: &quot;The harness runs `go build -o &lt;temporary path&gt; ./cmd/csvstat` and then runs 22 checks.&quot;,
+              &quot;stories&quot;: []
+            }
+          ]
+        }
+      ]
+    },
+    &quot;employees.csv&quot;: {
+      &quot;state&quot;: &quot;current&quot;,
+      &quot;versions&quot;: [
+        {
+          &quot;commit&quot;: &quot;aa96087&quot;,
+          &quot;date&quot;: &quot;2026-10-22&quot;,
+          &quot;hash&quot;: &quot;057f30060e45647dbb5773a0f2cef7fa541bbd462f5a65746083d7a169222ee0&quot;,
+          &quot;release&quot;: &quot;&quot;,
+          &quot;state&quot;: &quot;consumed&quot;,
+          &quot;via&quot;: &quot;plan&quot;,
+          &quot;ticket&quot;: null,
+          &quot;requirements&quot;: []
+        }
+      ]
+    },
+    &quot;header_only.csv&quot;: {
+      &quot;state&quot;: &quot;current&quot;,
+      &quot;versions&quot;: [
+        {
+          &quot;commit&quot;: &quot;aa96087&quot;,
+          &quot;date&quot;: &quot;2026-10-22&quot;,
+          &quot;hash&quot;: &quot;428b2fe8db619499f227e2ce2a56cebcf5149c161e680c5a65d792d74211f449&quot;,
+          &quot;release&quot;: &quot;&quot;,
+          &quot;state&quot;: &quot;consumed&quot;,
+          &quot;via&quot;: &quot;plan&quot;,
+          &quot;ticket&quot;: null,
+          &quot;requirements&quot;: [
+            {
+              &quot;name&quot;: &quot;read-header-only-csv&quot;,
+              &quot;text&quot;: &quot;sku,price,in_stock&quot;,
+              &quot;stories&quot;: [
+                &quot;csv-ingestion&quot;
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    &quot;orders.csv&quot;: {
+      &quot;state&quot;: &quot;current&quot;,
+      &quot;versions&quot;: [
+        {
+          &quot;commit&quot;: &quot;aa96087&quot;,
+          &quot;date&quot;: &quot;2026-10-22&quot;,
+          &quot;hash&quot;: &quot;93026827c46e9b0eab4a7e4e4eefc7518265dc56712f044061006b85adeb6ae8&quot;,
+          &quot;release&quot;: &quot;&quot;,
+          &quot;state&quot;: &quot;consumed&quot;,
+          &quot;via&quot;: &quot;plan&quot;,
+          &quot;ticket&quot;: null,
+          &quot;requirements&quot;: []
+        }
+      ]
+    },
+    &quot;ragged.csv&quot;: {
+      &quot;state&quot;: &quot;current&quot;,
+      &quot;versions&quot;: [
+        {
+          &quot;commit&quot;: &quot;aa96087&quot;,
+          &quot;date&quot;: &quot;2026-10-22&quot;,
+          &quot;hash&quot;: &quot;fd838208607b5e74d69d29662bd4961928d69fdd80a5e2752ece90f78b333465&quot;,
+          &quot;release&quot;: &quot;&quot;,
+          &quot;state&quot;: &quot;consumed&quot;,
+          &quot;via&quot;: &quot;plan&quot;,
+          &quot;ticket&quot;: null,
+          &quot;requirements&quot;: [
+            {
+              &quot;name&quot;: &quot;read-csv-records&quot;,
+              &quot;text&quot;: &quot;sku,price,in_stock\nA1,9.99,true\nA2,4.50,false\nA4,3.00,false&quot;,
+              &quot;stories&quot;: [
+                &quot;csv-ingestion&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;reject-ragged-record&quot;,
+              &quot;text&quot;: &quot;A3,1.25,true,extra&quot;,
+              &quot;stories&quot;: [
+                &quot;csv-validation&quot;
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    &quot;run.sh&quot;: {
+      &quot;state&quot;: &quot;current&quot;,
+      &quot;versions&quot;: [
+        {
+          &quot;commit&quot;: &quot;aa96087&quot;,
+          &quot;date&quot;: &quot;2026-10-22&quot;,
+          &quot;hash&quot;: &quot;8f598aabc017377364ec4a99f5c34bb81e06d68c9ef7b191513c6e9d3999bcbb&quot;,
+          &quot;release&quot;: &quot;&quot;,
+          &quot;state&quot;: &quot;consumed&quot;,
+          &quot;via&quot;: &quot;plan&quot;,
+          &quot;ticket&quot;: null,
+          &quot;requirements&quot;: [
+            {
+              &quot;name&quot;: &quot;build-csvstat&quot;,
+              &quot;text&quot;: &quot;Builds ./cmd/csvstat with `go build` and compares every command&#x27;s exit code and standard output&quot;,
+              &quot;stories&quot;: [
+                &quot;architecture&quot;,
+                &quot;conformance&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;profile-columns&quot;,
+              &quot;text&quot;: &quot;A. Every column of each data file&quot;,
+              &quot;stories&quot;: [
+                &quot;csv-ingestion&quot;,
+                &quot;csv-validation&quot;,
+                &quot;type-inference&quot;,
+                &quot;statistics&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;select-column&quot;,
+              &quot;text&quot;: &quot;B. One column&quot;,
+              &quot;stories&quot;: [
+                &quot;cli-contract&quot;,
+                &quot;statistics&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;frequency-reports&quot;,
+              &quot;text&quot;: &quot;C. Frequencies&quot;,
+              &quot;stories&quot;: [
+                &quot;cli-contract&quot;,
+                &quot;frequencies&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;reject-input-failures&quot;,
+              &quot;text&quot;: &quot;E. Rejected input and operational failures&quot;,
+              &quot;stories&quot;: [
+                &quot;cli-contract&quot;,
+                &quot;csv-ingestion&quot;,
+                &quot;csv-validation&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;reject-usage-errors&quot;,
+              &quot;text&quot;: &quot;U. Usage errors&quot;,
+              &quot;stories&quot;: [
+                &quot;cli-contract&quot;
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    &quot;sensors.csv&quot;: {
+      &quot;state&quot;: &quot;current&quot;,
+      &quot;versions&quot;: [
+        {
+          &quot;commit&quot;: &quot;aa96087&quot;,
+          &quot;date&quot;: &quot;2026-10-22&quot;,
+          &quot;hash&quot;: &quot;159d38499f5e2df7e2bfe5245c20e7f76c9d5f091aa497567b47bf707bde3c20&quot;,
+          &quot;release&quot;: &quot;&quot;,
+          &quot;state&quot;: &quot;consumed&quot;,
+          &quot;via&quot;: &quot;plan&quot;,
+          &quot;ticket&quot;: null,
+          &quot;requirements&quot;: []
+        }
+      ]
+    }
+  }
+}
+</pre></article>
+</main>
+</body>
+</html>
