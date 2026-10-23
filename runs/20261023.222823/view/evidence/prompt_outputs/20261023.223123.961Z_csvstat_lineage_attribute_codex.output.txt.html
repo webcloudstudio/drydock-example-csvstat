@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/prompt_outputs/20261023.223123.961Z_csvstat_lineage_attribute_codex.output.txt</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/prompt_outputs/20261023.223123.961Z_csvstat_lineage_attribute_codex.output.txt</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/prompt_outputs/20261023.223123.961Z_csvstat_lineage_attribute_codex.output.txt">Raw file</a></div></header>
+<article class="doc"><pre>&lt;requirement name=&quot;read-normalize-validate-csv&quot; stories=&quot;cli-input,cli-errors&quot;&gt;
+order_id,order_date,customer,qty,unit_price,coupon,ref,shipped
+5000,2025-02-01,Acme Corp ,1,116.70,,A7,2025-03-18
+5017,2025-02-05,Umbrella,9,62.85,WELCOME,-3,2025-02-30
+&lt;/requirement&gt;
+&lt;requirement name=&quot;resolve-columns-and-null-values&quot; stories=&quot;cli-columns&quot;&gt;
+order_id,order_date,customer,qty,unit_price,coupon,ref,shipped
+&lt;/requirement&gt;
+&lt;requirement name=&quot;infer-column-types&quot; stories=&quot;profile-types&quot;&gt;
+order_id,order_date,customer,qty,unit_price,coupon,ref,shipped
+&lt;/requirement&gt;
+&lt;requirement name=&quot;aggregate-frequent-values&quot; stories=&quot;frequency-values&quot;&gt;
+Acme Corp
+Globex
+Initech
+Umbrella
+Hooli
+&lt;/requirement&gt;
+&lt;requirement name=&quot;compute-profile-statistics&quot; stories=&quot;profile-statistics&quot;&gt;
+5000,2025-02-01,Acme Corp ,1,116.70,,A7,2025-03-18
+&lt;/requirement&gt;
+&lt;unattached story=&quot;architecture&quot;/&gt;
+&lt;unattached story=&quot;cli-foundation&quot;/&gt;
+&lt;unattached story=&quot;frequency-limits&quot;/&gt;
+&lt;unattached story=&quot;profile-output&quot;/&gt;
+&lt;unattached story=&quot;test-gate&quot;/&gt;
+&lt;unattached story=&quot;full-verification&quot;/&gt;</pre></article>
+</main>
+</body>
+</html>

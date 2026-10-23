@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-PROFILE-TYPES.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-PROFILE-TYPES.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-PROFILE-TYPES.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Profile Types</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261023 V1</td></tr><tr><td>Description</td><td>Infers integer, number, date, boolean, text, and empty column types.</td></tr><tr><td>Depends On</td><td>FEATURE-CLI-COLUMNS.md</td></tr><tr><td>Provides</td><td>integer, number, date, boolean, text, and empty inference</td></tr><tr><td>Consumes</td><td>column lookup, null normalization</td></tr></tbody></table></div>
+<h2>Type Inference</h2>
+<p>For non-null values, classify using this precedence:</p>
+<ol><li><code>integer</code>: <code>-?[0-9]+</code></li><li><code>number</code>: <code>-?[0-9]+(\.[0-9]+)?</code></li><li><code>date</code>: a real <code>YYYY-MM-DD</code> calendar date</li><li><code>boolean</code>: <code>true</code> or <code>false</code>, ignoring case</li><li><code>text</code>: any remaining value</li></ol>
+<p>A column with no non-null values is <code>empty</code>.</p>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC profile-types-fixtures ===<br>Intent: The supplied profile fixtures are accepted and produce profile rows. from pathlib import Path import subprocess</p>
+<p>for name in (&quot;employees.csv&quot;, &quot;sensors.csv&quot;, &quot;orders.csv&quot;, &quot;header_only.csv&quot;): result = subprocess.run( [&quot;./csvstat-ac&quot;, str(Path(&quot;sources&quot;) / name)], capture_output=True, text=True, ) print(result.stdout) print(result.stderr) assert result.returncode == 0 assert result.stdout != &quot;&quot; === END AC profile-types-fixtures ===</p>
+<p>=== AC profile-types-all-null ===<br>Intent: An all-null column remains a valid profile input. from pathlib import Path import subprocess</p>
+<p>result = subprocess.run( [&quot;./csvstat-ac&quot;, &quot;--column&quot;, &quot;battery&quot;, &quot;sources/sensors.csv&quot;], capture_output=True, text=True, ) print(result.stdout) print(result.stderr) assert result.returncode == 0 assert result.stdout != &quot;&quot; === END AC profile-types-all-null ===</p>
+<p>=== AC profile-types-invalid-date-text ===<br>Intent: A column containing an invalid calendar date remains valid input rather than causing command failure. import subprocess</p>
+<p>result = subprocess.run( [&quot;./csvstat-ac&quot;, &quot;--column&quot;, &quot;shipped&quot;, &quot;sources/orders.csv&quot;], capture_output=True, text=True, ) print(result.stdout) print(result.stderr) assert result.returncode == 0 assert result.stdout != &quot;&quot; === END AC profile-types-invalid-date-text ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Type inference ignores null values.</li><li>Date validation rejects impossible calendar dates.</li><li>Inference follows the specified precedence.</li><li>No fixture-specific type or value is hardcoded.</li></ul></article>
+</main>
+</body>
+</html>

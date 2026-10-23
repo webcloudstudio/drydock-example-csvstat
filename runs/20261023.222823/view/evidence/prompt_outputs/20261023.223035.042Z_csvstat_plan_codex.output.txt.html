@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/prompt_outputs/20261023.223035.042Z_csvstat_plan_codex.output.txt</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/prompt_outputs/20261023.223035.042Z_csvstat_plan_codex.output.txt</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/prompt_outputs/20261023.223035.042Z_csvstat_plan_codex.output.txt">Raw file</a></div></header>
+<article class="doc"><pre>=== BEGIN ARTIFACT FEATURE-FREQUENCY-LIMITS.md ===
+# FEATURE: Frequency Limits
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261023 V1 |
+| Description | Validate frequency limits and render bounded frequency output. |
+| Depends On  | FEATURE-FREQUENCY-VALUES.md |
+| Provides    | --top validation, default frequency limit, frequency CSV output |
+| Consumes    | frequency aggregation and deterministic ordering |
+
+## Questions
+
+- None.
+
+## Purpose
+
+The frequency command accepts `--freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;`. The default limit is five. `--top` must be a positive integer and is valid only with `--freq`. The limit is applied after frequency ordering.
+
+## Behavior
+
+- Emit the CSV header `value,count`.
+- Emit no more than the requested number of frequency rows.
+- Reject zero, negative, or non-integer `--top` values with usage exit status 2.
+- Reject `--top` without `--freq` with usage exit status 2.
+- Preserve RFC-compliant CSV rendering.
+
+## Programmatic Acceptance
+
+=== AC frequency-limit-success ===
+Intent: A valid positive limit executes the frequency command successfully and bounds the parsed result.
+import csv
+import io
+import subprocess
+
+column = &quot;department&quot;
+limit = &quot;2&quot;
+result = subprocess.run(
+    [&quot;./csvstat&quot;, &quot;--freq&quot;, column, &quot;--top&quot;, limit, &quot;sources/employees.csv&quot;],
+    capture_output=True,
+    text=True,
+)
+assert result.returncode == 0
+rows = list(csv.reader(io.StringIO(result.stdout)))
+assert rows[0] == [&quot;value&quot;, &quot;count&quot;]
+assert len(rows) &lt;= int(limit) + 1
+=== END AC frequency-limit-success ===
+
+=== AC frequency-limit-default ===
+Intent: Omitting --top uses the default limit and returns a successful frequency result.
+import csv
+import io
+import subprocess
+
+result = subprocess.run(
+    [&quot;./csvstat&quot;, &quot;--freq&quot;, &quot;department&quot;, &quot;sources/employees.csv&quot;],
+    capture_output=True,
+    text=True,
+)
+assert result.returncode == 0
+rows = list(csv.reader(io.StringIO(result.stdout)))
+assert rows[0] == [&quot;value&quot;, &quot;count&quot;]
+assert len(rows) &lt;= 6
+=== END AC frequency-limit-default ===
+
+=== AC frequency-limit-invalid ===
+Intent: Non-positive and malformed limits are rejected as usage errors.
+import subprocess
+
+cases = [
+    [&quot;--freq&quot;, &quot;department&quot;, &quot;--top&quot;, &quot;0&quot;, &quot;sources/employees.csv&quot;],
+    [&quot;--freq&quot;, &quot;department&quot;, &quot;--top&quot;, &quot;-1&quot;, &quot;sources/employees.csv&quot;],
+    [&quot;--freq&quot;, &quot;department&quot;, &quot;--top&quot;, &quot;x&quot;, &quot;sources/employees.csv&quot;],
+]
+for args in cases:
+    result = subprocess.run([&quot;./csvstat&quot;, *args], capture_output=True, text=True)
+    assert result.returncode == 2
+    assert result.stdout == &quot;&quot;
+=== END AC frequency-limit-invalid ===
+
+=== AC top-requires-frequency ===
+Intent: --top without --freq is rejected as a usage error.
+import subprocess
+
+result = subprocess.run(
+    [&quot;./csvstat&quot;, &quot;--top&quot;, &quot;3&quot;, &quot;sources/employees.csv&quot;],
+    capture_output=True,
+    text=True,
+)
+assert result.returncode == 2
+assert result.stdout == &quot;&quot;
+=== END AC top-requires-frequency ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Do not include null values in frequency output.
+- Do not change the ordering supplied by frequency aggregation when applying the limit.
+- Do not read or embed expected answers from supplied grading assets.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-CLI-ERRORS.md ===
+# FEATURE: CLI Errors
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261023 V1 |
+| Description | Map operational, usage, and rejected-input failures to the command contract. |
+| Depends On  | FEATURE-CLI-COLUMNS.md, FEATURE-PROFILE-OUTPUT.md, FEATURE-FREQUENCY-LIMITS.md |
+| Provides    | exit-code and diagnostic contract |
+| Consumes    | CSV validation, column lookup, profile output, frequency output |
+
+## Questions
+
+- None.
+
+## Purpose
+
+The command reports failures through exit status and diagnostics. It must never write profile or frequency CSV to standard output after a failure.
+
+## Error Contract
+
+- Exit 1 for a file that cannot be opened or read.
+- Exit 2 for missing or extra files, unknown options, missing option values, invalid `--top`, `--top` without `--freq`, or incompatible options.
+- Exit 3 for empty input, invalid or repeated headers, ragged records, or absent named columns.
+- Write one diagnostic line to standard error for failures.
+- Diagnostics identify the input file and identify the rejected record line when a record is structurally invalid.
+
+## Programmatic Acceptance
+
+=== AC operational-error ===
+Intent: An unreadable input file returns the operational failure status and no CSV output.
+import pathlib
+import subprocess
+
+missing = &quot;sources/does-not-exist.csv&quot;
+result = subprocess.run([&quot;./csvstat&quot;, missing], capture_output=True, text=True)
+assert result.returncode == 1
+assert result.stdout == &quot;&quot;
+assert pathlib.Path(missing).name in result.stderr
+=== END AC operational-error ===
+
+=== AC usage-errors ===
+Intent: Malformed command arguments return usage status and no CSV output.
+import subprocess
+
+cases = [
+    [&quot;./csvstat&quot;],
+    [&quot;./csvstat&quot;, &quot;sources/orders.csv&quot;, &quot;sources/employees.csv&quot;],
+    [&quot;./csvstat&quot;, &quot;--unknown&quot;, &quot;sources/orders.csv&quot;],
+    [&quot;./csvstat&quot;, &quot;--column&quot;],
+]
+for command in cases:
+    result = subprocess.run(command, capture_output=True, text=True)
+    assert result.returncode == 2
+    assert result.stdout == &quot;&quot;
+=== END AC usage-errors ===
+
+=== AC rejected-input ===
+Intent: Structurally invalid input and absent columns return rejected-input status and no CSV output.
+import subprocess
+
+cases = [
+    [&quot;./csvstat&quot;, &quot;sources/ragged.csv&quot;],
+    [&quot;./csvstat&quot;, &quot;--column&quot;, &quot;missing&quot;, &quot;sources/orders.csv&quot;],
+    [&quot;./csvstat&quot;, &quot;--freq&quot;, &quot;missing&quot;, &quot;sources/orders.csv&quot;],
+]
+for command in cases:
+    result = subprocess.run(command, capture_output=True, text=True)
+    assert result.returncode == 3
+    assert result.stdout == &quot;&quot;
+    assert result.stderr.strip()
+=== END AC rejected-input ===
+
+=== AC successful-output-isolated ===
+Intent: A valid command remains successful and emits CSV on standard output.
+import subprocess
+
+result = subprocess.run(
+    [&quot;./csvstat&quot;, &quot;--column&quot;, &quot;qty&quot;, &quot;sources/orders.csv&quot;],
+    capture_output=True,
+    text=True,
+)
+assert result.returncode == 0
+assert result.stdout != &quot;&quot;
+=== END AC successful-output-isolated ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Never emit partial CSV output before input validation and command execution succeed.
+- Keep diagnostics on standard error.
+- Preserve the distinct exit statuses for operational, usage, and rejected-input failures.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-TEST-GATE.md ===
+# FEATURE: Test Gate
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261023 V1 |
+| Description | Provide the project test launcher and focused automated coverage. |
+| Depends On  | FEATURE-CLI-FOUNDATION.md |
+| Provides    | bin/test.sh |
+| Consumes    | Go module and command packages |
+
+## Questions
+
+- None.
+
+## Test Gate
+
+`bin/test.sh` runs `go vet ./...` and `go test ./...` from the application root. It exits zero only when both commands succeed. The repository test suite should cover parsing, normalization, inference, statistics, rendering, frequency behavior, and exit-code mapping.
+
+## Programmatic Acceptance
+
+=== AC test-gate-present ===
+Intent: The project provides an executable POSIX test launcher.
+import os
+import pathlib
+
+path = pathlib.Path(&quot;bin/test.sh&quot;)
+assert path.is_file()
+assert os.access(path, os.X_OK)
+=== END AC test-gate-present ===
+
+=== AC test-gate-runs ===
+Intent: The project test launcher completes successfully.
+import os
+import subprocess
+
+result = subprocess.run(
+    [&quot;sh&quot;, &quot;bin/test.sh&quot;],
+    capture_output=True,
+    text=True,
+    env={**os.environ},
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0
+=== END AC test-gate-runs ===
+
+=== AC go-vet-and-tests ===
+Intent: The launcher exercises both the Go vet and Go test commands.
+import pathlib
+
+text = pathlib.Path(&quot;bin/test.sh&quot;).read_text()
+assert &quot;go vet ./...&quot; in text
+assert &quot;go test ./...&quot; in text
+=== END AC go-vet-and-tests ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Keep the launcher POSIX-compatible.
+- Run commands from the application root.
+- Do not make the launcher depend on the supplied grader or hardcoded fixture answers.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-FULL-VERIFICATION.md ===
+# FEATURE: Full Verification
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261023 V1 |
+| Description | Execute the complete supplied CsvStat conformance suite. |
+| Depends On  | ARCHITECTURE.md, FEATURE-CLI-FOUNDATION.md, FEATURE-CLI-INPUT.md, FEATURE-CLI-COLUMNS.md, FEATURE-PROFILE-TYPES.md, FEATURE-PROFILE-STATISTICS.md, FEATURE-PROFILE-OUTPUT.md, FEATURE-FREQUENCY-VALUES.md, FEATURE-FREQUENCY-LIMITS.md, FEATURE-CLI-ERRORS.md, FEATURE-TEST-GATE.md |
+| Provides    | full CsvStat conformance verification |
+| Consumes    | bin/test.sh, ./cmd/csvstat, complete CsvStat implementation |
+
+## Questions
+
+- None.
+
+## Verification Scope
+
+The supplied `sources/run.sh` is the authoritative release conformance suite. It builds `./cmd/csvstat`, exercises all supplied CSV fixtures and command forms, and returns zero only when every check passes. Run it from the completed application root without filtering, modification, or reinterpretation.
+
+## Programmatic Acceptance
+
+=== AC full-conformance ===
+Intent: The supplied conformance suite passes for the completed CsvStat implementation.
+Suite: full
+
+import os
+import subprocess
+
+result = subprocess.run(
+    [&quot;sh&quot;, &quot;sources/run.sh&quot;],
+    capture_output=True,
+    text=True,
+    env={**os.environ},
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0
+=== END AC full-conformance ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Execute the supplied suite exactly as staged.
+- Do not modify, regenerate, filter, or reinterpret any supplied source or fixture.
+- Treat the suite exit status as the release verification result.
+=== END ARTIFACT ===</pre></article>
+</main>
+</body>
+</html>

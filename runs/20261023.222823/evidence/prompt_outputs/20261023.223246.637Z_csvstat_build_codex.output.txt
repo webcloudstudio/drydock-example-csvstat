@@ -1,0 +1,23 @@
+<reusable-compact filename="ARCHITECTURE.md">
+- Go CLI architecture: `cmd/csvstat` handles process startup and `os.Exit`; `internal/cli` handles flags, dispatch, diagnostics, and exit codes; `internal/csvstat` owns CSV loading, normalization, profiling, frequencies, and rendering; `bin/test.sh` runs verification.
+- Standard library only; Go 1.22+.
+- Success writes CSV to stdout; diagnostics use stderr.
+- Exit codes: 1 operational failure, 2 usage failure, 3 rejected input.
+</reusable-compact>
+
+RESULT: SUCCESS
+
+FILES CHANGED:
+- go.mod
+- cmd/csvstat/main.go
+- internal/cli/cli.go
+- internal/cli/cli_test.go
+- internal/csvstat/csvstat.go
+- internal/csvstat/csvstat_test.go
+- bin/test.sh
+
+SUMMARY:
+Established the Go module, command boundary, internal package boundaries, CSV loading foundation, tests, and verification launcher. `go build ./cmd/csvstat`, `go vet ./...`, and `./bin/test.sh` pass.
+
+BLOCKERS:
+- None

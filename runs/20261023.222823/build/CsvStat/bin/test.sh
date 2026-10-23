@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+
+test -z "$(gofmt -l .)"
+go vet ./...
+go test ./...

@@ -1,0 +1,11 @@
+RESULT: SUCCESS
+
+FILES CHANGED:
+- csvstat
+- csvstat-ac
+
+SUMMARY:
+Refreshed stale executables from the current Go implementation. `bin/test.sh` passes, and the full CsvStat conformance suite passes all 22 checks.
+
+BLOCKERS:
+- None

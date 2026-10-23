@@ -1,0 +1,465 @@
+=== BEGIN ARTIFACT FEATURE-PROFILE-STATISTICS.md ===
+# FEATURE: Profile Statistics
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261023 V1 |
+| Description | Compute exact profile statistics and decimal formatting for normalized columns. |
+| Depends On  | FEATURE-PROFILE-TYPES.md |
+| Provides    | rows, nulls, distinct, extrema, sum, mean, median |
+| Consumes    | inferred column types, normalized records |
+
+## Questions
+
+- None.
+
+## Purpose
+
+This capability calculates profile statistics after input normalization and type inference.
+
+For every column it reports row count, null count, distinct non-null values, type-specific minimum and maximum, and numeric sum, mean, and median. Numeric calculations use exact arithmetic and are rounded once, half away from zero, to two decimal places when rendered.
+
+Integer values remain plain integers. Non-numeric sum, mean, and median fields remain empty. Boolean extrema are false when any false value exists and true only when all non-null values are true. Text extrema use bytewise ordering.
+
+## Programmatic Acceptance
+
+=== AC profile-statistics-integer ===
+Intent: Integer statistics include counts, extrema, exact total, mean, and median.
+
+import csv
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+rows = [
+    ["value"],
+    ["-3"],
+    ["1"],
+    ["4"],
+    ["NA"],
+]
+with tempfile.TemporaryDirectory() as directory:
+    path = Path(directory) / "input.csv"
+    path.write_text("\n".join(",".join(row) for row in rows) + "\n")
+    code, output, error = cli_runner(str(path), package="./cmd/csvstat")
+    assert code == 0
+    parsed = list(csv.reader(output.splitlines()))
+    header, result = parsed[0], parsed[1]
+    assert result[0] == "value"
+    assert result[1] == "integer"
+    assert int(result[2]) == len(rows) - 1
+    assert int(result[3]) == 1
+    values = [-3, 1, 4]
+    assert int(result[4]) == len(set(values))
+    assert int(result[5]) == min(values)
+    assert int(result[6]) == max(values)
+    assert int(result[7]) == sum(values)
+    assert result[8] == "0.67"
+    assert result[9] == "1.00"
+=== END AC profile-statistics-integer ===
+
+=== AC profile-statistics-decimal ===
+Intent: Decimal statistics preserve exact values and round mean and median to two places.
+
+import csv
+import tempfile
+from decimal import Decimal, ROUND_HALF_UP
+from pathlib import Path
+from drydock_go import cli_runner
+
+values = [Decimal("-1.01"), Decimal("-1.00"), Decimal("2.00"), Decimal("2.01")]
+source = "amount\n" + "\n".join(str(value) for value in values) + "\n"
+with tempfile.TemporaryDirectory() as directory:
+    path = Path(directory) / "input.csv"
+    path.write_text(source)
+    code, output, error = cli_runner(str(path), package="./cmd/csvstat")
+    assert code == 0
+    result = list(csv.reader(output.splitlines()))[1]
+    total = sum(values)
+    mean = (total / len(values)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    median = ((values[1] + values[2]) / 2).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    assert result[1] == "number"
+    assert result[7] == f"{total:.2f}"
+    assert result[8] == f"{mean:.2f}"
+    assert result[9] == f"{median:.2f}"
+=== END AC profile-statistics-decimal ===
+
+=== AC profile-statistics-nonnumeric ===
+Intent: Non-numeric columns retain counts and extrema while leaving numeric fields empty.
+
+import csv
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+source = "flag\nfalse\ntrue\nfalse\n"
+with tempfile.TemporaryDirectory() as directory:
+    path = Path(directory) / "input.csv"
+    path.write_text(source)
+    code, output, error = cli_runner(str(path), package="./cmd/csvstat")
+    assert code == 0
+    result = list(csv.reader(output.splitlines()))[1]
+    assert result[1] == "boolean"
+    assert int(result[2]) == 3
+    assert int(result[3]) == 0
+    assert int(result[4]) == 2
+    assert result[5] == "false"
+    assert result[6] == "true"
+    assert result[7:10] == ["", "", ""]
+=== END AC profile-statistics-nonnumeric ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Statistics must be computed from normalized input values, never from hardcoded fixture answers.
+- Decimal calculations must use exact arithmetic and round only during output formatting.
+
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-PROFILE-OUTPUT.md ===
+# FEATURE: Profile Output
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261023 V1 |
+| Description | Render profile results as RFC-compliant CSV output. |
+| Depends On  | FEATURE-PROFILE-STATISTICS.md |
+| Provides    | profile CSV output |
+| Consumes    | rows, nulls, distinct, extrema, sum, mean, median |
+
+## Questions
+
+- None.
+
+## Purpose
+
+The profile renderer writes one CSV header followed by one row per selected column in input order. A named column limits output to that column. Empty statistic values remain empty CSV fields, and fields containing commas, quotes, or newlines are encoded with RFC-compliant CSV quoting.
+
+## Programmatic Acceptance
+
+=== AC profile-output-all-columns ===
+Intent: A profile command emits one output row for each input column in file order.
+
+import csv
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+source = "first,second\n1,alpha\n2,beta\n"
+expected_columns = ["first", "second"]
+with tempfile.TemporaryDirectory() as directory:
+    path = Path(directory) / "input.csv"
+    path.write_text(source)
+    code, output, error = cli_runner(str(path), package="./cmd/csvstat")
+    assert code == 0
+    parsed = list(csv.reader(output.splitlines()))
+    assert parsed[0][0] == "column"
+    assert len(parsed) == len(expected_columns) + 1
+    assert [row[0] for row in parsed[1:]] == expected_columns
+=== END AC profile-output-all-columns ===
+
+=== AC profile-output-selected-column ===
+Intent: The column option emits exactly the requested profile row.
+
+import csv
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+source = "first,second\n1,alpha\n2,beta\n"
+selected = "second"
+with tempfile.TemporaryDirectory() as directory:
+    path = Path(directory) / "input.csv"
+    path.write_text(source)
+    code, output, error = cli_runner("--column", selected, str(path), package="./cmd/csvstat")
+    assert code == 0
+    parsed = list(csv.reader(output.splitlines()))
+    assert len(parsed) == 2
+    assert parsed[1][0] == selected
+    assert parsed[1][1] == "text"
+=== END AC profile-output-selected-column ===
+
+=== AC profile-output-quoting ===
+Intent: Profile output preserves comma-containing values through CSV parsing.
+
+import csv
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+value = "remote, part-time"
+source = "name,notes\nAda," + '"' + value + '"' + "\n"
+with tempfile.TemporaryDirectory() as directory:
+    path = Path(directory) / "input.csv"
+    path.write_text(source)
+    code, output, error = cli_runner("--column", "notes", str(path), package="./cmd/csvstat")
+    assert code == 0
+    parsed = list(csv.reader(output.splitlines()))
+    assert parsed[1][5] == value
+=== END AC profile-output-quoting ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Output must be written as CSV using RFC-compliant quoting and newline handling.
+- A failed command must not emit partial profile output.
+
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-FREQUENCY-VALUES.md ===
+# FEATURE: Frequency Values
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261023 V1 |
+| Description | Aggregate and deterministically order non-null column values by frequency. |
+| Depends On  | FEATURE-CLI-COLUMNS.md |
+| Provides    | frequency aggregation and deterministic ordering |
+| Consumes    | column lookup, null normalization |
+
+## Questions
+
+- None.
+
+## Purpose
+
+The frequency capability counts each distinct non-null normalized value in the requested column. It excludes empty values and the case-insensitive null spellings `NA`, `N/A`, and `NULL`.
+
+Rows are ordered by descending count and then by bytewise ascending value.
+
+## Programmatic Acceptance
+
+=== AC frequency-excludes-nulls ===
+Intent: Frequency output omits every recognized null spelling.
+
+import csv
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+source = "value\nalpha\nNA\nn/a\nNULL\n\nbeta\n"
+with tempfile.TemporaryDirectory() as directory:
+    path = Path(directory) / "input.csv"
+    path.write_text(source)
+    code, output, error = cli_runner("--freq", "value", str(path), package="./cmd/csvstat")
+    assert code == 0
+    rows = list(csv.reader(output.splitlines()))
+    values = [row[0] for row in rows[1:]]
+    assert values == ["alpha", "beta"]
+    assert all(value not in {"", "NA", "n/a", "NULL"} for value in values)
+=== END AC frequency-excludes-nulls ===
+
+=== AC frequency-orders-counts ===
+Intent: Frequency rows are ordered by descending count before value ordering.
+
+import csv
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+source = "value\nb\na\nb\nc\na\nb\n"
+expected_counts = {"a": 2, "b": 3, "c": 1}
+with tempfile.TemporaryDirectory() as directory:
+    path = Path(directory) / "input.csv"
+    path.write_text(source)
+    code, output, error = cli_runner("--freq", "value", str(path), package="./cmd/csvstat")
+    assert code == 0
+    rows = list(csv.reader(output.splitlines()))[1:]
+    actual = [(row[0], int(row[1])) for row in rows]
+    assert actual == sorted(expected_counts.items(), key=lambda item: (-item[1], item[0]))
+=== END AC frequency-orders-counts ===
+
+=== AC frequency-orders-ties ===
+Intent: Equal-frequency values are ordered by ascending byte value.
+
+import csv
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+source = "value\nz\na\nm\nz\na\nm\n"
+with tempfile.TemporaryDirectory() as directory:
+    path = Path(directory) / "input.csv"
+    path.write_text(source)
+    code, output, error = cli_runner("--freq", "value", str(path), package="./cmd/csvstat")
+    assert code == 0
+    rows = list(csv.reader(output.splitlines()))[1:]
+    assert [row[0] for row in rows] == sorted(["a", "m", "z"])
+=== END AC frequency-orders-ties ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Null values must never appear in frequency rows.
+- Frequency ordering must be deterministic and independent of input map iteration order.
+
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-FREQUENCY-LIMITS.md ===
+# FEATURE: Frequency Limits
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261023 V1 |
+| Description | Validate the frequency limit option and render bounded frequency output. |
+| Depends On  | FEATURE-FREQUENCY-VALUES.md |
+| Provides    | --top validation and frequency CSV output |
+| Consumes    | frequency aggregation and deterministic ordering |
+
+## Questions
+
+- None.
+
+## Purpose
+
+The `--top` option is valid only with `--freq` and accepts positive integers. When omitted, it defaults to five rows. Limiting occurs after frequency ordering, preserving the established order.
+
+The frequency renderer emits a `value,count` header and one row per selected value. An all-null column emits only the header.
+
+## Programmatic Acceptance
+
+=== AC frequency-default-limit ===
+Intent: Frequency output defaults to five rows when more than five values exist.
+
+import csv
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+values = ["a", "b", "c", "d", "e", "f"]
+source = "value\n" + "\n".join(values) + "\n"
+with tempfile.TemporaryDirectory() as directory:
+    path = Path(directory) / "input.csv"
+    path.write_text(source)
+    code, output, error = cli_runner("--freq", "value", str(path), package="./cmd/csvstat")
+    assert code == 0
+    rows = list(csv.reader(output.splitlines()))
+    assert len(rows[1:]) == 5
+    assert [row[0] for row in rows[1:]] == values[:5]
+=== END AC frequency-default-limit ===
+
+=== AC frequency-explicit-limit ===
+Intent: A positive top value limits rows after deterministic ordering.
+
+import csv
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+values = ["a", "b", "c", "d"]
+limit = 2
+source = "value\n" + "\n".join(values) + "\n"
+with tempfile.TemporaryDirectory() as directory:
+    path = Path(directory) / "input.csv"
+    path.write_text(source)
+    code, output, error = cli_runner("--freq", "value", "--top", str(limit), str(path), package="./cmd/csvstat")
+    assert code == 0
+    rows = list(csv.reader(output.splitlines()))
+    assert len(rows[1:]) == limit
+    assert [row[0] for row in rows[1:]] == values[:limit]
+=== END AC frequency-explicit-limit ===
+
+=== AC frequency-limit-errors ===
+Intent: Invalid frequency-limit combinations return usage failure status.
+
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+source = "value\na\n"
+with tempfile.TemporaryDirectory() as directory:
+    path = Path(directory) / "input.csv"
+    path.write_text(source)
+    cases = [
+        (["--freq", "value", "--top", "0", str(path)], 2),
+        (["--freq", "value", "--top", "-1", str(path)], 2),
+        (["--top", "2", str(path)], 2),
+    ]
+    for arguments, expected_code in cases:
+        code, output, error = cli_runner(*arguments, package="./cmd/csvstat")
+        assert code == expected_code
+        assert output == ""
+=== END AC frequency-limit-errors ===
+
+=== BEGIN ARTIFACT FEATURE-CLI-ERRORS.md ===
+# FEATURE: CLI Errors
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261023 V1 |
+| Description | Map operational, usage, and rejected-input failures to stable exit contracts. |
+| Depends On  | FEATURE-CLI-COLUMNS.md, FEATURE-PROFILE-OUTPUT.md, FEATURE-FREQUENCY-LIMITS.md |
+| Provides    | exit-code and diagnostic contract |
+| Consumes    | CSV validation, column lookup, profile output, frequency output |
+
+## Questions
+
+- None.
+
+## Purpose
+
+The command maps failures to exit status 1 for operational file errors, 2 for malformed arguments, and 3 for rejected input. Failed commands write no standard output and write one diagnostic line to standard error. Rejected-record diagnostics include the input filename and record line number.
+
+## Programmatic Acceptance
+
+=== AC cli-errors-usage ===
+Intent: Malformed argument invocations return usage status and no standard output.
+
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+source = "value\n1\n"
+with tempfile.TemporaryDirectory() as directory:
+    path = Path(directory) / "input.csv"
+    path.write_text(source)
+    cases = [
+        ([], 2),
+        (["--unknown", str(path)], 2),
+        (["--top", "2", str(path)], 2),
+        (["--freq", "value", "--top", "0", str(path)], 2),
+    ]
+    for arguments, expected_code in cases:
+        code, output, error = cli_runner(*arguments, package="./cmd/csvstat")
+        assert code == expected_code
+        assert output == ""
+=== END AC cli-errors-usage ===
+
+=== AC cli-errors-operational ===
+Intent: An unreadable input path returns operational-failure status and no standard output.
+
+missing_path = "definitely-missing-csvstat-input.csv"
+from drydock_go import cli_runner
+
+code, output, error = cli_runner(missing_path, package="./cmd/csvstat")
+assert code == 1
+assert output == ""
+assert error.strip() != ""
+assert missing_path in error
+=== END AC cli-errors-operational ===
+
+=== AC cli-errors-rejected ===
+Intent: Rejected CSV input returns rejection status and no standard output.
+
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+source = "sku,price\nA1,1\nA2,2,extra\n"
+with tempfile.TemporaryDirectory() as directory:
+    path = Path(directory) / "ragged.csv"
+    path.write_text(source)
+    code, output, error = cli_runner(str(path), package="./cmd/csvstat")
+    assert code == 3
+    assert output == ""
+    assert error.strip() != ""
+    assert str(path) in error
+=== END AC cli-errors-rejected ===
+
+=== END ARTIFACT ===

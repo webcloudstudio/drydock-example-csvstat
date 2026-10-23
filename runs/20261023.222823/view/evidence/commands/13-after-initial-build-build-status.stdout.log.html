@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/commands/13-after-initial-build-build-status.stdout.log</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/commands/13-after-initial-build-build-status.stdout.log</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/commands/13-after-initial-build-build-status.stdout.log">Raw file</a></div></header>
+<article class="doc"><pre>Drydock 0.2.0  Copyright (c) 2026 Web Cloud Studio. All rights reserved.
+Next: (no actionable steps — all done or blocked)
+
+Blueprint: CsvStat
+Target: /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat
+Rows: &lt;state&gt; &lt;type&gt;  &lt;Name&gt;  [&lt;id&gt;]   — pass [&lt;id&gt;] to --step
+Block: Build Block 1 · Foundational  [block-1]   — [built] story Define the CsvStat command architecture and module boundaries.  [architecture] — complete
+Block: Build Block 2 · Foundational  [block-2]   — [built] story Build the csvstat command entry point and module.  [cli-foundation] — complete
+
+Block: Build Block 3 · Service  [block-3]   — 10/10 stories complete
+  [built]   story  Read, normalize, and structurally validate CSV input.  [cli-input]
+  [built]   story  Resolve named columns and classify null values.  [cli-columns]
+  [built]   story  Infer each column type using the specified precedence.  [profile-types]
+  [built]   story  Aggregate and order frequent non-null column values.  [frequency-values]
+  [built]   story  Validate and apply frequency row limits.  [frequency-limits]
+  [built]   story  Compute exact profile statistics and decimal formatting.  [profile-statistics]
+  [built]   story  Render profile results as CSV.  [profile-output]
+  [built]   story  Map operational, usage, and rejected-input failures.  [cli-errors]
+  [built]   story  Provide the Go vet and test project gate.  [test-gate]
+  [built]   story  Run the complete supplied CsvStat conformance suite.  [full-verification]
+
+Steps: 12 total — 0 done, 12 built (await verify), 0 in review, 0 pending, 0 blocked by questions, 0 failed (0% complete)
+Buildable now: (none)
+</pre></article>
+</main>
+</body>
+</html>

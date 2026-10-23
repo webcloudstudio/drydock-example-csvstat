@@ -1,0 +1,416 @@
+=== BEGIN ARTIFACT ARCHITECTURE.md ===
+# ARCHITECTURE: CsvStat
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261023 V1 |
+| Description | Architecture and module boundaries for the CsvStat command-line CSV profiler. |
+| Depends On  | — |
+| Provides    | csvstat architecture |
+| Consumes    | — |
+
+## Questions
+
+- None.
+
+## Purpose
+
+CsvStat is a standard-library Go command-line pipeline. It reads one RFC 4180 CSV file, normalizes records, validates structure, profiles columns or reports frequencies, renders CSV output, and maps failures to documented exit codes.
+
+## Modules and Boundaries
+
+- `cmd/csvstat`: process startup, argument forwarding, and final `os.Exit`.
+- `internal/cli`: flag parsing, command dispatch, diagnostics, and exit-code mapping.
+- `internal/csvstat`: CSV loading, normalization, type inference, statistics, frequency aggregation, and rendering.
+- `bin/test.sh`: project verification launcher.
+
+Application logic returns values and errors through testable functions. Only the command entry point terminates the process.
+
+## Technology Stack
+
+- Go 1.22 or newer with the standard library only.
+- `encoding/csv` for RFC 4180 parsing and output.
+- POSIX shell for `bin/test.sh`.
+- Exact numeric arithmetic uses standard-library facilities such as `math/big`.
+
+## Contracts
+
+Successful commands write CSV only to standard output. Diagnostics go to standard error. Failed commands write no standard output. Exit codes are 1 for operational failures, 2 for usage failures, and 3 for rejected input.
+
+## Programmatic Acceptance
+
+=== AC architecture-build ===
+Intent: The application architecture builds as the declared Go command.
+import subprocess
+
+result = subprocess.run(
+    ["go", "build", "./cmd/csvstat"],
+    capture_output=True,
+    text=True,
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0
+=== END AC architecture-build ===
+
+=== AC architecture-vet ===
+Intent: The declared Go packages pass static analysis.
+import subprocess
+
+result = subprocess.run(
+    ["go", "vet", "./..."],
+    capture_output=True,
+    text=True,
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0
+=== END AC architecture-vet ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Use only the Go standard library.
+- Never read or modify files under `sources/` from application code.
+- Keep diagnostics off standard output.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-CLI-FOUNDATION.md ===
+# FEATURE: CLI Foundation
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261023 V1 |
+| Description | Provides the csvstat executable and documented command invocation surface. |
+| Depends On  | ARCHITECTURE.md |
+| Provides    | ./cmd/csvstat, csvstat help |
+| Consumes    | csvstat architecture |
+
+## Questions
+
+- None.
+
+## Intent
+
+Provide a Go module and executable at `./cmd/csvstat` with profile and frequency invocation forms.
+
+## Invocation
+
+- `csvstat [--column <name>] <file>`
+- `csvstat --freq <name> [--top <n>] <file>`
+
+The command supports useful help text for these forms and keeps process termination in `main`.
+
+## Programmatic Acceptance
+
+=== AC cli-foundation-build ===
+Intent: The declared command package builds successfully.
+import subprocess
+
+result = subprocess.run(
+    ["go", "build", "-o", "csvstat-ac", "./cmd/csvstat"],
+    capture_output=True,
+    text=True,
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0
+=== END AC cli-foundation-build ===
+
+=== AC cli-foundation-help ===
+Intent: The executable provides a successful help invocation.
+import subprocess
+
+result = subprocess.run(
+    ["./csvstat-ac", "--help"],
+    capture_output=True,
+    text=True,
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0
+=== END AC cli-foundation-help ===
+
+=== AC cli-foundation-usage ===
+Intent: A missing file argument is reported as a usage failure.
+import subprocess
+
+result = subprocess.run(
+    ["./csvstat-ac"],
+    capture_output=True,
+    text=True,
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 2
+=== END AC cli-foundation-usage ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- The executable is a Go main package at `./cmd/csvstat`.
+- Only `main` calls `os.Exit`.
+- No third-party modules are introduced.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-CLI-INPUT.md ===
+# FEATURE: CLI Input
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261023 V1 |
+| Description | Reads, normalizes, and structurally validates CSV input. |
+| Depends On  | FEATURE-CLI-FOUNDATION.md |
+| Provides    | RFC 4180 CSV parsing, trimmed records, structural validation |
+| Consumes    | ./cmd/csvstat |
+
+## Questions
+
+- None.
+
+## Input Rules
+
+Read UTF-8 CSV with `encoding/csv`. Trim every header and value before null, type, comparison, and aggregation processing. Preserve quoted commas and reject empty files, empty or repeated headers, and records whose field count differs from the header.
+
+## Diagnostics
+
+Rejected records retain their source line information so a diagnostic can identify the file and rejected record line.
+
+## Programmatic Acceptance
+
+=== AC cli-input-quoted ===
+Intent: A supplied CSV containing quoted commas is accepted.
+from pathlib import Path
+import subprocess
+
+asset = Path("sources/employees.csv")
+result = subprocess.run(
+    ["./csvstat-ac", str(asset)],
+    capture_output=True,
+    text=True,
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0
+assert result.stdout != ""
+=== END AC cli-input-quoted ===
+
+=== AC cli-input-ragged ===
+Intent: A ragged CSV is rejected without standard output.
+from pathlib import Path
+import subprocess
+
+asset = Path("sources/ragged.csv")
+result = subprocess.run(
+    ["./csvstat-ac", str(asset)],
+    capture_output=True,
+    text=True,
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 3
+assert result.stdout == ""
+assert result.stderr != ""
+=== END AC cli-input-ragged ===
+
+=== AC cli-input-header-only ===
+Intent: A header-only CSV is accepted as a valid empty data set.
+from pathlib import Path
+import subprocess
+
+asset = Path("sources/header_only.csv")
+result = subprocess.run(
+    ["./csvstat-ac", str(asset)],
+    capture_output=True,
+    text=True,
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0
+assert result.stdout != ""
+=== END AC cli-input-header-only ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Supplied source assets remain byte-for-byte unchanged.
+- Application code does not read `sources/run.sh`.
+- CSV parsing uses the standard library.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-CLI-COLUMNS.md ===
+# FEATURE: CLI Columns
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261023 V1 |
+| Description | Resolves named columns and normalizes null values for profiling commands. |
+| Depends On  | FEATURE-CLI-INPUT.md |
+| Provides    | column lookup, null normalization |
+| Consumes    | RFC 4180 CSV parsing, trimmed records, structural validation |
+
+## Questions
+
+- None.
+
+## Null and Column Rules
+
+After trimming, a value is null when it is empty or equals `NA`, `N/A`, or `NULL`, ignoring case. Named columns are resolved against the validated, trimmed header. An absent named column is rejected with exit code 3 and no standard output.
+
+## Programmatic Acceptance
+
+=== AC cli-columns-existing ===
+Intent: A named existing column is accepted for profiling.
+from pathlib import Path
+import subprocess
+
+asset = Path("sources/employees.csv")
+result = subprocess.run(
+    ["./csvstat-ac", "--column", "salary", str(asset)],
+    capture_output=True,
+    text=True,
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0
+assert result.stdout != ""
+=== END AC cli-columns-existing ===
+
+=== AC cli-columns-missing-profile ===
+Intent: A missing profile column is rejected without standard output.
+from pathlib import Path
+import subprocess
+
+asset = Path("sources/orders.csv")
+result = subprocess.run(
+    ["./csvstat-ac", "--column", "nosuch", str(asset)],
+    capture_output=True,
+    text=True,
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 3
+assert result.stdout == ""
+=== END AC cli-columns-missing-profile ===
+
+=== AC cli-columns-missing-frequency ===
+Intent: A missing frequency column is rejected without standard output.
+from pathlib import Path
+import subprocess
+
+asset = Path("sources/orders.csv")
+result = subprocess.run(
+    ["./csvstat-ac", "--freq", "nosuch", str(asset)],
+    capture_output=True,
+    text=True,
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 3
+assert result.stdout == ""
+=== END AC cli-columns-missing-frequency ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Null recognition occurs only after trimming.
+- Column lookup uses header names from the examined file.
+- No statistics or value lists are hardcoded.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-PROFILE-TYPES.md ===
+# FEATURE: Profile Types
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261023 V1 |
+| Description | Infers integer, number, date, boolean, text, and empty column types. |
+| Depends On  | FEATURE-CLI-COLUMNS.md |
+| Provides    | integer, number, date, boolean, text, and empty inference |
+| Consumes    | column lookup, null normalization |
+
+## Questions
+
+- None.
+
+## Type Inference
+
+For non-null values, classify using this precedence:
+
+1. `integer`: `-?[0-9]+`
+2. `number`: `-?[0-9]+(\.[0-9]+)?`
+3. `date`: a real `YYYY-MM-DD` calendar date
+4. `boolean`: `true` or `false`, ignoring case
+5. `text`: any remaining value
+
+A column with no non-null values is `empty`.
+
+## Programmatic Acceptance
+
+=== AC profile-types-fixtures ===
+Intent: The supplied profile fixtures are accepted and produce profile rows.
+from pathlib import Path
+import subprocess
+
+for name in ("employees.csv", "sensors.csv", "orders.csv", "header_only.csv"):
+    result = subprocess.run(
+        ["./csvstat-ac", str(Path("sources") / name)],
+        capture_output=True,
+        text=True,
+    )
+    print(result.stdout)
+    print(result.stderr)
+    assert result.returncode == 0
+    assert result.stdout != ""
+=== END AC profile-types-fixtures ===
+
+=== AC profile-types-all-null ===
+Intent: An all-null column remains a valid profile input.
+from pathlib import Path
+import subprocess
+
+result = subprocess.run(
+    ["./csvstat-ac", "--column", "battery", "sources/sensors.csv"],
+    capture_output=True,
+    text=True,
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0
+assert result.stdout != ""
+=== END AC profile-types-all-null ===
+
+=== AC profile-types-invalid-date-text ===
+Intent: A column containing an invalid calendar date remains valid input rather than causing command failure.
+import subprocess
+
+result = subprocess.run(
+    ["./csvstat-ac", "--column", "shipped", "sources/orders.csv"],
+    capture_output=True,
+    text=True,
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0
+assert result.stdout != ""
+=== END AC profile-types-invalid-date-text ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Type inference ignores null values.
+- Date validation rejects impossible calendar dates.
+- Inference follows the specified precedence.
+- No fixture-specific type or value is hardcoded.
+=== END ARTIFACT ===

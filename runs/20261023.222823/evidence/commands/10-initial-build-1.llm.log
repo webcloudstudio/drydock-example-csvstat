@@ -1,0 +1,19 @@
+--- llm 1/4 · build · codex gpt-5.6-luna · 20261023.223246.637Z-942037e8 ---
+  Completed CODEX/gpt-5.6-luna (build)  rc=0
+    elapsed=46.6s   cached=182,144 (92% hit)   uncached=16,614   out=4,443   tps=95.4
+  tokens: cached=182,144 (92% hit) · uncached=16,614 · out=4,443
+
+--- llm 2/4 · build · codex gpt-5.6-luna · 20261023.223346.352Z-49d1e67f ---
+  Completed CODEX/gpt-5.6-luna (build)  rc=0
+    elapsed=31.4s   cached=113,280 (89% hit)   uncached=13,628   out=3,570   tps=113.5
+  tokens: cached=113,280 (89% hit) · uncached=13,628 · out=3,570
+
+--- llm 3/4 · build · codex gpt-5.6-luna · 20261023.223528.933Z-cb51eaa7 ---
+  Completed CODEX/gpt-5.6-luna (build)  rc=0
+    elapsed=1m 9.8s   cached=403,200 (92% hit)   uncached=34,591   out=9,342   tps=133.8
+  tokens: cached=403,200 (92% hit) · uncached=34,591 · out=9,342
+
+--- llm 4/4 · build · codex gpt-5.6-luna · 20261023.223704.536Z-43b6712a ---
+  Completed CODEX/gpt-5.6-luna (build)  rc=0
+    elapsed=23.8s   cached=177,536 (85% hit)   uncached=30,578   out=1,572   tps=66.0
+  tokens: cached=177,536 (85% hit) · uncached=30,578 · out=1,572

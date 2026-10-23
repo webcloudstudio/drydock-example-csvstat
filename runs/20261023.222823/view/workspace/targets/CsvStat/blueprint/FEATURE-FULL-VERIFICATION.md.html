@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-FULL-VERIFICATION.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-FULL-VERIFICATION.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-FULL-VERIFICATION.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Full Verification</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261023 V1</td></tr><tr><td>Description</td><td>Execute the complete supplied CsvStat conformance suite.</td></tr><tr><td>Depends On</td><td>ARCHITECTURE.md, FEATURE-CLI-FOUNDATION.md, FEATURE-CLI-INPUT.md, FEATURE-CLI-COLUMNS.md, FEATURE-PROFILE-TYPES.md, FEATURE-PROFILE-STATISTICS.md, FEATURE-PROFILE-OUTPUT.md, FEATURE-FREQUENCY-VALUES.md, FEATURE-FREQUENCY-LIMITS.md, FEATURE-CLI-ERRORS.md, FEATURE-TEST-GATE.md</td></tr><tr><td>Provides</td><td>full CsvStat conformance verification</td></tr><tr><td>Consumes</td><td>bin/test.sh, ./cmd/csvstat, complete CsvStat implementation</td></tr></tbody></table></div>
+<h2>Verification Scope</h2>
+<p>The supplied <code>sources/run.sh</code> is the authoritative release conformance suite. It builds <code>./cmd/csvstat</code>, exercises all supplied CSV fixtures and command forms, and returns zero only when every check passes. Run it from the completed application root without filtering, modification, or reinterpretation.</p>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC full-conformance ===<br>Intent: The supplied conformance suite passes for the completed CsvStat implementation.<br>Suite: full</p>
+<p>import os import subprocess</p>
+<p>result = subprocess.run( [&quot;sh&quot;, &quot;sources/run.sh&quot;], capture_output=True, text=True, env={**os.environ}, ) print(result.stdout) print(result.stderr) assert result.returncode == 0 === END AC full-conformance ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Execute the supplied suite exactly as staged.</li><li>Do not modify, regenerate, filter, or reinterpret any supplied source or fixture.</li><li>Treat the suite exit status as the release verification result.</li></ul></article>
+</main>
+</body>
+</html>

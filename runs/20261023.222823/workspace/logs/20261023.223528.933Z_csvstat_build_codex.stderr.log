@@ -1,0 +1,1 @@
+2026-10-23T22:35:57.838994Z ERROR codex_core::tools::router: error=apply_patch verification failed: invalid patch: multiple operations target /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/build/CsvStat/internal/csvstat/csvstat.go

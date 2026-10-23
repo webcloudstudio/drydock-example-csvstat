@@ -1,0 +1,31 @@
+Drydock 0.2.0  Copyright (c) 2026 Web Cloud Studio. All rights reserved.
+Drydock status
+
+  Target          /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat
+  Name            drydock CsvStat Uat Case
+  Description     Drydock uat - CsvStat builds a Go CSV column profiler. The source is an original brief: infer each
+                  column's type (integer, number, date, boolean, text, empty), report rows, nulls, distinct, min, max,…
+  Phase           Loop
+  State           12 closed/implemented
+  Metadata        built · complete
+  Sources         7 imported · 12 authored blueprint files
+  Analysis        Ready · 11 stories · 0 questions · 0 blockers
+  Blueprint       ⚠  0 errors · 3 warnings
+    ⚠  Acceptance snippets: FEATURE-PROFILE-STATISTICS.md [profile-statistics-decimal]: expects "f'{total:.2f}'", a
+       value re-typed rather than derived from the input or read back from the system. This criterion is reported
+       but does not gate its story; bind the value to a name and use that name on both sides to make it binding
+    ⚠  Acceptance snippets: FEATURE-PROFILE-STATISTICS.md [profile-statistics-decimal]: expects "f'{mean:.2f}'", a value
+       re-typed rather than derived from the input or read back from the system. This criterion is reported but
+       does not gate its story; bind the value to a name and use that name on both sides to make it binding
+    ⚠  Acceptance snippets: FEATURE-PROFILE-STATISTICS.md [profile-statistics-decimal]: expects "f'{median:.2f}'", a
+       value re-typed rather than derived from the input or read back from the system. This criterion is reported
+       but does not gate its story; bind the value to a name and use that name on both sides to make it binding
+  Plan            12 closed/implemented
+  Frontier        (none)
+  Workflow        5 steps
+                  Initialize         complete at 2026-10-23T22:28:26.087+00:00
+                  Import             complete at 2026-10-23T22:28:31.532+00:00
+                  Analyze            complete at 2026-10-23T22:28:57.559+00:00
+                  Plan               complete at 2026-10-23T22:32:07.863+00:00
+                  Build              complete at 2026-10-23T22:38:09.415+00:00
+  Next step       drydock refit CsvStat BOTH <Scope> <Change>

@@ -1,0 +1,2 @@
+2026-10-23T22:33:10.611652Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to read file to update /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/build/CsvStat/bin/test.sh: No such file or directory (os error 2)
+2026-10-23T22:33:24.038250Z ERROR codex_core::tools::router: error=exec_command failed: CreateProcess { message: "Rejected(\"`/bin/bash -lc 'rm -f ./csvstat && find bin cmd internal -type f -print | sort && git status --short'` rejected: rm -f style commands are not permitted. Use a safer approach\")" }

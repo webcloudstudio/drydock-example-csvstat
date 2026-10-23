@@ -1,0 +1,12 @@
+<unattached story="architecture"/>
+<unattached story="cli-foundation"/>
+<unattached story="cli-input"/>
+<unattached story="cli-columns"/>
+<unattached story="profile-types"/>
+<unattached story="frequency-values"/>
+<unattached story="frequency-limits"/>
+<unattached story="profile-statistics"/>
+<unattached story="profile-output"/>
+<unattached story="cli-errors"/>
+<unattached story="test-gate"/>
+<unattached story="full-verification"/>

@@ -1,0 +1,22 @@
+<requirement name="build-csvstat-command" stories="cli-foundation">
+Builds ./cmd/csvstat with `go build` and compares every command's exit code and standard output
+</requirement>
+<requirement name="profile-every-column" stories="cli-input,cli-columns,profile-types,profile-statistics,profile-output">
+# ── A. Every column of each data file ──────────────────────────────────────────────────
+</requirement>
+<requirement name="profile-selected-column" stories="cli-columns,profile-types,profile-statistics,profile-output">
+# ── B. One column ────────────────────────────────────────────────────────────────────────
+</requirement>
+<requirement name="calculate-frequencies" stories="cli-input,cli-columns,frequency-values,frequency-limits">
+# ── C. Frequencies ───────────────────────────────────────────────────────────────────────
+</requirement>
+<requirement name="reject-invalid-input" stories="cli-input,cli-errors">
+# ── E. Rejected input and operational failures ───────────────────────────────────────────
+</requirement>
+<requirement name="reject-usage-errors" stories="frequency-limits,cli-errors">
+# ── U. Usage errors ──────────────────────────────────────────────────────────────────────
+</requirement>
+<unattached story="architecture"/>
+<unattached story="profile-output"/>
+<unattached story="test-gate"/>
+<unattached story="full-verification"/>

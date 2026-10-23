@@ -1,0 +1,144 @@
+# Blueprint Analysis: CsvStat
+
+## Commander Expectations
+
+- assert the CSV profiler builds as a standard-library Go CLI and passes every supplied conformance check.
+
+## Crew
+
+| Crew | Charge |
+|---|---|
+| Commander | Defines intent and decides what done means. |
+| Team Lead | Confirms epic completeness and stakeholder expectations. |
+| Planning Crew | Authors atomic specifications and the ordered Manifest. |
+| Shipyard Crew | Builds the tickets without synchronous Commander access. |
+
+## Story List
+
+### Feature: CLI Foundation and Input Handling
+
+| ID | Story | High-level AC |
+|---|---|---|
+| CLI-001 | Build the csvstat command entry point | A Go module builds `./cmd/csvstat` as an executable using only the standard library, with command help text available for the supported invocation forms. |
+| CLI-002 | Read and validate CSV input | The command reads RFC 4180 CSV, trims headers and values, accepts quoted fields, and rejects empty files, invalid headers, and ragged records. |
+| CLI-003 | Resolve columns and null values | The command recognizes the specified null spellings and rejects absent named columns without writing standard output. |
+
+### Feature: Column Profiling
+
+| ID | Story | High-level AC |
+|---|---|---|
+| PROFILE-001 | Infer column types | Each column is classified as integer, number, date, boolean, text, or empty according to the stated precedence and validation rules. |
+| PROFILE-002 | Calculate column statistics | Profile output reports rows, nulls, distinct values, min, max, numeric sum, mean, and median with the required formatting and ordering. |
+| PROFILE-003 | Render profile CSV output | Full-file and single-column profile commands emit the exact CSV header and row structure, including RFC-compliant quoting and empty fields. |
+
+### Feature: Frequency Reporting
+
+| ID | Story | High-level AC |
+|---|---|---|
+| FREQ-001 | List frequent column values | `--freq` excludes nulls and orders values by descending count then bytewise ascending value. |
+| FREQ-002 | Apply frequency limits | `--top` accepts positive integers, defaults to five, and limits the frequency rows while preserving ordering. |
+
+### Feature: Command Errors and Verification
+
+| ID | Story | High-level AC |
+|---|---|---|
+| CLI-004 | Map operational and usage failures | File, argument, and rejected-input failures return exit codes 1, 2, and 3 respectively and write nothing to standard output. |
+| TEST-001 | Provide the project test gate | `bin/test.sh` runs `go vet ./...` and `go test ./...`, succeeding only when both pass. |
+| VERIFY-001 | Pass the complete supplied conformance suite | The complete supplied `sources/run.sh` suite passes without filtering; acceptance declares `Suite: full`. |
+
+## Story Guidance
+
+Named stories planning must produce. Authoritative record: `STORY_GUIDANCE.json`.
+
+None.
+
+## Surfaced Acceptance Criteria
+
+| ID | Story ID | Criterion |
+|---|---|---|
+| AC-001 | CLI-001 | The command shall provide help text covering the supported profile and frequency invocation forms. |
+| AC-002 | CLI-002 | The parser shall preserve quoted commas and apply trimming before null, type, and statistic evaluation. |
+| AC-003 | CLI-004 | A failing command shall write one diagnostic line to standard error naming the file and, for rejected records, the line number. |
+
+## Source Inventory
+
+| Path | Content kind | Disposition | Reason |
+|---|---|---|---|
+| `sources/INSTRUCTIONS.md` | markdown | analyzed | readable UTF-8 |
+| `sources/employees.csv` | text | analyzed | readable UTF-8 |
+| `sources/header_only.csv` | text | analyzed | readable UTF-8 |
+| `sources/orders.csv` | text | analyzed | readable UTF-8 |
+| `sources/ragged.csv` | text | analyzed | readable UTF-8 |
+| `sources/run.sh` | code | analyzed | readable UTF-8 |
+| `sources/sensors.csv` | text | analyzed | readable UTF-8 |
+
+## Relationship Model
+
+| Source or group | Relationship type | Related source or group | Evidence | Delivery implication |
+|---|---|---|---|---|
+| `sources/INSTRUCTIONS.md` | instruction-to-test | `sources/run.sh` | The instructions define the CLI, rules, outputs, and exit codes that the harness checks. | Implement the normative behavior before running conformance verification. |
+| `sources/run.sh` | test-kit-to-implementation | `./cmd/csvstat` | The harness builds the command and invokes all profile, frequency, rejection, operational, and usage cases. | Stage the harness and fixtures; terminal verification runs the full suite. |
+| `sources/*.csv` | fixture-to-verification | `sources/run.sh` | The harness reads the supplied employee, sensor, order, header-only, and ragged fixtures. | Preserve fixtures unchanged and make parser behavior data-driven. |
+| CSV parser | parser-to-normalizer | type and statistics engine | Values must be trimmed before null, type, comparison, and aggregation rules. | Establish normalization as the shared boundary for all downstream stories. |
+| CLI argument parser | dependency | profile and frequency commands | Options select distinct execution modes and invalid combinations have defined exit codes. | Complete argument validation before command dispatch. |
+
+## Source Roles
+
+| Path | Role | Plan disposition | Build disposition |
+|---|---|---|---|
+| `sources/INSTRUCTIONS.md` | normative specification | context | prompt-only |
+| `sources/run.sh` | conformance test suite | context | stage |
+| `sources/employees.csv` | asset | context | stage |
+| `sources/sensors.csv` | asset | context | stage |
+| `sources/orders.csv` | asset | context | stage |
+| `sources/header_only.csv` | asset | context | stage |
+| `sources/ragged.csv` | asset | context | stage |
+
+## Planning Instructions
+
+### Delivery Shape
+
+A Go command-line pipeline accepts one CSV file and optional column, frequency, and top arguments. It parses and normalizes records, validates structure, infers column types, computes profiles or frequencies, writes CSV to standard output, and maps failures to defined exit codes.
+
+### Story Realization Map
+
+| Story ID | Blueprint scope | Evidence | Related files | Delivery kind |
+|---|---|---|---|---|
+| CLI-001 | Go module and command entry point | `sources/INSTRUCTIONS.md` command and stack sections | `cmd/csvstat`, `go.mod` | capability |
+| CLI-002 | CSV parser and structural validation | `sources/INSTRUCTIONS.md` reading section | `sources/*.csv` | capability |
+| CLI-003 | normalization, nulls, and column lookup | `sources/INSTRUCTIONS.md` null and command sections | `sources/employees.csv`, `sources/orders.csv` | capability |
+| PROFILE-001 | type inference and date validation | `sources/INSTRUCTIONS.md` types section | `sources/employees.csv`, `sources/sensors.csv`, `sources/orders.csv` | capability |
+| PROFILE-002 | statistics and decimal formatting | `sources/INSTRUCTIONS.md` profile and decimals sections | all profile fixtures | capability |
+| PROFILE-003 | profile CSV rendering | `sources/INSTRUCTIONS.md` output section | `sources/run.sh` | capability |
+| FREQ-001 | frequency aggregation and ordering | `sources/INSTRUCTIONS.md` frequency section | `sources/run.sh` | capability |
+| FREQ-002 | top argument behavior | `sources/INSTRUCTIONS.md` command section | `sources/run.sh` | capability |
+| CLI-004 | diagnostics and exit-code mapping | `sources/INSTRUCTIONS.md` exit section | `sources/run.sh` | capability |
+| TEST-001 | local vet/test launcher | `sources/INSTRUCTIONS.md` tests section | `bin/test.sh` | test harness |
+| VERIFY-001 | complete supplied conformance execution | `sources/run.sh` | `sources/run.sh`, staged CSV fixtures | acceptance contract |
+
+### Test and Acceptance Strategy
+
+Implementation stories use focused unit and command tests for parsing, normalization, inference, statistics, rendering, frequency ordering, and exit codes. `TEST-001` provides the local vet and test gate. `VERIFY-001` is the sole terminal story that runs the complete unfiltered supplied harness and declares `Suite: full`; all other validation remains scoped to the story capability.
+
+### Sequencing and Dependencies
+
+Create the Go module and command entry point first. Implement CSV parsing and normalization before inference and aggregation. Implement profile and frequency renderers after their calculations. Add error mapping around all command paths. Run focused tests and `bin/test.sh` before the final full `sources/run.sh` verification. The supplied harness and all fixtures must be staged before terminal verification.
+
+### Source Conflicts and Gaps
+
+No unresolved source conflicts or blockers. The CLI help wording is not specified, so the command story carries the derived requirement to expose help for the documented invocation forms.
+
+## Analysis Notes
+generated: 2026-10-23
+blueprint: /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat/blueprint
+
+Quality: Ready
+  blockers: 0
+  questions: 0
+  features: 4
+  stories: 11
+  stack: Go 1.22+, standard library, POSIX shell
+  display_name: not proposed
+  short_description: not proposed
+
+Project type: cli. No blockers or open Commander questions remain.

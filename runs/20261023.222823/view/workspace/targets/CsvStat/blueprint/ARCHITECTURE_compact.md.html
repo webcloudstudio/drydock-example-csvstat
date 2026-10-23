@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/ARCHITECTURE_compact.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/ARCHITECTURE_compact.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/ARCHITECTURE_compact.md">Raw file</a></div></header>
+<article class="doc"><p>&lt;!-- Compacted from ARCHITECTURE.md sha256=0523e9a1384a42626d0062f018639c66c4784890cecd223013d13f942f05e05a on 2026-10-23 by drydock build agent --&gt;</p>
+<ul><li>Go CLI architecture: <code>cmd/csvstat</code> handles process startup and <code>os.Exit</code>; <code>internal/cli</code> handles flags, dispatch, diagnostics, and exit codes; <code>internal/csvstat</code> owns CSV loading, normalization, profiling, frequencies, and rendering; <code>bin/test.sh</code> runs verification.</li><li>Standard library only; Go 1.22+.</li><li>Success writes CSV to stdout; diagnostics use stderr.</li><li>Exit codes: 1 operational failure, 2 usage failure, 3 rejected input.</li></ul></article>
+</main>
+</body>
+</html>

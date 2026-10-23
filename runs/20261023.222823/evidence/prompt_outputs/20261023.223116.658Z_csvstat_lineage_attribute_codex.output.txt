@@ -1,0 +1,13 @@
+<requirement name="csv-header" stories="cli-input,cli-columns">
+sku,price,in_stock
+</requirement>
+<unattached story="architecture"/>
+<unattached story="cli-foundation"/>
+<unattached story="profile-types"/>
+<unattached story="frequency-values"/>
+<unattached story="frequency-limits"/>
+<unattached story="profile-statistics"/>
+<unattached story="profile-output"/>
+<unattached story="cli-errors"/>
+<unattached story="test-gate"/>
+<unattached story="full-verification"/>

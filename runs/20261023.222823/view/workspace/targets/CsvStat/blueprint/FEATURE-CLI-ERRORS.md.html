@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-CLI-ERRORS.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-CLI-ERRORS.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-CLI-ERRORS.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: CLI Errors</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261023 V1</td></tr><tr><td>Description</td><td>Map operational, usage, and rejected-input failures to the command contract.</td></tr><tr><td>Depends On</td><td>FEATURE-CLI-COLUMNS.md, FEATURE-PROFILE-OUTPUT.md, FEATURE-FREQUENCY-LIMITS.md</td></tr><tr><td>Provides</td><td>exit-code and diagnostic contract</td></tr><tr><td>Consumes</td><td>CSV validation, column lookup, profile output, frequency output</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>The command reports failures through exit status and diagnostics. It must never write profile or frequency CSV to standard output after a failure.</p>
+<h2>Error Contract</h2>
+<ul><li>Exit 1 for a file that cannot be opened or read.</li><li>Exit 2 for missing or extra files, unknown options, missing option values, invalid <code>--top</code>, <code>--top</code> without <code>--freq</code>, or incompatible options.</li><li>Exit 3 for empty input, invalid or repeated headers, ragged records, or absent named columns.</li><li>Write one diagnostic line to standard error for failures.</li><li>Diagnostics identify the input file and identify the rejected record line when a record is structurally invalid.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC operational-error ===<br>Intent: An unreadable input file returns the operational failure status and no CSV output. import pathlib import subprocess</p>
+<p>missing = &quot;sources/does-not-exist.csv&quot; result = subprocess.run([&quot;./csvstat&quot;, missing], capture_output=True, text=True) assert result.returncode == 1 assert result.stdout == &quot;&quot; assert pathlib.Path(missing).name in result.stderr === END AC operational-error ===</p>
+<p>=== AC usage-errors ===<br>Intent: Malformed command arguments return usage status and no CSV output. import subprocess</p>
+<p>cases = [ [&quot;./csvstat&quot;], [&quot;./csvstat&quot;, &quot;sources/orders.csv&quot;, &quot;sources/employees.csv&quot;], [&quot;./csvstat&quot;, &quot;--unknown&quot;, &quot;sources/orders.csv&quot;], [&quot;./csvstat&quot;, &quot;--column&quot;], ] for command in cases: result = subprocess.run(command, capture_output=True, text=True) assert result.returncode == 2 assert result.stdout == &quot;&quot; === END AC usage-errors ===</p>
+<p>=== AC rejected-input ===<br>Intent: Structurally invalid input and absent columns return rejected-input status and no CSV output. import subprocess</p>
+<p>cases = [ [&quot;./csvstat&quot;, &quot;sources/ragged.csv&quot;], [&quot;./csvstat&quot;, &quot;--column&quot;, &quot;missing&quot;, &quot;sources/orders.csv&quot;], [&quot;./csvstat&quot;, &quot;--freq&quot;, &quot;missing&quot;, &quot;sources/orders.csv&quot;], ] for command in cases: result = subprocess.run(command, capture_output=True, text=True) assert result.returncode == 3 assert result.stdout == &quot;&quot; assert result.stderr.strip() === END AC rejected-input ===</p>
+<p>=== AC successful-output-isolated ===<br>Intent: A valid command remains successful and emits CSV on standard output. import subprocess</p>
+<p>result = subprocess.run( [&quot;./csvstat&quot;, &quot;--column&quot;, &quot;qty&quot;, &quot;sources/orders.csv&quot;], capture_output=True, text=True, ) assert result.returncode == 0 assert result.stdout != &quot;&quot; === END AC successful-output-isolated ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Never emit partial CSV output before input validation and command execution succeed.</li><li>Keep diagnostics on standard error.</li><li>Preserve the distinct exit statuses for operational, usage, and rejected-input failures.</li></ul></article>
+</main>
+</body>
+</html>

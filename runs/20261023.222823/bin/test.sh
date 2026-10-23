@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+
+gofmt -l . | grep -q '^$'
+go vet ./...
+go test ./...

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/LINEAGE.json</title>
+<link rel="stylesheet" href="../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/LINEAGE.json</h1><div class="filenav"><a href="../../../../index.html">&larr; Report</a><a href="../../../../workspace/targets/CsvStat/LINEAGE.json">Raw file</a></div></header>
+<article class="doc"><pre>{
+  &quot;version&quot;: 1,
+  &quot;import&quot;: {
+    &quot;root&quot;: &quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/sources&quot;,
+    &quot;format&quot;: &quot;markdown&quot;
+  },
+  &quot;sources&quot;: {
+    &quot;INSTRUCTIONS.md&quot;: {
+      &quot;state&quot;: &quot;current&quot;,
+      &quot;versions&quot;: [
+        {
+          &quot;commit&quot;: &quot;d94d00c&quot;,
+          &quot;date&quot;: &quot;2026-10-23&quot;,
+          &quot;hash&quot;: &quot;a4a0357965923ada8afb3528e85c937802a26eb02db8685900dbe0e9566c7a57&quot;,
+          &quot;release&quot;: &quot;&quot;,
+          &quot;state&quot;: &quot;consumed&quot;,
+          &quot;via&quot;: &quot;plan&quot;,
+          &quot;ticket&quot;: null,
+          &quot;requirements&quot;: [
+            {
+              &quot;name&quot;: &quot;build-go-cli&quot;,
+              &quot;text&quot;: &quot;Implement in Go 1.22 or newer using only the standard library. The application root is a Go module, and its executable is the main package at `./cmd/csvstat`. Tests run under `go test`.&quot;,
+              &quot;stories&quot;: [
+                &quot;cli-foundation&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;run-conformance-harness&quot;,
+              &quot;text&quot;: &quot;The harness runs `go build -o &lt;temporary path&gt; ./cmd/csvstat` and then runs 22 checks.&quot;,
+              &quot;stories&quot;: [
+                &quot;full-verification&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;read-validate-csv&quot;,
+              &quot;text&quot;: &quot;The file is **rejected** when it is empty, when a header name is empty or repeated, or when any record has a different number of fields from the header.&quot;,
+              &quot;stories&quot;: [
+                &quot;cli-input&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;resolve-columns-null-values&quot;,
+              &quot;text&quot;: &quot;Every header name and every value is trimmed of leading and trailing spaces before any other rule applies.&quot;,
+              &quot;stories&quot;: [
+                &quot;cli-columns&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;infer-column-types&quot;,
+              &quot;text&quot;: &quot;A column&#x27;s type is the first of these that every non-null value satisfies:&quot;,
+              &quot;stories&quot;: [
+                &quot;profile-types&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;compute-profile-statistics&quot;,
+              &quot;text&quot;: &quot;Header `column,type,rows,nulls,distinct,min,max,sum,mean,median`, then one row per column in file order (or the one named by `--column`).&quot;,
+              &quot;stories&quot;: [
+                &quot;profile-statistics&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;render-profile-csv&quot;,
+              &quot;text&quot;: &quot;CSV on standard output with `\\n` line endings.&quot;,
+              &quot;stories&quot;: [
+                &quot;profile-output&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;list-frequent-values&quot;,
+              &quot;text&quot;: &quot;Header `value,count`, then one row per distinct non-null value of the column, ordered by count descending, then value ascending by byte value, at most `--top` rows.&quot;,
+              &quot;stories&quot;: [
+                &quot;frequency-values&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;limit-frequency-rows&quot;,
+              &quot;text&quot;: &quot;`--top &lt;n&gt;` | With `--freq`, list at most `&lt;n&gt;` values. A positive integer; default `5`.&quot;,
+              &quot;stories&quot;: [
+                &quot;frequency-limits&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;map-command-failures&quot;,
+              &quot;text&quot;: &quot;A failing command writes nothing to standard output and one diagnostic line to standard error naming the file and, for a rejected record, its line number.&quot;,
+              &quot;stories&quot;: [
+                &quot;cli-errors&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;provide-test-gate&quot;,
+              &quot;text&quot;: &quot;The completed application provides a POSIX-compatible `bin/test.sh` that runs `go vet ./...` and `go test ./...` from the application root and exits zero only when both pass.&quot;,
+              &quot;stories&quot;: [
+                &quot;test-gate&quot;
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    &quot;employees.csv&quot;: {
+      &quot;state&quot;: &quot;current&quot;,
+      &quot;versions&quot;: [
+        {
+          &quot;commit&quot;: &quot;d94d00c&quot;,
+          &quot;date&quot;: &quot;2026-10-23&quot;,
+          &quot;hash&quot;: &quot;057f30060e45647dbb5773a0f2cef7fa541bbd462f5a65746083d7a169222ee0&quot;,
+          &quot;release&quot;: &quot;&quot;,
+          &quot;state&quot;: &quot;consumed&quot;,
+          &quot;via&quot;: &quot;plan&quot;,
+          &quot;ticket&quot;: null,
+          &quot;requirements&quot;: []
+        }
+      ]
+    },
+    &quot;header_only.csv&quot;: {
+      &quot;state&quot;: &quot;current&quot;,
+      &quot;versions&quot;: [
+        {
+          &quot;commit&quot;: &quot;d94d00c&quot;,
+          &quot;date&quot;: &quot;2026-10-23&quot;,
+          &quot;hash&quot;: &quot;428b2fe8db619499f227e2ce2a56cebcf5149c161e680c5a65d792d74211f449&quot;,
+          &quot;release&quot;: &quot;&quot;,
+          &quot;state&quot;: &quot;consumed&quot;,
+          &quot;via&quot;: &quot;plan&quot;,
+          &quot;ticket&quot;: null,
+          &quot;requirements&quot;: [
+            {
+              &quot;name&quot;: &quot;csv-header&quot;,
+              &quot;text&quot;: &quot;sku,price,in_stock&quot;,
+              &quot;stories&quot;: [
+                &quot;cli-input&quot;,
+                &quot;cli-columns&quot;
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    &quot;orders.csv&quot;: {
+      &quot;state&quot;: &quot;current&quot;,
+      &quot;versions&quot;: [
+        {
+          &quot;commit&quot;: &quot;d94d00c&quot;,
+          &quot;date&quot;: &quot;2026-10-23&quot;,
+          &quot;hash&quot;: &quot;93026827c46e9b0eab4a7e4e4eefc7518265dc56712f044061006b85adeb6ae8&quot;,
+          &quot;release&quot;: &quot;&quot;,
+          &quot;state&quot;: &quot;consumed&quot;,
+          &quot;via&quot;: &quot;plan&quot;,
+          &quot;ticket&quot;: null,
+          &quot;requirements&quot;: [
+            {
+              &quot;name&quot;: &quot;read-normalize-validate-csv&quot;,
+              &quot;text&quot;: &quot;order_id,order_date,customer,qty,unit_price,coupon,ref,shipped\n5000,2025-02-01,Acme Corp ,1,116.70,,A7,2025-03-18\n5017,2025-02-05,Umbrella,9,62.85,WELCOME,-3,2025-02-30&quot;,
+              &quot;stories&quot;: [
+                &quot;cli-input&quot;,
+                &quot;cli-errors&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;resolve-columns-and-null-values&quot;,
+              &quot;text&quot;: &quot;order_id,order_date,customer,qty,unit_price,coupon,ref,shipped&quot;,
+              &quot;stories&quot;: [
+                &quot;cli-columns&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;infer-column-types&quot;,
+              &quot;text&quot;: &quot;order_id,order_date,customer,qty,unit_price,coupon,ref,shipped&quot;,
+              &quot;stories&quot;: [
+                &quot;profile-types&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;aggregate-frequent-values&quot;,
+              &quot;text&quot;: &quot;Acme Corp\nGlobex\nInitech\nUmbrella\nHooli&quot;,
+              &quot;stories&quot;: [
+                &quot;frequency-values&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;compute-profile-statistics&quot;,
+              &quot;text&quot;: &quot;5000,2025-02-01,Acme Corp ,1,116.70,,A7,2025-03-18&quot;,
+              &quot;stories&quot;: [
+                &quot;profile-statistics&quot;
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    &quot;ragged.csv&quot;: {
+      &quot;state&quot;: &quot;current&quot;,
+      &quot;versions&quot;: [
+        {
+          &quot;commit&quot;: &quot;d94d00c&quot;,
+          &quot;date&quot;: &quot;2026-10-23&quot;,
+          &quot;hash&quot;: &quot;fd838208607b5e74d69d29662bd4961928d69fdd80a5e2752ece90f78b333465&quot;,
+          &quot;release&quot;: &quot;&quot;,
+          &quot;state&quot;: &quot;consumed&quot;,
+          &quot;via&quot;: &quot;plan&quot;,
+          &quot;ticket&quot;: null,
+          &quot;requirements&quot;: [
+            {
+              &quot;name&quot;: &quot;reject-ragged-row&quot;,
+              &quot;text&quot;: &quot;A3,1.25,true,extra&quot;,
+              &quot;stories&quot;: [
+                &quot;cli-input&quot;,
+                &quot;cli-errors&quot;
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    &quot;run.sh&quot;: {
+      &quot;state&quot;: &quot;current&quot;,
+      &quot;versions&quot;: [
+        {
+          &quot;commit&quot;: &quot;d94d00c&quot;,
+          &quot;date&quot;: &quot;2026-10-23&quot;,
+          &quot;hash&quot;: &quot;8f598aabc017377364ec4a99f5c34bb81e06d68c9ef7b191513c6e9d3999bcbb&quot;,
+          &quot;release&quot;: &quot;&quot;,
+          &quot;state&quot;: &quot;consumed&quot;,
+          &quot;via&quot;: &quot;plan&quot;,
+          &quot;ticket&quot;: null,
+          &quot;requirements&quot;: [
+            {
+              &quot;name&quot;: &quot;build-csvstat-command&quot;,
+              &quot;text&quot;: &quot;Builds ./cmd/csvstat with `go build` and compares every command&#x27;s exit code and standard output&quot;,
+              &quot;stories&quot;: [
+                &quot;cli-foundation&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;profile-every-column&quot;,
+              &quot;text&quot;: &quot;# \u2500\u2500 A. Every column of each data file \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500&quot;,
+              &quot;stories&quot;: [
+                &quot;cli-input&quot;,
+                &quot;cli-columns&quot;,
+                &quot;profile-types&quot;,
+                &quot;profile-statistics&quot;,
+                &quot;profile-output&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;profile-selected-column&quot;,
+              &quot;text&quot;: &quot;# \u2500\u2500 B. One column \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500&quot;,
+              &quot;stories&quot;: [
+                &quot;cli-columns&quot;,
+                &quot;profile-types&quot;,
+                &quot;profile-statistics&quot;,
+                &quot;profile-output&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;calculate-frequencies&quot;,
+              &quot;text&quot;: &quot;# \u2500\u2500 C. Frequencies \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500&quot;,
+              &quot;stories&quot;: [
+                &quot;cli-input&quot;,
+                &quot;cli-columns&quot;,
+                &quot;frequency-values&quot;,
+                &quot;frequency-limits&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;reject-invalid-input&quot;,
+              &quot;text&quot;: &quot;# \u2500\u2500 E. Rejected input and operational failures \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500&quot;,
+              &quot;stories&quot;: [
+                &quot;cli-input&quot;,
+                &quot;cli-errors&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;reject-usage-errors&quot;,
+              &quot;text&quot;: &quot;# \u2500\u2500 U. Usage errors \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500&quot;,
+              &quot;stories&quot;: [
+                &quot;frequency-limits&quot;,
+                &quot;cli-errors&quot;
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    &quot;sensors.csv&quot;: {
+      &quot;state&quot;: &quot;current&quot;,
+      &quot;versions&quot;: [
+        {
+          &quot;commit&quot;: &quot;d94d00c&quot;,
+          &quot;date&quot;: &quot;2026-10-23&quot;,
+          &quot;hash&quot;: &quot;159d38499f5e2df7e2bfe5245c20e7f76c9d5f091aa497567b47bf707bde3c20&quot;,
+          &quot;release&quot;: &quot;&quot;,
+          &quot;state&quot;: &quot;consumed&quot;,
+          &quot;via&quot;: &quot;plan&quot;,
+          &quot;ticket&quot;: null,
+          &quot;requirements&quot;: []
+        }
+      ]
+    }
+  }
+}
+</pre></article>
+</main>
+</body>
+</html>

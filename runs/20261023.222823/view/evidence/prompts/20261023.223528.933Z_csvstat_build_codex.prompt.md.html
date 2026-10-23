@@ -1,0 +1,1592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/prompts/20261023.223528.933Z_csvstat_build_codex.prompt.md</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/prompts/20261023.223528.933Z_csvstat_build_codex.prompt.md</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/prompts/20261023.223528.933Z_csvstat_build_codex.prompt.md">Raw file</a></div></header>
+<article class="doc"><h1>System Instructions</h1>
+<p>This prompt is divided into three sections:</p>
+<ol><li><strong>System Instructions</strong> (this section) — structural orientation only. Do not treat this</li></ol>
+<p>section as task input.</p>
+<ol><li><strong>Input Context</strong> — begins with the heading <code># Input Context</code>. All blocks are wrapped in</li></ol>
+<p><code>&lt;pblock&gt;</code> tags. Two block types:</p>
+<ul><li>File blocks: <code>&lt;pblock filename=&quot;&lt;name&gt;&quot; role=&quot;&lt;role&gt;&quot; guidance=&quot;...&quot;&gt;</code> — optional</li></ul>
+<p><code>guidance</code> attribute carries context-specific instructions; content is in a fenced block.</p>
+<ul><li>Metadata/section blocks: <code>&lt;pblock label=&quot;&lt;label&gt;&quot; kind=&quot;&lt;kind&gt;&quot;&gt;</code> — job parameters,</li></ul>
+<p>rules, instructions, or group headers.</p>
+<ol><li><strong>Agent Task</strong> — begins with the heading <code># Agent Task</code>. Defines your persona, constraints,</li></ol>
+<p>and required outputs. Read all input context before acting on this section.</p>
+<h1>Input Context</h1>
+<p>&lt;pblock label=&quot;Build block job&quot; kind=&quot;job&quot;&gt;</p>
+<h2>Build block job</h2>
+<ul><li>TARGET: CsvStat</li><li>BUILD_DIRECTORY: /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/build/CsvStat</li><li>WORKING_DIRECTORY: /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/build/CsvStat</li><li>BUILD_BLOCK: Block 3 · Service (block-3)</li><li>STORIES: Read, normalize, and structurally validate CSV input. (cli-input), Resolve named columns and classify null values. (cli-columns), Infer each column type using the specified precedence. (profile-types), Aggregate and order frequent non-null column values. (frequency-values), Validate and apply frequency row limits. (frequency-limits), Compute exact profile statistics and decimal formatting. (profile-statistics), Render profile results as CSV. (profile-output), Map operational, usage, and rejected-input failures. (cli-errors), Provide the Go vet and test project gate. (test-gate), Run the complete supplied CsvStat conformance suite. (full-verification)</li><li>DATE: 2026-10-23</li><li>BUILD_SCOPE: exactly one MANIFEST.md build block</li></ul>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock label=&quot;Stories in this block&quot; kind=&quot;section&quot;&gt;</p>
+<h2>Stories in this block</h2>
+<ul><li>Read, normalize, and structurally validate CSV input. (cli-input) [story]</li><li>Resolve named columns and classify null values. (cli-columns) [story]</li><li>Infer each column type using the specified precedence. (profile-types) [story]</li><li>Aggregate and order frequent non-null column values. (frequency-values) [story]</li><li>Validate and apply frequency row limits. (frequency-limits) [story]</li><li>Compute exact profile statistics and decimal formatting. (profile-statistics) [story]</li><li>Render profile results as CSV. (profile-output) [story]</li><li>Map operational, usage, and rejected-input failures. (cli-errors) [story]</li><li>Provide the Go vet and test project gate. (test-gate) [story]</li><li>Run the complete supplied CsvStat conformance suite. (full-verification) [story]</li></ul>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock label=&quot;Files on disk&quot; kind=&quot;section&quot;&gt;</p>
+<h2>Files on disk in the build directory</h2>
+<ul><li>sources/employees.csv</li><li>sources/header_only.csv</li><li>sources/orders.csv</li><li>sources/ragged.csv</li><li>sources/run.sh</li><li>sources/sensors.csv</li></ul>
+<p>These are the only imported files present on disk. Every other file named in this prompt is supplied as prompt context and is not on disk; read it here and do not report it as a missing input.</p>
+<p>&lt;/pblock&gt;</p>
+<h2>COMPASS - Target Orientation</h2>
+<p>&lt;pblock filename=&quot;COMPASS.md&quot; role=&quot;compass&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat/COMPASS.md&quot; guidance=&quot;Important: This is the core project intent, constraints, and guardrails. It should have presecedence in conflicts.&quot;&gt;</p>
+<pre><code># COMPASS: CsvStat
+
+## Compass
+
+Build a command-line CSV column profiler, the Go executable `./cmd/csvstat`, as described in
+`sources/INSTRUCTIONS.md`. It infers each column&#x27;s type, reports counts, extremes, and for numeric
+columns sum, mean, and median, and lists a column&#x27;s most frequent values.
+
+Correctness is measured by `sources/run.sh`: it builds the executable with `go build` and makes
+22 checks of exit code and standard output against five supplied CSV files. The goal is every
+check passing.
+
+## Constraints
+
+- Implement in Go 1.22 or newer with the standard library only. No third-party modules.
+- The application root is a Go module; the executable&#x27;s main package is `./cmd/csvstat`.
+- Compute sums, means, and medians exactly (for example with `math/big`) and round once, half away
+  from zero, when writing.
+- Diagnostics go to standard error and are never compared.
+
+## Guardrails
+
+- Do not modify, rewrite, regenerate, or substitute any file under `sources/`.
+- Do not read `sources/run.sh` or any supplied data file from application code, and do not
+  hardcode a statistic, a type, or a value list. Every value comes from the file examined.
+
+## Verification Protocol
+
+| Story kind | Command | Asserts |
+|---|---|---|
+| Every behavioral story | `sh bin/test.sh` | exit `0` |
+| Terminal story (once, last) | `sh sources/run.sh` | exit `0` |
+
+&lt;!-- drydock:build-write-guardrail:start --&gt;
+## Build Write Guardrail
+
+- Authorized build directory: `/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/build/CsvStat`
+- Authorized Target directory: `/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat`
+- Build agents have permission to create, modify, and remove files required by the active build block inside these authorized directories.
+- No path outside these authorized directories may be modified.
+- Protected Drydock artifacts:
+  - `/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat/blueprint/`
+  - `/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat/MANIFEST.md`
+  - `/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat/COMPASS.md`
+  - `/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat/QuarterDeck/`
+  - `/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat/evidence/`
+&lt;!-- drydock:build-write-guardrail:end --&gt;</code></pre>
+<p>&lt;/pblock&gt;</p>
+<h2>STACK - Technology HOW</h2>
+<p>&lt;pblock filename=&quot;go_compact.md&quot; role=&quot;stack&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/Rigging/languages/go/go_compact.md&quot;&gt;</p>
+<pre><code>&lt;!-- Compacted from Rigging/languages/go/go.md sha256=aa96c7155b26f091e4f2ee9b7a47ff2202fc7c162254f2b8676779198c7147da on 2026-10-18 by Rigging maintenance --&gt;
+
+## Foundation Contract
+
+The published shape of this foundation. It is built before every other foundation: a web server,
+a database, or a CLI is built *into* this tree, this environment, and this test runner. Carried
+verbatim into `go_compact.md`.
+
+- source_root: internal/
+- test_command: go test ./...
+- environment: the module declared in `go.mod`; no vendored toolchain
+- dependencies: `go.mod`
+
+```
+project/
+  go.mod                  # module path; the Go toolchain version
+  cmd/                    # one directory per binary, each package main
+  internal/               # application packages; not importable outside this module
+  bin/                    # launchers; each runs the toolchain, never a vendored copy
+```
+
+Application foundations add packages under `internal/`. The generated persistence library is a
+separate module at `persistence/`, linked by the root `go.mod`.
+
+### Native application layouts and fixtures
+
+Initialize the root `go.mod` in the language foundation before the DATABASE block.
+Use `cmd/app/main.go` for process startup, `internal/cli` for CLI behavior, and
+`internal/appserver` for HTTP behavior. The root application module requires
+`drydock.local/persistence v0.0.0` with `replace drydock.local/persistence =&gt; ./persistence`;
+the generated persistence directory owns its nested module. Run both module test suites.
+
+For a CLI, expose `Run(args []string, stdout, stderr io.Writer) int`, use a local
+`flag.FlagSet` with `flag.ContinueOnError`, and test with `bytes.Buffer`. Only main calls
+`os.Exit`. For HTTP, expose `NewHandler(...) http.Handler` using `net/http.ServeMux`.
+Use `httptest.NewRecorder` and `httptest.NewRequest` for handler tests, or
+`httptest.NewServer` with `t.Cleanup(server.Close)` when testing a real HTTP client.
+Keep business logic in application packages and persistence access in the shipped library.
+
+### How do we execute and measure Acceptance Criteria in this language?
+
+An Acceptance Criterion (AC) is an executable check of Blueprint-required behavior. Native tests
+use `testing` in `*_test.go`; the project gate is `go test ./...`. Within the existing Blueprint
+Python AC container, execute a named test through the shipped helper:
+
+```python
+from drydock_go import run_test
+result = run_test(&quot;./internal/orders&quot;, &quot;TestCreateOrder&quot;)
+assert result.passed, (result.status, result.stdout, result.stderr)
+```
+
+Drydock stages this helper beside the criterion. It runs `go test -json -count=1 -run` with an
+exact test name, retains output and per-test outcomes, and rejects absent/skipped tests as proof.
+The enclosing AC provides identity, timeout, result storage and repair state. Compilation errors
+remain distinct from assertion failures in `result.status`. Coverage and persistence observations
+require explicit instrumentation per criterion; unavailable observations are unknown.
+
+A criterion that exercises the command line runs the built executable through the same helper,
+never `go run`, which reports every non-zero program exit as 1:
+
+```python
+from drydock_go import cli_runner
+code, out, err = cli_runner(&quot;--top&quot;, &quot;0&quot;, &quot;data.csv&quot;)
+assert code == 2, (code, out, err)
+```
+
+`cli_runner` builds the single `./cmd/&lt;name&gt;` main package once with `go build` and returns
+`(exit_code, stdout, stderr)`; pass `package=&quot;./cmd/&lt;name&gt;&quot;` when there are several, and `input=`
+for standard input. A failed build settles the criterion as `execution-error`.
+
+### How does this language provide the shared persistence contract?
+
+Use the shipped module in `Rigging/languages/go/persistence/`. Drydock copies it to the Target&#x27;s
+`persistence/`, generates `schema.go`, `testing.go` and a schema command from `DATABASE.md`, and
+links it into the existing root `go.mod` as `drydock.local/persistence`. Driver versions and sums
+are shipped; SQLite uses `go-sqlite3` (a C compiler and CGO are required), PostgreSQL uses `lib/pq`.
+Run `go mod download` during dependency provisioning; execution requires these modules available.
+
+Call `persistence.OpenDatabase(ctx, dsn)`, then typed methods such as
+`db.Tickets.List(ctx, persistence.TicketsListInput{Status: &quot;open&quot;})`. Methods return a value and
+an error. Optional inputs use pointers; read results are generated structs. Undeclared operations
+and unsupported field types fail explicitly. Use `OpenSession(ctx, dsn)` for native database criteria;
+empty DSN selects the configured, provisioned application store. Defer its cleanup and check the
+returned error: it rolls back on success and failure, never applies schema or deletes the store.
+Pass the same Store to the feature. Other connections and external effects require committed,
+idempotent criteria with owned records and supported cleanup. Both engines retain autocommit
+outside explicit rollback scopes.
+
+The Go library and generator are verified on SQLite and PostgreSQL. Keep application SQL inside
+the library; agents write callers. The language foundation must create `go.mod` before the
+DATABASE step. Python Blueprint AC containers invoke the native Go tests through `run_test`.
+
+---
+
+## Consumer Rules
+
+- Use `gofmt`, explicit errors, small consumer-owned interfaces and owned goroutine lifetimes.
+- Keep business logic in `internal/` and entry points in `cmd/`; commit `go.mod` and `go.sum`.
+- Gate with `go vet ./...`, `go build ./...` and `go test -race ./...`.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;common.md&quot; role=&quot;stack&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/Rigging/stack/common.md&quot;&gt;</p>
+<pre><code># Common Best Practices
+
+**Type:** guidance
+**Version:** 20260320 V1  
+**Category:** Technologies
+**Description:** Common development patterns shared across all stack configurations
+
+Always included regardless of technology stack. Covers project structure conventions, shell scripts, metadata files, git hygiene, and development workflow. This file does not change between projects.
+
+---
+
+## 1. Project Directory Layout
+
+**Rule**: Every project follows a predictable directory structure.
+
+```
+project-name/
+├── bin/                # Operation scripts (see Shell Scripts section)
+├── data/               # Runtime data (DB, logs, backups) — gitignored
+│   ├── logs/           # Script and process output logs
+│   └── backups/        # Database and file backups
+├── docs/               # Project documentation
+├── tests/              # Test suite
+├── PROJECT/            # Build specification (optional, for specification-driven projects)
+├── .env                # Environment config — gitignored
+├── .env.example        # Template with placeholder values — committed
+├── .gitignore
+├── CLAUDE.md           # AI agent instructions
+└── Links.md            # External links
+```
+
+Additional directories depend on the stack (e.g., `templates/`, `static/`, `migrations/`).
+
+**Why**: Consistent layout lets any developer or AI agent locate files instantly.
+
+---
+
+## 2. Shell Scripts (bin/ Directory)
+
+**Rule**: All user-facing operations live in `bin/` as bash scripts with standardized headers, logging, and error handling.
+
+### Script Template
+
+```bash
+#!/bin/bash
+# CommandCenter Operation
+# Name: Human Readable Name
+# Type: daemon|batch
+# Port: 8000
+
+# --- Standard Preamble ---
+set -euo pipefail
+SCRIPT_DIR=&quot;$(cd &quot;$(dirname &quot;${BASH_SOURCE[0]}&quot;)&quot; &amp;&amp; pwd)&quot;
+PROJECT_DIR=&quot;$(cd &quot;$SCRIPT_DIR/..&quot; &amp;&amp; pwd)&quot;
+LOG_DIR=&quot;$PROJECT_DIR/data/logs&quot;
+mkdir -p &quot;$LOG_DIR&quot;
+
+TIMESTAMP=$(date &#x27;+%Y-%m-%d_%H%M%S&#x27;)
+SCRIPT_NAME=$(basename &quot;$0&quot; .sh)
+LOG_FILE=&quot;$LOG_DIR/${SCRIPT_NAME}_${TIMESTAMP}.log&quot;
+
+echo &quot;=== $SCRIPT_NAME started at $(date &#x27;+%Y-%m-%d %H:%M:%S&#x27;) ===&quot; | tee &quot;$LOG_FILE&quot;
+echo &quot;Arguments: $*&quot; | tee -a &quot;$LOG_FILE&quot;
+echo &quot;Working dir: $PROJECT_DIR&quot; | tee -a &quot;$LOG_FILE&quot;
+echo &quot;---&quot; | tee -a &quot;$LOG_FILE&quot;
+
+cd &quot;$PROJECT_DIR&quot;
+
+# --- Your Commands Here ---
+# All output goes to both console and log file via tee
+your_command 2&gt;&amp;1 | tee -a &quot;$LOG_FILE&quot;
+
+echo &quot;=== $SCRIPT_NAME finished at $(date &#x27;+%Y-%m-%d %H:%M:%S&#x27;) ===&quot; | tee -a &quot;$LOG_FILE&quot;
+```
+
+### Header Fields
+
+The first comment block is parsed by Command Center&#x27;s scanner for auto-discovery:
+
+| Field | Required | Values | Description |
+|-------|----------|--------|-------------|
+| `# CommandCenter Operation` | Yes | literal | Marks script as discoverable |
+| `# Name:` | Yes | free text | Display name in UI |
+| `# Type:` | No | `daemon` or `batch` | Default: `batch`. Daemons stay running. |
+| `# Port:` | No | integer | Port number for daemon services |
+
+Scripts without the `# CommandCenter Operation` header are still valid scripts but won&#x27;t appear in Command Center&#x27;s UI.
+
+### Standard Scripts
+
+Every project should have these scripts (where applicable):
+
+| Script | Type | Purpose |
+|--------|------|---------|
+| `bin/start.sh` | daemon | Start the dev server |
+| `bin/stop.sh` | batch | Stop the dev server |
+| `bin/test.sh` | batch | Run test suite |
+| `bin/build.sh` | batch | Build/compile the project |
+| `bin/deploy.sh` | batch | Deploy to production |
+| `bin/backup.sh` | batch | Backup data/database |
+
+### Logging Pattern
+
+- All stdout and stderr captured via `tee` to `data/logs/`
+- Log filename includes script name and timestamp: `start_2026-03-07_143022.log`
+- First lines of log always record: timestamp, arguments, working directory
+- These logs are viewable from Command Center&#x27;s Process Monitor
+
+**Why**: Standardized scripts make every project operable the same way. Log capture enables monitoring, alerting, and post-mortem analysis.
+
+---
+
+## 3. External Links (Links.md)
+
+**Rule**: Every project maintains a `Links.md` file at its root with a markdown table of relevant URLs.
+
+```markdown
+| Label | URL |
+|-------|-----|
+| Local Dev | http://localhost:5001 |
+| Production | https://example.com |
+| Docs | https://docs.example.com |
+| GitHub | https://github.com/user/repo |
+```
+
+Rules:
+- One table, two columns: Label and URL
+- Labels are short and descriptive
+- Command Center&#x27;s scanner reads this on startup and stores links in the project&#x27;s `extra` JSON
+- Links appear in the project&#x27;s configuration page
+
+**Why**: Centralizes all project URLs in one discoverable, parseable location. Both AI agents and Command Center consume it.
+
+---
+
+## 4. CLAUDE.md Convention
+
+**Rule**: Every project has a `CLAUDE.md` at its root following this section structure:
+
+1. `## Project Overview` — What the project does, key features
+2. `## Architecture` — Tech stack, key files, patterns
+3. `## Dev Commands` — Bash commands to run the project (in a code block)
+4. `## Service Endpoints` — URLs: `- Label: https://url`
+5. `## Bookmarks` — Grouped links: `### Group` then `- [Title](URL)`
+
+Section rename rules — always use the standard name:
+- `## Commands` / `## Development Commands` / `## Build Commands` → `## Dev Commands`
+- `## Overview` / `## Project Purpose` → `## Project Overview`
+- `## Stack` → `## Architecture`
+
+**Why**: Consistent structure lets AI agents parse project context reliably.
+
+---
+
+## 5. Git Hygiene
+
+**Rule**: Maintain a comprehensive `.gitignore`. Never commit secrets, generated files, or runtime data.
+
+```gitignore
+# Runtime
+data/
+*.db
+*.log
+
+# Environment
+.env
+venv/
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+```
+
+Rules:
+- `data/` — runtime databases, logs, backups, uploads
+- `.env` — secrets and local config
+- Commit `.env.example` with placeholder values
+- Write imperative commit messages: &quot;Add health endpoint&quot; not &quot;Added health endpoint&quot;
+
+**Why**: Clean repos are cloneable and runnable. No secrets in history.
+
+---
+
+## 6. Development Workflow
+
+**Rule**: Follow these rules when working in any git-managed project.
+
+1. **Always commit changes immediately** after completing a task if the task has no errors
+2. **Commit messages** should have descriptive text (no AI/tool mentions)
+3. **DO NOT push** — only commit to local git
+4. **NO co-authored-by lines** in commits
+5. **Always end code change responses with a restart notice** for any project that runs a web server:
+   - If only templates/CSS/static files changed: &quot;No restart needed — browser refresh is enough.&quot;
+   - If any Python/JS server files changed: &quot;Restart required — run the start script or equivalent.&quot;
+
+**Why**: Consistent workflow prevents accidental pushes, keeps commit history clean, and ensures developers know when to restart.
+
+---
+
+## Summary Checklist
+
+- [ ] Standard directory layout with `bin/`, `data/`, `docs/`, `tests/`
+- [ ] Shell scripts in `bin/` with CommandCenter headers and tee logging
+- [ ] `Links.md` for external URLs
+- [ ] `CLAUDE.md` following section convention
+- [ ] `.env.example` committed, `.env` gitignored
+- [ ] Comprehensive `.gitignore`
+- [ ] Commit immediately, don&#x27;t push, no AI mentions</code></pre>
+<p>&lt;/pblock&gt;</p>
+<h2>CONTEXT - Read-Only Support</h2>
+<p>&lt;pblock filename=&quot;employees.csv&quot; role=&quot;context&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat/blueprint/employees.csv&quot;&gt;</p>
+<pre><code>id,name,department,hire_date,salary,remote,manager_id,notes
+1001,Ada,Support,2022-05-14,80024.66,False,,
+1002,Grace,Sales,2018-11-08,43699.25,TRUE,NA,mentor
+1003,Alan,Finance,2024-05-01,78968.70,TRUE,NA,&quot;relocating to Austin, TX&quot;
+1004,Edsger,Engineering,2022-08-20,147150.99,TRUE,,mentor
+1005,Barbara,Sales,2021-02-12,124928.57,False,NA,
+1006,Donald,Sales,2024-01-10,56026.60,true,5,
+1007,Ken,Support,2017-05-10,95084.43,False,NA,
+1008,Dennis,Support,2015-08-27,124465.37,true,,
+1009,Margaret,Engineering,2022-10-03,125757.29,true,4,mentor
+1010,Linus,Support,2020-01-18,49214.01,False,2,
+1011,Radia,Engineering,2018-06-04,57624.26,true,NA,&quot;remote, part-time&quot;
+1012,Frances,Engineering,2016-12-22,50090.17,False,,&quot;remote, part-time&quot;
+1013,John,Sales,2018-03-19,43868.97,false,2,&quot;relocating to Austin, TX&quot;
+1014,Niklaus,Engineering,2025-03-09,107151.27,False,,
+1015,Leslie,Support,2022-05-02,51916.52,true,NA,&quot;remote, part-time&quot;
+1016,Tony,Sales,2023-07-04,78226.09,true,,&quot;remote, part-time&quot;
+1017,Barbara,Sales,2016-08-14,65687.87,False,4,
+1018,Guido,Support,2021-09-08,108360.98,false,,
+1019,Bjarne,Finance,2021-04-22,113570.10,true,3,&quot;remote, part-time&quot;
+1020,Anita,Sales,2016-02-25,93165.09,False,NA,on leave
+1021,Sophie,Support,2018-10-15,126295.79,false,2,&quot;relocating to Austin, TX&quot;
+1022,Lynn,Engineering,2025-06-02,119572.82,true,4,
+1023,Jean,Engineering,2023-06-18,70767.32,true,4,mentor
+1024,Hedy,Sales,2021-02-08,74017.98,False,NA,&quot;remote, part-time&quot;</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;sensors.csv&quot; role=&quot;context&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat/blueprint/sensors.csv&quot;&gt;</p>
+<pre><code>reading_id,recorded_at,sensor,temp_c,humidity,ok,battery
+1,2025-03-01T08:00,north,N/A,18,false, 
+2,2025-03-01T09:00,south,N/A,,false,
+3,2025-03-01T10:00,east,-0.44,46,false,
+4,2025-03-01T11:00,west,29.33,78,false,NULL
+5,2025-03-01T12:00,north,25.24,31,true,
+6,2025-03-01T13:00,south,18.12,30,true,NULL
+7,2025-03-01T14:00,east,-2.88,62,false,
+8,2025-03-01T15:00,west,2.41,77,true,NULL
+9,2025-03-01T16:00,north,-0.01,44,true,null
+10,2025-03-01T17:00,south,-3.07,70,true, 
+11,2025-03-01T18:00,east,3.35,74,false,
+12,2025-03-01T19:00,west,15.66,28,false, 
+13,2025-03-02T08:00,north,-8.02,45,false,
+14,2025-03-02T09:00,south,29.81,,true, 
+15,2025-03-02T10:00,east,6.81,39,true, 
+16,2025-03-02T11:00,west,-9.02,,true,
+17,2025-03-02T12:00,north,1.23,92,false,
+18,2025-03-02T13:00,south,-8.30,,true,null
+19,2025-03-02T14:00,east,-5.96,86,false,NULL
+20,2025-03-02T15:00,west,22.66,90,true,NULL
+21,2025-03-02T16:00,north,-9.02,51,false,null
+22,2025-03-02T17:00,south,-6.40,66,false,
+23,2025-03-02T18:00,east,-2.33,60,false, 
+24,2025-03-02T19:00,west,11.22,,false,
+25,2025-03-03T08:00,north,3.70,71,true,null
+26,2025-03-03T09:00,south,20.98,31,true,null
+27,2025-03-03T10:00,east,1.40,71,false,NULL
+28,2025-03-03T11:00,west,0.38,,true,null
+29,2025-03-03T12:00,north,N/A,88,false,NULL
+30,2025-03-03T13:00,south,-3.76,81,false,
+31,2025-03-03T14:00,east,-12.21,50,true,null
+32,2025-03-03T15:00,west,21.86,79,true,NULL
+33,2025-03-03T16:00,north,12.46,46,true, 
+34,2025-03-03T17:00,south,16.42,,true,NULL
+35,2025-03-03T18:00,east,21.30,51,false,null
+36,2025-03-03T19:00,west,14.14,43,true,</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;orders.csv&quot; role=&quot;context&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat/blueprint/orders.csv&quot;&gt;</p>
+<pre><code>order_id,order_date,customer,qty,unit_price,coupon,ref,shipped
+5000,2025-02-01,Acme Corp ,1,116.70,,A7,2025-03-18
+5001,2025-02-14,Acme Corp ,7,195.17,,-3,2025-03-05
+5002,2025-02-23,  Globex  ,9,82.61,,12.5,2025-03-02
+5003,2025-02-06,Initech,4,120.30,SAVE10,12,2025-03-16
+5004,2025-02-05,  Globex  ,6,155.63,SAVE10,7,2025-03-24
+5005,2025-02-11,  Globex  ,5,137.64,,A7,2025-03-01
+5006,2025-02-27,  Globex  ,11,212.83,SAVE10,12.5,2025-03-01
+5007,2025-02-07,Acme Corp ,10,218.65,,12,2025-03-19
+5008,2025-02-04,Acme Corp ,4,203.55,,A7,2025-03-09
+5009,2025-02-01,Umbrella,1,107.26,,7,2025-03-23
+5010,2025-02-11,  Globex  ,4,15.27,WELCOME,7,2025-03-05
+5011,2025-02-23,Initech,6,116.93,,12.5,2025-03-03
+5012,2025-02-16,Acme Corp,5,209.08,,7,2025-03-13
+5013,2025-02-17,  Globex  ,12,95.82,WELCOME,12,2025-03-27
+5014,2025-02-12,Umbrella,1,73.61,,12,2025-03-22
+5015,2025-02-11,Initech,6,142.57,WELCOME,7,2025-03-08
+5016,2025-02-20,Acme Corp,4,203.02,WELCOME,12,2025-03-19
+5017,2025-02-05,Umbrella,9,62.85,WELCOME,-3,2025-02-30
+5018,2025-02-05,  Globex  ,10,54.32,,-3,2025-03-15
+5019,2025-02-17,  Globex  ,4,48.40,SAVE10,-3,2025-03-10
+5020,2025-02-02,Acme Corp,4,229.87,,-3,2025-03-26
+5021,2025-02-10,  Globex  ,11,224.50,,-3,2025-03-04
+5022,2025-02-01,Acme Corp,11,221.74,,12.5,2025-03-05
+5023,2025-02-02,Umbrella,7,120.51,,12.5,2025-03-18
+5024,2025-02-06,  Globex  ,6,231.18,,-3,2025-03-13
+5025,2025-02-25,Hooli,10,139.05,WELCOME,12.5,2025-03-18
+5026,2025-02-10,Umbrella,12,52.25,,12,2025-03-14
+5027,2025-02-13,Umbrella,6,48.62,SAVE10,12.5,2025-03-14
+5028,2025-02-19,Umbrella,10,213.06,,12.5,2025-03-14
+5029,2025-02-18,Acme Corp,10,124.98,WELCOME,A7,2025-03-04</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;header_only.csv&quot; role=&quot;context&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat/blueprint/header_only.csv&quot;&gt;</p>
+<pre><code>sku,price,in_stock</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;ragged.csv&quot; role=&quot;context&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat/blueprint/ragged.csv&quot;&gt;</p>
+<pre><code>sku,price,in_stock
+A1,9.99,true
+A2,4.50,false
+A3,1.25,true,extra
+A4,3.00,false</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;ARCHITECTURE_compact.md&quot; role=&quot;context&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat/blueprint/ARCHITECTURE_compact.md&quot;&gt;</p>
+<pre><code>&lt;!-- Compacted from ARCHITECTURE.md sha256=0523e9a1384a42626d0062f018639c66c4784890cecd223013d13f942f05e05a on 2026-10-23 by drydock build agent --&gt;
+
+- Go CLI architecture: `cmd/csvstat` handles process startup and `os.Exit`; `internal/cli` handles flags, dispatch, diagnostics, and exit codes; `internal/csvstat` owns CSV loading, normalization, profiling, frequencies, and rendering; `bin/test.sh` runs verification.
+- Standard library only; Go 1.22+.
+- Success writes CSV to stdout; diagnostics use stderr.
+- Exit codes: 1 operational failure, 2 usage failure, 3 rejected input.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;run.sh&quot; role=&quot;context&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat/blueprint/run.sh&quot;&gt;</p>
+<pre><code>#!/bin/sh
+# run.sh — CsvStat grader. Do not filter, skip, or reinterpret.
+#
+# Builds ./cmd/csvstat with `go build` and compares every command&#x27;s exit code and standard output
+# over the supplied data files with the known answer below. Standard error is never compared.
+#
+#   sh sources/run.sh                    from the application root (how `drydock uat` runs it)
+#   sh uat/CsvStat/bin/run.sh APP        from anywhere, grading the application root APP
+#
+# Exit 0 only when the build succeeds and every check passes.
+set -u
+
+HERE=$(cd &quot;$(dirname &quot;$0&quot;)&quot; &amp;&amp; pwd)
+APP=$(cd &quot;${1:-.}&quot; &amp;&amp; pwd)
+if [ -f &quot;$HERE/employees.csv&quot; ]; then DATA=$HERE; else DATA=$(cd &quot;$HERE/../sources&quot; &amp;&amp; pwd); fi
+WORK=$(mktemp -d)
+trap &#x27;rm -rf &quot;$WORK&quot;&#x27; EXIT INT TERM
+BIN=&quot;$WORK/csvstat&quot;
+MISSING=&quot;$WORK/no-such-file.csv&quot;
+
+if ! (cd &quot;$APP&quot; &amp;&amp; go build -o &quot;$BIN&quot; ./cmd/csvstat); then
+    echo &quot;error: go build ./cmd/csvstat failed at the application root $APP.&quot; &gt;&amp;2
+    echo &quot;The deliverable is a Go module whose main package is ./cmd/csvstat.&quot; &gt;&amp;2
+    exit 1
+fi
+
+PASSED=0
+FAILED=0
+
+# check &lt;id&gt; &lt;expected exit&gt; &lt;csvstat args...&gt;  — expected standard output on stdin.
+check() {
+    id=$1
+    want_rc=$2
+    shift 2
+    cat &gt; &quot;$WORK/want&quot;
+    (cd &quot;$APP&quot; &amp;&amp; &quot;$BIN&quot; &quot;$@&quot;) &gt; &quot;$WORK/got&quot; 2&gt; &quot;$WORK/err&quot;
+    rc=$?
+    if [ &quot;$rc&quot; -eq &quot;$want_rc&quot; ] &amp;&amp; cmp -s &quot;$WORK/want&quot; &quot;$WORK/got&quot;; then
+        PASSED=$((PASSED + 1))
+        echo &quot;PASS $id: csvstat $*&quot;
+    else
+        FAILED=$((FAILED + 1))
+        echo &quot;FAIL $id: csvstat $*&quot;
+        echo &quot;  exit: expected $want_rc, got $rc&quot;
+        diff &quot;$WORK/want&quot; &quot;$WORK/got&quot; | sed &#x27;s/^/  /&#x27;
+        sed &#x27;s/^/  stderr: /&#x27; &quot;$WORK/err&quot;
+    fi
+}
+
+# ── A. Every column of each data file ──────────────────────────────────────────────────
+check A1 0 &quot;$DATA/employees.csv&quot; &lt;&lt;&#x27;EOF&#x27;
+column,type,rows,nulls,distinct,min,max,sum,mean,median
+id,integer,24,0,24,1001,1024,24300,1012.50,1012.50
+name,text,24,0,23,Ada,Tony,,,
+department,text,24,0,4,Engineering,Support,,,
+hire_date,date,24,0,24,2015-08-27,2025-06-02,,,
+salary,number,24,0,24,43699.25,147150.99,2085635.10,86901.46,79496.68
+remote,boolean,24,0,4,false,true,,,
+manager_id,integer,24,15,4,2,5,30,3.33,4.00
+notes,text,24,10,4,mentor,&quot;remote, part-time&quot;,,,
+EOF
+check A2 0 &quot;$DATA/sensors.csv&quot; &lt;&lt;&#x27;EOF&#x27;
+column,type,rows,nulls,distinct,min,max,sum,mean,median
+reading_id,integer,36,0,36,1,36,666,18.50,18.50
+recorded_at,text,36,0,36,2025-03-01T08:00,2025-03-03T19:00,,,
+sensor,text,36,0,4,east,west,,,
+temp_c,number,36,3,32,-12.21,29.81,207.06,6.27,2.41
+humidity,integer,36,7,25,18,92,1698,58.55,60.00
+ok,boolean,36,0,2,false,true,,,
+battery,empty,36,36,0,,,,,
+EOF
+check A3 0 &quot;$DATA/orders.csv&quot; &lt;&lt;&#x27;EOF&#x27;
+column,type,rows,nulls,distinct,min,max,sum,mean,median
+order_id,integer,30,0,30,5000,5029,150435,5014.50,5014.50
+order_date,date,30,0,19,2025-02-01,2025-02-27,,,
+customer,text,30,0,5,Acme Corp,Umbrella,,,
+qty,integer,30,0,9,1,12,206,6.87,6.00
+unit_price,number,30,0,30,15.27,231.18,4177.97,139.27,131.31
+coupon,text,30,18,2,SAVE10,WELCOME,,,
+ref,text,30,0,5,-3,A7,,,
+shipped,text,30,0,20,2025-02-30,2025-03-27,,,
+EOF
+check A4 0 &quot;$DATA/header_only.csv&quot; &lt;&lt;&#x27;EOF&#x27;
+column,type,rows,nulls,distinct,min,max,sum,mean,median
+sku,empty,0,0,0,,,,,
+price,empty,0,0,0,,,,,
+in_stock,empty,0,0,0,,,,,
+EOF
+
+# ── B. One column ────────────────────────────────────────────────────────────────────────
+check B1 0 --column salary &quot;$DATA/employees.csv&quot; &lt;&lt;&#x27;EOF&#x27;
+column,type,rows,nulls,distinct,min,max,sum,mean,median
+salary,number,24,0,24,43699.25,147150.99,2085635.10,86901.46,79496.68
+EOF
+check B2 0 --column notes &quot;$DATA/employees.csv&quot; &lt;&lt;&#x27;EOF&#x27;
+column,type,rows,nulls,distinct,min,max,sum,mean,median
+notes,text,24,10,4,mentor,&quot;remote, part-time&quot;,,,
+EOF
+check B3 0 --column temp_c &quot;$DATA/sensors.csv&quot; &lt;&lt;&#x27;EOF&#x27;
+column,type,rows,nulls,distinct,min,max,sum,mean,median
+temp_c,number,36,3,32,-12.21,29.81,207.06,6.27,2.41
+EOF
+
+# ── C. Frequencies ───────────────────────────────────────────────────────────────────────
+check C1 0 --freq department &quot;$DATA/employees.csv&quot; &lt;&lt;&#x27;EOF&#x27;
+value,count
+Sales,8
+Engineering,7
+Support,7
+Finance,2
+EOF
+check C2 0 --freq sensor --top 2 &quot;$DATA/sensors.csv&quot; &lt;&lt;&#x27;EOF&#x27;
+value,count
+east,9
+north,9
+EOF
+check C3 0 --freq customer &quot;$DATA/orders.csv&quot; &lt;&lt;&#x27;EOF&#x27;
+value,count
+Globex,10
+Acme Corp,9
+Umbrella,7
+Initech,3
+Hooli,1
+EOF
+check C4 0 --freq manager_id --top 3 &quot;$DATA/employees.csv&quot; &lt;&lt;&#x27;EOF&#x27;
+value,count
+4,4
+2,3
+3,1
+EOF
+check C5 0 --freq battery &quot;$DATA/sensors.csv&quot; &lt;&lt;&#x27;EOF&#x27;
+value,count
+EOF
+
+# ── E. Rejected input and operational failures ───────────────────────────────────────────
+check E1 3 &quot;$DATA/ragged.csv&quot; &lt; /dev/null
+check E2 3 --column nosuch &quot;$DATA/orders.csv&quot; &lt; /dev/null
+check E3 3 --freq nosuch &quot;$DATA/orders.csv&quot; &lt; /dev/null
+check E4 1 &quot;$MISSING&quot; &lt; /dev/null
+
+# ── U. Usage errors ──────────────────────────────────────────────────────────────────────
+check U1 2 &lt; /dev/null
+check U2 2 &quot;$DATA/orders.csv&quot; &quot;$DATA/sensors.csv&quot; &lt; /dev/null
+check U3 2 --freq sensor --top 0 &quot;$DATA/sensors.csv&quot; &lt; /dev/null
+check U4 2 --top 3 &quot;$DATA/sensors.csv&quot; &lt; /dev/null
+check U5 2 --column qty --freq qty &quot;$DATA/orders.csv&quot; &lt; /dev/null
+check U6 2 --frobnicate &quot;$DATA/orders.csv&quot; &lt; /dev/null
+
+TOTAL=$((PASSED + FAILED))
+echo &quot;CsvStat: $PASSED passed, $FAILED failed (of $TOTAL)&quot;
+[ &quot;$FAILED&quot; -eq 0 ]</code></pre>
+<p>&lt;/pblock&gt;</p>
+<h2>IMPLEMENTS - Authoritative Step Specifications</h2>
+<p>&lt;pblock label=&quot;Implementation recency anchor&quot; kind=&quot;section&quot;&gt; The files in this section are the load-bearing specifications for this build block. Build these files exactly. Treat earlier sections as constraints and context.</p>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-CLI-INPUT.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat/blueprint/FEATURE-CLI-INPUT.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: CLI Input
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261023 V1 |
+| Description | Reads, normalizes, and structurally validates CSV input. |
+| Depends On  | FEATURE-CLI-FOUNDATION.md |
+| Provides    | RFC 4180 CSV parsing, trimmed records, structural validation |
+| Consumes    | ./cmd/csvstat |
+
+## Input Rules
+
+Read UTF-8 CSV with `encoding/csv`. Trim every header and value before null, type, comparison, and aggregation processing. Preserve quoted commas and reject empty files, empty or repeated headers, and records whose field count differs from the header.
+
+## Diagnostics
+
+Rejected records retain their source line information so a diagnostic can identify the file and rejected record line.
+
+## Programmatic Acceptance
+
+=== AC cli-input-quoted ===
+Intent: A supplied CSV containing quoted commas is accepted.
+from pathlib import Path
+import subprocess
+
+asset = Path(&quot;sources/employees.csv&quot;)
+result = subprocess.run(
+    [&quot;./csvstat-ac&quot;, str(asset)],
+    capture_output=True,
+    text=True,
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0
+assert result.stdout != &quot;&quot;
+=== END AC cli-input-quoted ===
+
+=== AC cli-input-ragged ===
+Intent: A ragged CSV is rejected without standard output.
+from pathlib import Path
+import subprocess
+
+asset = Path(&quot;sources/ragged.csv&quot;)
+result = subprocess.run(
+    [&quot;./csvstat-ac&quot;, str(asset)],
+    capture_output=True,
+    text=True,
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 3
+assert result.stdout == &quot;&quot;
+assert result.stderr != &quot;&quot;
+=== END AC cli-input-ragged ===
+
+=== AC cli-input-header-only ===
+Intent: A header-only CSV is accepted as a valid empty data set.
+from pathlib import Path
+import subprocess
+
+asset = Path(&quot;sources/header_only.csv&quot;)
+result = subprocess.run(
+    [&quot;./csvstat-ac&quot;, str(asset)],
+    capture_output=True,
+    text=True,
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0
+assert result.stdout != &quot;&quot;
+=== END AC cli-input-header-only ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Supplied source assets remain byte-for-byte unchanged.
+- Application code does not read `sources/run.sh`.
+- CSV parsing uses the standard library.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-CLI-COLUMNS.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat/blueprint/FEATURE-CLI-COLUMNS.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: CLI Columns
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261023 V1 |
+| Description | Resolves named columns and normalizes null values for profiling commands. |
+| Depends On  | FEATURE-CLI-INPUT.md |
+| Provides    | column lookup, null normalization |
+| Consumes    | RFC 4180 CSV parsing, trimmed records, structural validation |
+
+## Null and Column Rules
+
+After trimming, a value is null when it is empty or equals `NA`, `N/A`, or `NULL`, ignoring case. Named columns are resolved against the validated, trimmed header. An absent named column is rejected with exit code 3 and no standard output.
+
+## Programmatic Acceptance
+
+=== AC cli-columns-existing ===
+Intent: A named existing column is accepted for profiling.
+from pathlib import Path
+import subprocess
+
+asset = Path(&quot;sources/employees.csv&quot;)
+result = subprocess.run(
+    [&quot;./csvstat-ac&quot;, &quot;--column&quot;, &quot;salary&quot;, str(asset)],
+    capture_output=True,
+    text=True,
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0
+assert result.stdout != &quot;&quot;
+=== END AC cli-columns-existing ===
+
+=== AC cli-columns-missing-profile ===
+Intent: A missing profile column is rejected without standard output.
+from pathlib import Path
+import subprocess
+
+asset = Path(&quot;sources/orders.csv&quot;)
+result = subprocess.run(
+    [&quot;./csvstat-ac&quot;, &quot;--column&quot;, &quot;nosuch&quot;, str(asset)],
+    capture_output=True,
+    text=True,
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 3
+assert result.stdout == &quot;&quot;
+=== END AC cli-columns-missing-profile ===
+
+=== AC cli-columns-missing-frequency ===
+Intent: A missing frequency column is rejected without standard output.
+from pathlib import Path
+import subprocess
+
+asset = Path(&quot;sources/orders.csv&quot;)
+result = subprocess.run(
+    [&quot;./csvstat-ac&quot;, &quot;--freq&quot;, &quot;nosuch&quot;, str(asset)],
+    capture_output=True,
+    text=True,
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 3
+assert result.stdout == &quot;&quot;
+=== END AC cli-columns-missing-frequency ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Null recognition occurs only after trimming.
+- Column lookup uses header names from the examined file.
+- No statistics or value lists are hardcoded.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-PROFILE-TYPES.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat/blueprint/FEATURE-PROFILE-TYPES.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: Profile Types
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261023 V1 |
+| Description | Infers integer, number, date, boolean, text, and empty column types. |
+| Depends On  | FEATURE-CLI-COLUMNS.md |
+| Provides    | integer, number, date, boolean, text, and empty inference |
+| Consumes    | column lookup, null normalization |
+
+## Type Inference
+
+For non-null values, classify using this precedence:
+
+1. `integer`: `-?[0-9]+`
+2. `number`: `-?[0-9]+(\.[0-9]+)?`
+3. `date`: a real `YYYY-MM-DD` calendar date
+4. `boolean`: `true` or `false`, ignoring case
+5. `text`: any remaining value
+
+A column with no non-null values is `empty`.
+
+## Programmatic Acceptance
+
+=== AC profile-types-fixtures ===
+Intent: The supplied profile fixtures are accepted and produce profile rows.
+from pathlib import Path
+import subprocess
+
+for name in (&quot;employees.csv&quot;, &quot;sensors.csv&quot;, &quot;orders.csv&quot;, &quot;header_only.csv&quot;):
+    result = subprocess.run(
+        [&quot;./csvstat-ac&quot;, str(Path(&quot;sources&quot;) / name)],
+        capture_output=True,
+        text=True,
+    )
+    print(result.stdout)
+    print(result.stderr)
+    assert result.returncode == 0
+    assert result.stdout != &quot;&quot;
+=== END AC profile-types-fixtures ===
+
+=== AC profile-types-all-null ===
+Intent: An all-null column remains a valid profile input.
+from pathlib import Path
+import subprocess
+
+result = subprocess.run(
+    [&quot;./csvstat-ac&quot;, &quot;--column&quot;, &quot;battery&quot;, &quot;sources/sensors.csv&quot;],
+    capture_output=True,
+    text=True,
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0
+assert result.stdout != &quot;&quot;
+=== END AC profile-types-all-null ===
+
+=== AC profile-types-invalid-date-text ===
+Intent: A column containing an invalid calendar date remains valid input rather than causing command failure.
+import subprocess
+
+result = subprocess.run(
+    [&quot;./csvstat-ac&quot;, &quot;--column&quot;, &quot;shipped&quot;, &quot;sources/orders.csv&quot;],
+    capture_output=True,
+    text=True,
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0
+assert result.stdout != &quot;&quot;
+=== END AC profile-types-invalid-date-text ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Type inference ignores null values.
+- Date validation rejects impossible calendar dates.
+- Inference follows the specified precedence.
+- No fixture-specific type or value is hardcoded.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-FREQUENCY-VALUES.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat/blueprint/FEATURE-FREQUENCY-VALUES.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: Frequency Values
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261023 V1 |
+| Description | Aggregate and deterministically order non-null column values by frequency. |
+| Depends On  | FEATURE-CLI-COLUMNS.md |
+| Provides    | frequency aggregation and deterministic ordering |
+| Consumes    | column lookup, null normalization |
+
+## Purpose
+
+The frequency capability counts each distinct non-null normalized value in the requested column. It excludes empty values and the case-insensitive null spellings `NA`, `N/A`, and `NULL`.
+
+Rows are ordered by descending count and then by bytewise ascending value.
+
+## Programmatic Acceptance
+
+=== AC frequency-excludes-nulls ===
+Intent: Frequency output omits every recognized null spelling.
+
+import csv
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+source = &quot;value\nalpha\nNA\nn/a\nNULL\n\nbeta\n&quot;
+with tempfile.TemporaryDirectory() as directory:
+    path = Path(directory) / &quot;input.csv&quot;
+    path.write_text(source)
+    code, output, error = cli_runner(&quot;--freq&quot;, &quot;value&quot;, str(path), package=&quot;./cmd/csvstat&quot;)
+    assert code == 0
+    rows = list(csv.reader(output.splitlines()))
+    values = [row[0] for row in rows[1:]]
+    assert values == [&quot;alpha&quot;, &quot;beta&quot;]
+    assert all(value not in {&quot;&quot;, &quot;NA&quot;, &quot;n/a&quot;, &quot;NULL&quot;} for value in values)
+=== END AC frequency-excludes-nulls ===
+
+=== AC frequency-orders-counts ===
+Intent: Frequency rows are ordered by descending count before value ordering.
+
+import csv
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+source = &quot;value\nb\na\nb\nc\na\nb\n&quot;
+expected_counts = {&quot;a&quot;: 2, &quot;b&quot;: 3, &quot;c&quot;: 1}
+with tempfile.TemporaryDirectory() as directory:
+    path = Path(directory) / &quot;input.csv&quot;
+    path.write_text(source)
+    code, output, error = cli_runner(&quot;--freq&quot;, &quot;value&quot;, str(path), package=&quot;./cmd/csvstat&quot;)
+    assert code == 0
+    rows = list(csv.reader(output.splitlines()))[1:]
+    actual = [(row[0], int(row[1])) for row in rows]
+    assert actual == sorted(expected_counts.items(), key=lambda item: (-item[1], item[0]))
+=== END AC frequency-orders-counts ===
+
+=== AC frequency-orders-ties ===
+Intent: Equal-frequency values are ordered by ascending byte value.
+
+import csv
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+source = &quot;value\nz\na\nm\nz\na\nm\n&quot;
+with tempfile.TemporaryDirectory() as directory:
+    path = Path(directory) / &quot;input.csv&quot;
+    path.write_text(source)
+    code, output, error = cli_runner(&quot;--freq&quot;, &quot;value&quot;, str(path), package=&quot;./cmd/csvstat&quot;)
+    assert code == 0
+    rows = list(csv.reader(output.splitlines()))[1:]
+    assert [row[0] for row in rows] == sorted([&quot;a&quot;, &quot;m&quot;, &quot;z&quot;])
+=== END AC frequency-orders-ties ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Null values must never appear in frequency rows.
+- Frequency ordering must be deterministic and independent of input map iteration order.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-FREQUENCY-LIMITS.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat/blueprint/FEATURE-FREQUENCY-LIMITS.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: Frequency Limits
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261023 V1 |
+| Description | Validate frequency limits and render bounded frequency output. |
+| Depends On  | FEATURE-FREQUENCY-VALUES.md |
+| Provides    | --top validation, default frequency limit, frequency CSV output |
+| Consumes    | frequency aggregation and deterministic ordering |
+
+## Purpose
+
+The frequency command accepts `--freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;`. The default limit is five. `--top` must be a positive integer and is valid only with `--freq`. The limit is applied after frequency ordering.
+
+## Behavior
+
+- Emit the CSV header `value,count`.
+- Emit no more than the requested number of frequency rows.
+- Reject zero, negative, or non-integer `--top` values with usage exit status 2.
+- Reject `--top` without `--freq` with usage exit status 2.
+- Preserve RFC-compliant CSV rendering.
+
+## Programmatic Acceptance
+
+=== AC frequency-limit-success ===
+Intent: A valid positive limit executes the frequency command successfully and bounds the parsed result.
+import csv
+import io
+import subprocess
+
+column = &quot;department&quot;
+limit = &quot;2&quot;
+result = subprocess.run(
+    [&quot;./csvstat&quot;, &quot;--freq&quot;, column, &quot;--top&quot;, limit, &quot;sources/employees.csv&quot;],
+    capture_output=True,
+    text=True,
+)
+assert result.returncode == 0
+rows = list(csv.reader(io.StringIO(result.stdout)))
+assert rows[0] == [&quot;value&quot;, &quot;count&quot;]
+assert len(rows) &lt;= int(limit) + 1
+=== END AC frequency-limit-success ===
+
+=== AC frequency-limit-default ===
+Intent: Omitting --top uses the default limit and returns a successful frequency result.
+import csv
+import io
+import subprocess
+
+result = subprocess.run(
+    [&quot;./csvstat&quot;, &quot;--freq&quot;, &quot;department&quot;, &quot;sources/employees.csv&quot;],
+    capture_output=True,
+    text=True,
+)
+assert result.returncode == 0
+rows = list(csv.reader(io.StringIO(result.stdout)))
+assert rows[0] == [&quot;value&quot;, &quot;count&quot;]
+assert len(rows) &lt;= 6
+=== END AC frequency-limit-default ===
+
+=== AC frequency-limit-invalid ===
+Intent: Non-positive and malformed limits are rejected as usage errors.
+import subprocess
+
+cases = [
+    [&quot;--freq&quot;, &quot;department&quot;, &quot;--top&quot;, &quot;0&quot;, &quot;sources/employees.csv&quot;],
+    [&quot;--freq&quot;, &quot;department&quot;, &quot;--top&quot;, &quot;-1&quot;, &quot;sources/employees.csv&quot;],
+    [&quot;--freq&quot;, &quot;department&quot;, &quot;--top&quot;, &quot;x&quot;, &quot;sources/employees.csv&quot;],
+]
+for args in cases:
+    result = subprocess.run([&quot;./csvstat&quot;, *args], capture_output=True, text=True)
+    assert result.returncode == 2
+    assert result.stdout == &quot;&quot;
+=== END AC frequency-limit-invalid ===
+
+=== AC top-requires-frequency ===
+Intent: --top without --freq is rejected as a usage error.
+import subprocess
+
+result = subprocess.run(
+    [&quot;./csvstat&quot;, &quot;--top&quot;, &quot;3&quot;, &quot;sources/employees.csv&quot;],
+    capture_output=True,
+    text=True,
+)
+assert result.returncode == 2
+assert result.stdout == &quot;&quot;
+=== END AC top-requires-frequency ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Do not include null values in frequency output.
+- Do not change the ordering supplied by frequency aggregation when applying the limit.
+- Do not read or embed expected answers from supplied grading assets.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-PROFILE-STATISTICS.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat/blueprint/FEATURE-PROFILE-STATISTICS.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: Profile Statistics
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261023 V1 |
+| Description | Compute exact profile statistics and decimal formatting for normalized columns. |
+| Depends On  | FEATURE-PROFILE-TYPES.md |
+| Provides    | rows, nulls, distinct, extrema, sum, mean, median |
+| Consumes    | inferred column types, normalized records |
+
+## Purpose
+
+This capability calculates profile statistics after input normalization and type inference.
+
+For every column it reports row count, null count, distinct non-null values, type-specific minimum and maximum, and numeric sum, mean, and median. Numeric calculations use exact arithmetic and are rounded once, half away from zero, to two decimal places when rendered.
+
+Integer values remain plain integers. Non-numeric sum, mean, and median fields remain empty. Boolean extrema are false when any false value exists and true only when all non-null values are true. Text extrema use bytewise ordering.
+
+## Programmatic Acceptance
+
+=== AC profile-statistics-integer ===
+Intent: Integer statistics include counts, extrema, exact total, mean, and median.
+
+import csv
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+rows = [
+    [&quot;value&quot;],
+    [&quot;-3&quot;],
+    [&quot;1&quot;],
+    [&quot;4&quot;],
+    [&quot;NA&quot;],
+]
+with tempfile.TemporaryDirectory() as directory:
+    path = Path(directory) / &quot;input.csv&quot;
+    path.write_text(&quot;\n&quot;.join(&quot;,&quot;.join(row) for row in rows) + &quot;\n&quot;)
+    code, output, error = cli_runner(str(path), package=&quot;./cmd/csvstat&quot;)
+    assert code == 0
+    parsed = list(csv.reader(output.splitlines()))
+    header, result = parsed[0], parsed[1]
+    assert result[0] == &quot;value&quot;
+    assert result[1] == &quot;integer&quot;
+    assert int(result[2]) == len(rows) - 1
+    assert int(result[3]) == 1
+    values = [-3, 1, 4]
+    assert int(result[4]) == len(set(values))
+    assert int(result[5]) == min(values)
+    assert int(result[6]) == max(values)
+    assert int(result[7]) == sum(values)
+    assert result[8] == &quot;0.67&quot;
+    assert result[9] == &quot;1.00&quot;
+=== END AC profile-statistics-integer ===
+
+=== AC profile-statistics-decimal ===
+Intent: Decimal statistics preserve exact values and round mean and median to two places.
+
+import csv
+import tempfile
+from decimal import Decimal, ROUND_HALF_UP
+from pathlib import Path
+from drydock_go import cli_runner
+
+values = [Decimal(&quot;-1.01&quot;), Decimal(&quot;-1.00&quot;), Decimal(&quot;2.00&quot;), Decimal(&quot;2.01&quot;)]
+source = &quot;amount\n&quot; + &quot;\n&quot;.join(str(value) for value in values) + &quot;\n&quot;
+with tempfile.TemporaryDirectory() as directory:
+    path = Path(directory) / &quot;input.csv&quot;
+    path.write_text(source)
+    code, output, error = cli_runner(str(path), package=&quot;./cmd/csvstat&quot;)
+    assert code == 0
+    result = list(csv.reader(output.splitlines()))[1]
+    total = sum(values)
+    mean = (total / len(values)).quantize(Decimal(&quot;0.01&quot;), rounding=ROUND_HALF_UP)
+    median = ((values[1] + values[2]) / 2).quantize(Decimal(&quot;0.01&quot;), rounding=ROUND_HALF_UP)
+    assert result[1] == &quot;number&quot;
+    assert result[7] == f&quot;{total:.2f}&quot;
+    assert result[8] == f&quot;{mean:.2f}&quot;
+    assert result[9] == f&quot;{median:.2f}&quot;
+=== END AC profile-statistics-decimal ===
+
+=== AC profile-statistics-nonnumeric ===
+Intent: Non-numeric columns retain counts and extrema while leaving numeric fields empty.
+
+import csv
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+source = &quot;flag\nfalse\ntrue\nfalse\n&quot;
+with tempfile.TemporaryDirectory() as directory:
+    path = Path(directory) / &quot;input.csv&quot;
+    path.write_text(source)
+    code, output, error = cli_runner(str(path), package=&quot;./cmd/csvstat&quot;)
+    assert code == 0
+    result = list(csv.reader(output.splitlines()))[1]
+    assert result[1] == &quot;boolean&quot;
+    assert int(result[2]) == 3
+    assert int(result[3]) == 0
+    assert int(result[4]) == 2
+    assert result[5] == &quot;false&quot;
+    assert result[6] == &quot;true&quot;
+    assert result[7:10] == [&quot;&quot;, &quot;&quot;, &quot;&quot;]
+=== END AC profile-statistics-nonnumeric ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Statistics must be computed from normalized input values, never from hardcoded fixture answers.
+- Decimal calculations must use exact arithmetic and round only during output formatting.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-PROFILE-OUTPUT.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat/blueprint/FEATURE-PROFILE-OUTPUT.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: Profile Output
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261023 V1 |
+| Description | Render profile results as RFC-compliant CSV output. |
+| Depends On  | FEATURE-PROFILE-STATISTICS.md |
+| Provides    | profile CSV output |
+| Consumes    | rows, nulls, distinct, extrema, sum, mean, median |
+
+## Purpose
+
+The profile renderer writes one CSV header followed by one row per selected column in input order. A named column limits output to that column. Empty statistic values remain empty CSV fields, and fields containing commas, quotes, or newlines are encoded with RFC-compliant CSV quoting.
+
+## Programmatic Acceptance
+
+=== AC profile-output-all-columns ===
+Intent: A profile command emits one output row for each input column in file order.
+
+import csv
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+source = &quot;first,second\n1,alpha\n2,beta\n&quot;
+expected_columns = [&quot;first&quot;, &quot;second&quot;]
+with tempfile.TemporaryDirectory() as directory:
+    path = Path(directory) / &quot;input.csv&quot;
+    path.write_text(source)
+    code, output, error = cli_runner(str(path), package=&quot;./cmd/csvstat&quot;)
+    assert code == 0
+    parsed = list(csv.reader(output.splitlines()))
+    assert parsed[0][0] == &quot;column&quot;
+    assert len(parsed) == len(expected_columns) + 1
+    assert [row[0] for row in parsed[1:]] == expected_columns
+=== END AC profile-output-all-columns ===
+
+=== AC profile-output-selected-column ===
+Intent: The column option emits exactly the requested profile row.
+
+import csv
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+source = &quot;first,second\n1,alpha\n2,beta\n&quot;
+selected = &quot;second&quot;
+with tempfile.TemporaryDirectory() as directory:
+    path = Path(directory) / &quot;input.csv&quot;
+    path.write_text(source)
+    code, output, error = cli_runner(&quot;--column&quot;, selected, str(path), package=&quot;./cmd/csvstat&quot;)
+    assert code == 0
+    parsed = list(csv.reader(output.splitlines()))
+    assert len(parsed) == 2
+    assert parsed[1][0] == selected
+    assert parsed[1][1] == &quot;text&quot;
+=== END AC profile-output-selected-column ===
+
+=== AC profile-output-quoting ===
+Intent: Profile output preserves comma-containing values through CSV parsing.
+
+import csv
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+value = &quot;remote, part-time&quot;
+source = &quot;name,notes\nAda,&quot; + &#x27;&quot;&#x27; + value + &#x27;&quot;&#x27; + &quot;\n&quot;
+with tempfile.TemporaryDirectory() as directory:
+    path = Path(directory) / &quot;input.csv&quot;
+    path.write_text(source)
+    code, output, error = cli_runner(&quot;--column&quot;, &quot;notes&quot;, str(path), package=&quot;./cmd/csvstat&quot;)
+    assert code == 0
+    parsed = list(csv.reader(output.splitlines()))
+    assert parsed[1][5] == value
+=== END AC profile-output-quoting ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Output must be written as CSV using RFC-compliant quoting and newline handling.
+- A failed command must not emit partial profile output.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-CLI-ERRORS.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat/blueprint/FEATURE-CLI-ERRORS.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: CLI Errors
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261023 V1 |
+| Description | Map operational, usage, and rejected-input failures to the command contract. |
+| Depends On  | FEATURE-CLI-COLUMNS.md, FEATURE-PROFILE-OUTPUT.md, FEATURE-FREQUENCY-LIMITS.md |
+| Provides    | exit-code and diagnostic contract |
+| Consumes    | CSV validation, column lookup, profile output, frequency output |
+
+## Purpose
+
+The command reports failures through exit status and diagnostics. It must never write profile or frequency CSV to standard output after a failure.
+
+## Error Contract
+
+- Exit 1 for a file that cannot be opened or read.
+- Exit 2 for missing or extra files, unknown options, missing option values, invalid `--top`, `--top` without `--freq`, or incompatible options.
+- Exit 3 for empty input, invalid or repeated headers, ragged records, or absent named columns.
+- Write one diagnostic line to standard error for failures.
+- Diagnostics identify the input file and identify the rejected record line when a record is structurally invalid.
+
+## Programmatic Acceptance
+
+=== AC operational-error ===
+Intent: An unreadable input file returns the operational failure status and no CSV output.
+import pathlib
+import subprocess
+
+missing = &quot;sources/does-not-exist.csv&quot;
+result = subprocess.run([&quot;./csvstat&quot;, missing], capture_output=True, text=True)
+assert result.returncode == 1
+assert result.stdout == &quot;&quot;
+assert pathlib.Path(missing).name in result.stderr
+=== END AC operational-error ===
+
+=== AC usage-errors ===
+Intent: Malformed command arguments return usage status and no CSV output.
+import subprocess
+
+cases = [
+    [&quot;./csvstat&quot;],
+    [&quot;./csvstat&quot;, &quot;sources/orders.csv&quot;, &quot;sources/employees.csv&quot;],
+    [&quot;./csvstat&quot;, &quot;--unknown&quot;, &quot;sources/orders.csv&quot;],
+    [&quot;./csvstat&quot;, &quot;--column&quot;],
+]
+for command in cases:
+    result = subprocess.run(command, capture_output=True, text=True)
+    assert result.returncode == 2
+    assert result.stdout == &quot;&quot;
+=== END AC usage-errors ===
+
+=== AC rejected-input ===
+Intent: Structurally invalid input and absent columns return rejected-input status and no CSV output.
+import subprocess
+
+cases = [
+    [&quot;./csvstat&quot;, &quot;sources/ragged.csv&quot;],
+    [&quot;./csvstat&quot;, &quot;--column&quot;, &quot;missing&quot;, &quot;sources/orders.csv&quot;],
+    [&quot;./csvstat&quot;, &quot;--freq&quot;, &quot;missing&quot;, &quot;sources/orders.csv&quot;],
+]
+for command in cases:
+    result = subprocess.run(command, capture_output=True, text=True)
+    assert result.returncode == 3
+    assert result.stdout == &quot;&quot;
+    assert result.stderr.strip()
+=== END AC rejected-input ===
+
+=== AC successful-output-isolated ===
+Intent: A valid command remains successful and emits CSV on standard output.
+import subprocess
+
+result = subprocess.run(
+    [&quot;./csvstat&quot;, &quot;--column&quot;, &quot;qty&quot;, &quot;sources/orders.csv&quot;],
+    capture_output=True,
+    text=True,
+)
+assert result.returncode == 0
+assert result.stdout != &quot;&quot;
+=== END AC successful-output-isolated ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Never emit partial CSV output before input validation and command execution succeed.
+- Keep diagnostics on standard error.
+- Preserve the distinct exit statuses for operational, usage, and rejected-input failures.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-TEST-GATE.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat/blueprint/FEATURE-TEST-GATE.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: Test Gate
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261023 V1 |
+| Description | Provide the project test launcher and focused automated coverage. |
+| Depends On  | FEATURE-CLI-FOUNDATION.md |
+| Provides    | bin/test.sh |
+| Consumes    | Go module and command packages |
+
+## Test Gate
+
+`bin/test.sh` runs `go vet ./...` and `go test ./...` from the application root. It exits zero only when both commands succeed. The repository test suite should cover parsing, normalization, inference, statistics, rendering, frequency behavior, and exit-code mapping.
+
+## Programmatic Acceptance
+
+=== AC test-gate-present ===
+Intent: The project provides an executable POSIX test launcher.
+import os
+import pathlib
+
+path = pathlib.Path(&quot;bin/test.sh&quot;)
+assert path.is_file()
+assert os.access(path, os.X_OK)
+=== END AC test-gate-present ===
+
+=== AC test-gate-runs ===
+Intent: The project test launcher completes successfully.
+import os
+import subprocess
+
+result = subprocess.run(
+    [&quot;sh&quot;, &quot;bin/test.sh&quot;],
+    capture_output=True,
+    text=True,
+    env={**os.environ},
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0
+=== END AC test-gate-runs ===
+
+=== AC go-vet-and-tests ===
+Intent: The launcher exercises both the Go vet and Go test commands.
+import pathlib
+
+text = pathlib.Path(&quot;bin/test.sh&quot;).read_text()
+assert &quot;go vet ./...&quot; in text
+assert &quot;go test ./...&quot; in text
+=== END AC go-vet-and-tests ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Keep the launcher POSIX-compatible.
+- Run commands from the application root.
+- Do not make the launcher depend on the supplied grader or hardcoded fixture answers.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-FULL-VERIFICATION.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat/blueprint/FEATURE-FULL-VERIFICATION.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: Full Verification
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261023 V1 |
+| Description | Execute the complete supplied CsvStat conformance suite. |
+| Depends On  | ARCHITECTURE.md, FEATURE-CLI-FOUNDATION.md, FEATURE-CLI-INPUT.md, FEATURE-CLI-COLUMNS.md, FEATURE-PROFILE-TYPES.md, FEATURE-PROFILE-STATISTICS.md, FEATURE-PROFILE-OUTPUT.md, FEATURE-FREQUENCY-VALUES.md, FEATURE-FREQUENCY-LIMITS.md, FEATURE-CLI-ERRORS.md, FEATURE-TEST-GATE.md |
+| Provides    | full CsvStat conformance verification |
+| Consumes    | bin/test.sh, ./cmd/csvstat, complete CsvStat implementation |
+
+## Verification Scope
+
+The supplied `sources/run.sh` is the authoritative release conformance suite. It builds `./cmd/csvstat`, exercises all supplied CSV fixtures and command forms, and returns zero only when every check passes. Run it from the completed application root without filtering, modification, or reinterpretation.
+
+## Programmatic Acceptance
+
+=== AC full-conformance ===
+Intent: The supplied conformance suite passes for the completed CsvStat implementation.
+Suite: full
+
+import os
+import subprocess
+
+result = subprocess.run(
+    [&quot;sh&quot;, &quot;sources/run.sh&quot;],
+    capture_output=True,
+    text=True,
+    env={**os.environ},
+)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0
+=== END AC full-conformance ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Execute the supplied suite exactly as staged.
+- Do not modify, regenerate, filter, or reinterpret any supplied source or fixture.
+- Treat the suite exit status as the release verification result.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock label=&quot;Build instructions&quot; kind=&quot;instructions&quot;&gt;</p>
+<h3>Build instructions for this block</h3>
+<h4>Read, normalize, and structurally validate CSV input. (cli-input)</h4>
+<p>Implement CSV loading with encoding/csv. Trim headers and values before downstream processing, preserve quoted fields, reject empty files, invalid headers, and ragged records, and retain rejected-record line information for diagnostics. Do not read or embed answers from the supplied grader.</p>
+<h4>Resolve named columns and classify null values. (cli-columns)</h4>
+<p>Implement recognition of empty, NA, N/A, and NULL values case-insensitively after trimming. Resolve --column and --freq names against the validated header and reject absent names without producing stdout. Preserve the command&#x27;s usage-versus-rejected-input exit-code distinction.</p>
+<h4>Infer each column type using the specified precedence. (profile-types)</h4>
+<p>Infer each column from non-null values in the required order: integer, number, date, boolean, then text. Validate integer and number lexical forms, validate real calendar dates, handle case-insensitive booleans, and classify all-null columns as empty.</p>
+<h4>Aggregate and order frequent non-null column values. (frequency-values)</h4>
+<p>Count distinct non-null values for the requested column. Sort by descending count and then bytewise ascending value, excluding all null spellings and preserving exact normalized values.</p>
+<h4>Validate and apply frequency row limits. (frequency-limits)</h4>
+<p>Implement --top with default five and positive-integer validation. Reject --top without --freq, limit output after ordering, and render the value,count CSV header and rows.</p>
+<h4>Compute exact profile statistics and decimal formatting. (profile-statistics)</h4>
+<p>Compute every required profile statistic from the normalized records. Use exact arithmetic, including exact decimal sums, means, and medians, and round once half away from zero to exactly two decimal places. Apply type-specific extrema and leave nonnumeric statistic fields empty.</p>
+<h4>Render profile results as CSV. (profile-output)</h4>
+<p>Emit the exact profile header and rows in source-column order, or only the requested named column. Use encoding/csv so commas, quotes, and newlines are RFC-compliant, and emit empty fields as empty CSV fields.</p>
+<h4>Map operational, usage, and rejected-input failures. (cli-errors)</h4>
+<p>Centralize command validation and error mapping. Return 1 for file open/read failures, 2 for malformed arguments, and 3 for rejected input. Write no stdout on failure and write one diagnostic line to stderr naming the file and rejected record line when applicable.</p>
+<h4>Provide the Go vet and test project gate. (test-gate)</h4>
+<p>Add a POSIX-compatible bin/test.sh that runs go vet ./... and go test ./... from the application root. Ensure it exits zero only when both commands succeed and add focused Go tests for the implemented behavior.</p>
+<h4>Run the complete supplied CsvStat conformance suite. (full-verification)</h4>
+<p>Assemble the completed CLI and execute the supplied sources/run.sh without filtering, modification, or reinterpretation. Treat its exit status as the release verification result and preserve the supplied sources byte-for-byte.</p>
+<p>&lt;/pblock&gt;</p>
+<h1>Agent Task</h1>
+<p>You are a Drydock build agent implementing exactly one build step of a larger plan. The build job block below names the target, the build working directory, and the step. Everything you need is stacked into this prompt under role headings:</p>
+<ul><li><code>compass</code> — the Target&#x27;s COMPASS.md orientation.</li><li><code>implements</code> — the Typed Specification files this step builds. These are</li></ul>
+<p>authoritative; implement them exactly.</p>
+<ul><li><code>context</code> — read-only support specifications. Do not reimplement them.</li><li><code>stack</code> — enterprise stack and technology rules. Honor them.</li><li><code>rules</code> — governance and branding rules. Honor them.</li></ul>
+<p>Operating contract:</p>
+<ol><li>Follow the write authorization and protected paths in the stacked <code>COMPASS.md</code> exactly.</li></ol>
+<p>That persisted guardrail is the sole authority for paths this build may modify.</p>
+<ol><li>Start by inspecting the build working directory. Preserve existing application</li></ol>
+<p>files unless this step&#x27;s specifications require a change. Its <code>sources/</code> subdirectory holds staged build assets — imported test corpora, conformance harnesses, and fixtures — placed there for you. They are read-only inputs: run them, import them, and write code against them, but never create, rewrite, trim, regenerate, or substitute one, even to make a check pass. A step that modifies a staged asset fails and the asset is restored. If an asset you expect is absent, report that; do not author a replacement.</p>
+<ol><li>Implement only this step. Use <code>context</code>, <code>stack</code>, and <code>rules</code> as constraints,</li></ol>
+<p>not as additional work to perform.</p>
+<ol><li>Follow the stack and rules for languages, structure, naming, and branding.</li><li>The programmatic acceptance assertions in the <code>implements</code> specifications are</li></ol>
+<p>this step&#x27;s <strong>Definition of Done</strong> — human-owned, declared before the build, and fixed. Build the story and, in this same step, write the deterministic tests that prove each declared assertion, as a TDD master would; add finer tests for coverage. Every test you write follows the same rule the acceptance assertions do: <strong>act on the system, read the state back, compare to expected.</strong> The oracle is a return value, parsed JSON, a status code, a stored row, file contents read back, or an exit status — never a substring of captured stdout or stderr, a test-runner tally, or a log line. Write tests in the project&#x27;s own language using that language&#x27;s libraries; an in-language HTTP client yields a status code and a parsed body, where <code>curl</code> yields text to scrape. Round-trip anything that stores state: act, then read back through the public interface. Assert declared failure signals on negative paths, never message wording. You may add tests but must never remove, soften, or weaken a declared acceptance assertion. A <code>Suite: full</code> conformance check gates on the entire imported test suite: the step is done only when it passes in full, never on a representative subset — reproduce the standard exactly rather than wrapping a third-party library that approximates it. For a suite, the runner&#x27;s exit status is the verdict and the whole verdict: print its captured output for diagnosis, never assert on the text of its summary. When an assertion is a static or filesystem scan (import boundary, &quot;X never appears outside Y,&quot; grep/AST gate), honor the scope the specification states and never widen it: scan production source only, exclude <code>.venv/</code>, <code>site-packages</code>, and vendored or generated code, and do not flag test doubles or fixtures that use the guarded dependency. Run every declared acceptance assertion before returning. For a conformance suite, use its section or example filters to diagnose coherent root-cause clusters, but rerun the full declared scope before reporting the result. Treat failing examples as a work queue for fixing general behavior; never add example-specific exceptions.</p>
+<ol><li>Grow the project&#x27;s own test suite as you write the code, and treat it as the project&#x27;s</li></ol>
+<p>real coverage. The acceptance assertions in <code>implements</code> are gates: few, fixed, and written before any code existed, so every expectation in them is a prediction. The tests you write are written <em>beside</em> the finished code, so their expected values are observed rather than predicted — which is why exhaustive coverage belongs here and not there. Extend the suite in the project&#x27;s established location and runner, keep it runnable by the project&#x27;s declared test command, and leave it green when you return. Cover, at minimum: every public entry point and every verb it declares, including declared error paths; the boundaries — empty, exactly one, many, absent optional fields, declared maxima; declared idempotence, applied twice; one behavior per test, named for the behavior; and isolation — database criteria use the provisioned application store and the shipped rollback fixture, passing its connection into the feature. Other connections and durability tests use criterion-owned records, idempotent setup and checked cleanup through supported interfaces. Never replace the configured store, reapply schema, or delete unrelated business records. Where a staged authoritative suite already covers a surface, that suite is the coverage: run it, and do not restate its cases. Run it <strong>only through the invocation this step&#x27;s acceptance criteria declare</strong>. A criterion marked <code>Suite: scoped</code> names the whole of this step&#x27;s obligation to that suite; running the suite&#x27;s unscoped entry point instead is not extra rigor, it is a different step&#x27;s gate executed early. A partial capability fails most of an authoritative corpus by construction and its unimplemented cases exhaust the runner&#x27;s per-case timeout rather than returning, so the unscoped run costs the most where it teaches the least, and interrupting it forfeits the step. If no criterion in this step invokes the staged suite, do not invoke it. Report the pass/fail counts of the invocations you did run in your <code>SUMMARY</code> so a reader can see coverage moving across steps.</p>
+<ol><li>Treat <code>User Acceptance</code> entries as review evidence requirements. Implement</li></ol>
+<p>the supporting behavior, but do not claim to have performed human judgment.</p>
+<ol><li>The <code>implements</code> section is authoritative and intentionally stacked late in</li></ol>
+<p>the prompt as the recency anchor. Build that WHAT exactly; do not substitute generic framework defaults.</p>
+<ol><li>Before adding or installing Python dependencies, verify each package name</li></ol>
+<p>against the declared registry. Do not invent package names. If a needed package cannot be verified or appears newly published, fail explicitly instead of installing it.</p>
+<ol><li>Use the stack&#x27;s required package manager workflow for dependency changes.</li></ol>
+<p>When the stack requires <code>uv</code>, update manifests through <code>uv</code> conventions rather than bare <code>pip install</code>.</p>
+<ol><li>Do not claim success unless you actually created or modified project files in</li></ol>
+<p>the build working directory. If you cannot write files or cannot complete the step, report failure explicitly.</p>
+<ol><li>Do not run <code>git add</code>, <code>git commit</code>, create branches, create tags, rewrite</li></ol>
+<p>history, or otherwise mutate Git history. Drydock checkpoints application changes and Target evidence after each execution and completed step. File lineage comes from Git and the Manifest&#x27;s <code>implements:</code> entries; no additional attribution response is required.</p>
+<ol><li>End your response with this exact closing structure:</li></ol>
+<pre><code>RESULT: SUCCESS | FAILED
+
+FILES CHANGED:
+- relative/path
+
+SUMMARY:
+&lt;brief reviewable summary&gt;
+
+BLOCKERS:
+- &lt;only if any&gt;</code></pre>
+<p>Before <code>RESULT</code>, you may emit one optional JSON payload when implementation required a bounded choice not already settled by the owning specification. This records what you did; it does not ask permission, create a questionnaire, or excuse incomplete work:</p>
+<pre><code>&lt;blueprint-decisions&gt;
+[{&quot;spec&quot;:&quot;FEATURE-Example.md&quot;,&quot;severity&quot;:&quot;Material&quot;,&quot;subject&quot;:&quot;Chosen behavior&quot;,&quot;decision&quot;:&quot;Options A and B were available. I implemented B because ... Is that acceptable, or should this change on replan?&quot;}]
+&lt;/blueprint-decisions&gt;</code></pre>
+<p>Name only a specification implemented by this build block. Use <code>Low</code> or <code>Material</code>; Build never emits a Blocking decision. Omit the payload when no implementation decision was necessary.</p>
+<ol><li><code>FILES CHANGED</code> must list only files actually written in the build working</li></ol>
+<p>directory. If no files were written, use <code>RESULT: FAILED</code>.</p>
+<ol><li>On <code>RESULT: FAILED</code>, append two additional lines so the failure is actionable</li></ol>
+<p>without opening logs. <code>FAILURE_SUMMARY</code> is one line naming the cause; <code>FAILURE_DETAIL</code> states what happened, why, and what to change before a rerun. Name concrete conditions when they apply: token or context limit exceeded, could not execute commands in this environment, a required input was missing, or a specific tool or command failed.</p>
+<pre><code>FAILURE_SUMMARY: &lt;one line naming the cause&gt;
+FAILURE_DETAIL: &lt;what happened, why, and what to change before rerunning&gt;</code></pre>
+<ol><li>When a declared acceptance criterion cannot pass no matter how the code is written,</li></ol>
+<p>say so with this exact token. You may not edit the criterion — it is staged and restored before grading:</p>
+<pre><code>AC_BROKEN: &lt;check-id&gt;[, &lt;check-id&gt;]</code></pre>
+<p>This is a report, not a verdict, and it stops nothing. A criterion reaches you only when its expected value is one its author could not have invented — a status code, a staged suite&#x27;s exit status, a value the criterion itself supplied as input — so your claim that the criterion rather than the code is at fault is the less likely explanation, and the budget is spent as it would be for any other failure. A criterion whose expectation <em>was</em> hand-typed already settles <code>DISPUTED</code> on its own, without you naming it. Emit the token only after running the criterion and confirming the underlying command succeeded while the assertion still failed. Name the affected check ids, emit it alongside your normal <code>RESULT</code> line, state the reasoning in <code>FAILURE_DETAIL</code>, and emit it even when <code>RESULT: SUCCESS</code>. Do not use it for a criterion you merely failed to satisfy.</p></article>
+</main>
+</body>
+</html>

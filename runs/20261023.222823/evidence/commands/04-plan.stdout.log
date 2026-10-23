@@ -1,0 +1,80 @@
+Drydock 0.2.0  Copyright (c) 2026 Web Cloud Studio. All rights reserved.
+2026-10-23 18:29:00 EDT  Calling CODEX/gpt-5.6-luna (plan · topology)...
+  Completed CODEX/gpt-5.6-luna (plan · topology)  rc=0
+2026-10-23 18:29:21 EDT  Calling CODEX/gpt-5.6-luna (plan · declaration repair)...
+  Completed CODEX/gpt-5.6-luna (plan · declaration repair)  rc=0
+========================================================================
+PLAN PROGRESS  ·  STAGE 1 · TOPOLOGY
+========================================================================
+Topology Created:  True
+Blueprints Created: 0 / 12
+Manifest Created:  False
+Blueprints Remaining: 12
+Batch Result:       Topology accepted
+========================================================================
+2026-10-23 18:29:45 EDT  Calling CODEX/gpt-5.6-luna (plan · blueprint batch 1)...
+  Completed CODEX/gpt-5.6-luna (plan · blueprint batch 1)  rc=0
+========================================================================
+PLAN PROGRESS  ·  STAGE 2 · BLUEPRINT BATCH 1
+========================================================================
+Topology Created:  True
+Blueprints Created: 5 / 12
+Manifest Created:  False
+Blueprints Remaining: 7
+Batch Result:       Accepted 5 Blueprint(s)
+========================================================================
+2026-10-23 18:30:06 EDT  Calling CODEX/gpt-5.6-luna (plan · blueprint batch 2)...
+  Completed CODEX/gpt-5.6-luna (plan · blueprint batch 2)  rc=0
+========================================================================
+PLAN PROGRESS  ·  STAGE 2 · BLUEPRINT BATCH 2
+========================================================================
+Topology Created:  True
+Blueprints Created: 8 / 12
+Manifest Created:  False
+Blueprints Remaining: 4
+Batch Result:       Accepted 3 Blueprint(s)
+========================================================================
+2026-10-23 18:30:35 EDT  Calling CODEX/gpt-5.6-luna (plan · blueprint batch 3)...
+  Completed CODEX/gpt-5.6-luna (plan · blueprint batch 3)  rc=0
+========================================================================
+PLAN PROGRESS  ·  STAGE 2 · BLUEPRINT BATCH 3
+========================================================================
+Topology Created:  True
+Blueprints Created: 12 / 12
+Manifest Created:  False
+Blueprints Remaining: 0
+Batch Result:       Accepted 4 Blueprint(s)
+========================================================================
+========================================================================
+PLAN PROGRESS  ·  STAGE 3 · MANIFEST
+========================================================================
+Topology Created:  True
+Blueprints Created: 12 / 12
+Manifest Created:  True
+Blueprints Remaining: 0
+Batch Result:       Manifest validated and serialized
+========================================================================
+2026-10-23 18:31:03 EDT  Calling CODEX/gpt-5.6-luna (lineage_attribute)...
+  Completed CODEX/gpt-5.6-luna (lineage_attribute)  rc=0
+2026-10-23 18:31:11 EDT  Calling CODEX/gpt-5.6-luna (lineage_attribute)...
+  Completed CODEX/gpt-5.6-luna (lineage_attribute)  rc=0
+2026-10-23 18:31:16 EDT  Calling CODEX/gpt-5.6-luna (lineage_attribute)...
+  Completed CODEX/gpt-5.6-luna (lineage_attribute)  rc=0
+2026-10-23 18:31:23 EDT  Calling CODEX/gpt-5.6-luna (lineage_attribute)...
+  Completed CODEX/gpt-5.6-luna (lineage_attribute)  rc=0
+2026-10-23 18:31:32 EDT  Calling CODEX/gpt-5.6-luna (lineage_attribute)...
+  Completed CODEX/gpt-5.6-luna (lineage_attribute)  rc=0
+2026-10-23 18:31:41 EDT  Calling CODEX/gpt-5.6-luna (lineage_attribute)...
+  Completed CODEX/gpt-5.6-luna (lineage_attribute)  rc=0
+2026-10-23 18:31:51 EDT  Calling CODEX/gpt-5.6-luna (lineage_attribute)...
+  Completed CODEX/gpt-5.6-luna (lineage_attribute)  rc=0
+
+Mode: OVERWRITE (Blueprint specs regenerated from analysis)
+Provider: codex / gpt-5.6-luna
+Graph: 0 features, 12 stories, 0 spikes, 0 acceptance gates
+Warnings: 6
+Outcome: updated
+Execution: 20261023.222900.680Z-d1038563
+Elapsed: 3 minutes 8 seconds
+Review: /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/workspace/targets/CsvStat/QuarterDeck
+Target - committed project workspace git store

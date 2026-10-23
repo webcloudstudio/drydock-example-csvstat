@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-FREQUENCY-LIMITS.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-FREQUENCY-LIMITS.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-FREQUENCY-LIMITS.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Frequency Limits</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261023 V1</td></tr><tr><td>Description</td><td>Validate frequency limits and render bounded frequency output.</td></tr><tr><td>Depends On</td><td>FEATURE-FREQUENCY-VALUES.md</td></tr><tr><td>Provides</td><td>--top validation, default frequency limit, frequency CSV output</td></tr><tr><td>Consumes</td><td>frequency aggregation and deterministic ordering</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>The frequency command accepts <code>--freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</code>. The default limit is five. <code>--top</code> must be a positive integer and is valid only with <code>--freq</code>. The limit is applied after frequency ordering.</p>
+<h2>Behavior</h2>
+<ul><li>Emit the CSV header <code>value,count</code>.</li><li>Emit no more than the requested number of frequency rows.</li><li>Reject zero, negative, or non-integer <code>--top</code> values with usage exit status 2.</li><li>Reject <code>--top</code> without <code>--freq</code> with usage exit status 2.</li><li>Preserve RFC-compliant CSV rendering.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC frequency-limit-success ===<br>Intent: A valid positive limit executes the frequency command successfully and bounds the parsed result. import csv import io import subprocess</p>
+<p>column = &quot;department&quot; limit = &quot;2&quot; result = subprocess.run( [&quot;./csvstat&quot;, &quot;--freq&quot;, column, &quot;--top&quot;, limit, &quot;sources/employees.csv&quot;], capture_output=True, text=True, ) assert result.returncode == 0 rows = list(csv.reader(io.StringIO(result.stdout))) assert rows[0] == [&quot;value&quot;, &quot;count&quot;] assert len(rows) &lt;= int(limit) + 1 === END AC frequency-limit-success ===</p>
+<p>=== AC frequency-limit-default ===<br>Intent: Omitting --top uses the default limit and returns a successful frequency result. import csv import io import subprocess</p>
+<p>result = subprocess.run( [&quot;./csvstat&quot;, &quot;--freq&quot;, &quot;department&quot;, &quot;sources/employees.csv&quot;], capture_output=True, text=True, ) assert result.returncode == 0 rows = list(csv.reader(io.StringIO(result.stdout))) assert rows[0] == [&quot;value&quot;, &quot;count&quot;] assert len(rows) &lt;= 6 === END AC frequency-limit-default ===</p>
+<p>=== AC frequency-limit-invalid ===<br>Intent: Non-positive and malformed limits are rejected as usage errors. import subprocess</p>
+<p>cases = [ [&quot;--freq&quot;, &quot;department&quot;, &quot;--top&quot;, &quot;0&quot;, &quot;sources/employees.csv&quot;], [&quot;--freq&quot;, &quot;department&quot;, &quot;--top&quot;, &quot;-1&quot;, &quot;sources/employees.csv&quot;], [&quot;--freq&quot;, &quot;department&quot;, &quot;--top&quot;, &quot;x&quot;, &quot;sources/employees.csv&quot;], ] for args in cases: result = subprocess.run([&quot;./csvstat&quot;, *args], capture_output=True, text=True) assert result.returncode == 2 assert result.stdout == &quot;&quot; === END AC frequency-limit-invalid ===</p>
+<p>=== AC top-requires-frequency ===<br>Intent: --top without --freq is rejected as a usage error. import subprocess</p>
+<p>result = subprocess.run( [&quot;./csvstat&quot;, &quot;--top&quot;, &quot;3&quot;, &quot;sources/employees.csv&quot;], capture_output=True, text=True, ) assert result.returncode == 2 assert result.stdout == &quot;&quot; === END AC top-requires-frequency ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Do not include null values in frequency output.</li><li>Do not change the ordering supplied by frequency aggregation when applying the limit.</li><li>Do not read or embed expected answers from supplied grading assets.</li></ul></article>
+</main>
+</body>
+</html>

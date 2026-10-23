@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-PROFILE-OUTPUT.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-PROFILE-OUTPUT.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-PROFILE-OUTPUT.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Profile Output</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261023 V1</td></tr><tr><td>Description</td><td>Render profile results as RFC-compliant CSV output.</td></tr><tr><td>Depends On</td><td>FEATURE-PROFILE-STATISTICS.md</td></tr><tr><td>Provides</td><td>profile CSV output</td></tr><tr><td>Consumes</td><td>rows, nulls, distinct, extrema, sum, mean, median</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>The profile renderer writes one CSV header followed by one row per selected column in input order. A named column limits output to that column. Empty statistic values remain empty CSV fields, and fields containing commas, quotes, or newlines are encoded with RFC-compliant CSV quoting.</p>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC profile-output-all-columns ===<br>Intent: A profile command emits one output row for each input column in file order.</p>
+<p>import csv import tempfile from pathlib import Path from drydock_go import cli_runner</p>
+<p>source = &quot;first,second\n1,alpha\n2,beta\n&quot; expected_columns = [&quot;first&quot;, &quot;second&quot;] with tempfile.TemporaryDirectory() as directory: path = Path(directory) / &quot;input.csv&quot; path.write_text(source) code, output, error = cli_runner(str(path), package=&quot;./cmd/csvstat&quot;) assert code == 0 parsed = list(csv.reader(output.splitlines())) assert parsed[0][0] == &quot;column&quot; assert len(parsed) == len(expected_columns) + 1 assert [row[0] for row in parsed[1:]] == expected_columns === END AC profile-output-all-columns ===</p>
+<p>=== AC profile-output-selected-column ===<br>Intent: The column option emits exactly the requested profile row.</p>
+<p>import csv import tempfile from pathlib import Path from drydock_go import cli_runner</p>
+<p>source = &quot;first,second\n1,alpha\n2,beta\n&quot; selected = &quot;second&quot; with tempfile.TemporaryDirectory() as directory: path = Path(directory) / &quot;input.csv&quot; path.write_text(source) code, output, error = cli_runner(&quot;--column&quot;, selected, str(path), package=&quot;./cmd/csvstat&quot;) assert code == 0 parsed = list(csv.reader(output.splitlines())) assert len(parsed) == 2 assert parsed[1][0] == selected assert parsed[1][1] == &quot;text&quot; === END AC profile-output-selected-column ===</p>
+<p>=== AC profile-output-quoting ===<br>Intent: Profile output preserves comma-containing values through CSV parsing.</p>
+<p>import csv import tempfile from pathlib import Path from drydock_go import cli_runner</p>
+<p>value = &quot;remote, part-time&quot; source = &quot;name,notes\nAda,&quot; + &#x27;&quot;&#x27; + value + &#x27;&quot;&#x27; + &quot;\n&quot; with tempfile.TemporaryDirectory() as directory: path = Path(directory) / &quot;input.csv&quot; path.write_text(source) code, output, error = cli_runner(&quot;--column&quot;, &quot;notes&quot;, str(path), package=&quot;./cmd/csvstat&quot;) assert code == 0 parsed = list(csv.reader(output.splitlines())) assert parsed[1][5] == value === END AC profile-output-quoting ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Output must be written as CSV using RFC-compliant quoting and newline handling.</li><li>A failed command must not emit partial profile output.</li></ul></article>
+</main>
+</body>
+</html>

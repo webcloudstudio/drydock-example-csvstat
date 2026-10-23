@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-FREQUENCY-VALUES.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-FREQUENCY-VALUES.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-FREQUENCY-VALUES.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Frequency Values</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261023 V1</td></tr><tr><td>Description</td><td>Aggregate and deterministically order non-null column values by frequency.</td></tr><tr><td>Depends On</td><td>FEATURE-CLI-COLUMNS.md</td></tr><tr><td>Provides</td><td>frequency aggregation and deterministic ordering</td></tr><tr><td>Consumes</td><td>column lookup, null normalization</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>The frequency capability counts each distinct non-null normalized value in the requested column. It excludes empty values and the case-insensitive null spellings <code>NA</code>, <code>N/A</code>, and <code>NULL</code>.</p>
+<p>Rows are ordered by descending count and then by bytewise ascending value.</p>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC frequency-excludes-nulls ===<br>Intent: Frequency output omits every recognized null spelling.</p>
+<p>import csv import tempfile from pathlib import Path from drydock_go import cli_runner</p>
+<p>source = &quot;value\nalpha\nNA\nn/a\nNULL\n\nbeta\n&quot; with tempfile.TemporaryDirectory() as directory: path = Path(directory) / &quot;input.csv&quot; path.write_text(source) code, output, error = cli_runner(&quot;--freq&quot;, &quot;value&quot;, str(path), package=&quot;./cmd/csvstat&quot;) assert code == 0 rows = list(csv.reader(output.splitlines())) values = [row[0] for row in rows[1:]] assert values == [&quot;alpha&quot;, &quot;beta&quot;] assert all(value not in {&quot;&quot;, &quot;NA&quot;, &quot;n/a&quot;, &quot;NULL&quot;} for value in values) === END AC frequency-excludes-nulls ===</p>
+<p>=== AC frequency-orders-counts ===<br>Intent: Frequency rows are ordered by descending count before value ordering.</p>
+<p>import csv import tempfile from pathlib import Path from drydock_go import cli_runner</p>
+<p>source = &quot;value\nb\na\nb\nc\na\nb\n&quot; expected_counts = {&quot;a&quot;: 2, &quot;b&quot;: 3, &quot;c&quot;: 1} with tempfile.TemporaryDirectory() as directory: path = Path(directory) / &quot;input.csv&quot; path.write_text(source) code, output, error = cli_runner(&quot;--freq&quot;, &quot;value&quot;, str(path), package=&quot;./cmd/csvstat&quot;) assert code == 0 rows = list(csv.reader(output.splitlines()))[1:] actual = [(row[0], int(row[1])) for row in rows] assert actual == sorted(expected_counts.items(), key=lambda item: (-item[1], item[0])) === END AC frequency-orders-counts ===</p>
+<p>=== AC frequency-orders-ties ===<br>Intent: Equal-frequency values are ordered by ascending byte value.</p>
+<p>import csv import tempfile from pathlib import Path from drydock_go import cli_runner</p>
+<p>source = &quot;value\nz\na\nm\nz\na\nm\n&quot; with tempfile.TemporaryDirectory() as directory: path = Path(directory) / &quot;input.csv&quot; path.write_text(source) code, output, error = cli_runner(&quot;--freq&quot;, &quot;value&quot;, str(path), package=&quot;./cmd/csvstat&quot;) assert code == 0 rows = list(csv.reader(output.splitlines()))[1:] assert [row[0] for row in rows] == sorted([&quot;a&quot;, &quot;m&quot;, &quot;z&quot;]) === END AC frequency-orders-ties ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Null values must never appear in frequency rows.</li><li>Frequency ordering must be deterministic and independent of input map iteration order.</li></ul></article>
+</main>
+</body>
+</html>

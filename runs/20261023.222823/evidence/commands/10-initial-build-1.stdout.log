@@ -1,0 +1,60 @@
+Drydock 0.2.0  Copyright (c) 2026 Web Cloud Studio. All rights reserved.
+Build: CsvStat
+scope: entire project
+frontier: architecture
+git: baseline CsvStat 00e119cdb6ea
+git: baseline CsvStat 9d18c26d381b
+
+BLOCK block-1  name="Block 1 · Foundational"  calls_max=7
+  story=architecture  "Define the CsvStat command architecture and module boundaries."
+
+  [call 1/7]  kind=initial  llm=codex/gpt-5.6-luna
+    result=ok  rc=0  execution=20261023.223246.637Z-942037e8
+    acceptance=2/2
+git: block-1 | go.md, ARCHITECTURE.md | call=1 | app=8863803600df target=e91842946fb4
+
+  DONE  story=architecture  state=closed/implemented  execution=20261023.223246.637Z-942037e8  elapsed=57.8s
+git: block-1 | go.md, ARCHITECTURE.md | step_completed | app=unchanged target=f720377c39bb
+
+BLOCK block-2  name="Block 2 · Foundational"  calls_max=7
+  story=cli-foundation  "Build the csvstat command entry point and module."
+
+  [call 1/7]  kind=initial  llm=codex/gpt-5.6-luna
+    result=ok  rc=0  execution=20261023.223346.352Z-49d1e67f
+    acceptance=3/3
+git: block-2 | FEATURE-CLI-FOUNDATION.md | call=1 | app=782d53edd063 target=0f7da7568046
+
+  DONE  story=cli-foundation  state=closed/implemented  execution=20261023.223346.352Z-49d1e67f  elapsed=51.6s
+git: block-2 | FEATURE-CLI-FOUNDATION.md | step_completed | app=unchanged target=6e74117b5ff1
+
+BLOCK block-3  name="Block 3 · Service"  calls_max=7
+  story=cli-input  "Read, normalize, and structurally validate CSV input."
+  story=cli-columns  "Resolve named columns and classify null values."
+  story=profile-types  "Infer each column type using the specified precedence."
+  story=frequency-values  "Aggregate and order frequent non-null column values."
+  story=frequency-limits  "Validate and apply frequency row limits."
+  story=profile-statistics  "Compute exact profile statistics and decimal formatting."
+  story=profile-output  "Render profile results as CSV."
+  story=cli-errors  "Map operational, usage, and rejected-input failures."
+  story=test-gate  "Provide the Go vet and test project gate."
+  story=full-verification  "Run the complete supplied CsvStat conformance suite."
+
+  [call 1/7]  kind=initial  llm=codex/gpt-5.6-luna
+    result=ok  rc=0  execution=20261023.223528.933Z-cb51eaa7
+    acceptance=15/30  failed=cli-input-quoted,cli-input-ragged,cli-input-header-only,cli-columns-existing,cli-columns-missing-profile,cli-columns-missing-frequency,profile-types-fixtures,profile-types-all-null,profile-types-invalid-date-text,frequency-limit-success,frequency-limit-default,frequency-limit-invalid,top-requires-frequency,rejected-input,successful-output-isolated
+git: block-3 | FEATURE-CLI-INPUT.md, FEATURE-CLI-COLUMNS.md, FEATURE-PROFILE-TYPES.md, FEATURE-FREQUENCY-VALUES.md, FEATURE-FREQUENCY-LIMITS.md, FEATURE-PROFILE-STATISTICS.md, FEATURE-PROFILE-OUTPUT.md, FEATURE-CLI-ERRORS.md, FEATURE-TEST-GATE.md, FEATURE-FULL-VERIFICATION.md | call=1 | app=c197f2072d33 target=c9e63eb61e33
+
+  [call 2/7]  kind=repair(1/6)  llm=codex/gpt-5.6-luna
+    fixing=cli-input-quoted,cli-input-ragged,cli-input-header-only,cli-columns-existing,cli-columns-missing-profile,cli-columns-missing-frequency,profile-types-fixtures,profile-types-all-null,profile-types-invalid-date-text,frequency-limit-success,frequency-limit-default,frequency-limit-invalid,top-requires-frequency,rejected-input,successful-output-isolated
+    result=ok  rc=0  execution=20261023.223704.536Z-43b6712a
+    acceptance=30/30
+git: block-3 | FEATURE-CLI-INPUT.md, FEATURE-CLI-COLUMNS.md, FEATURE-PROFILE-TYPES.md, FEATURE-FREQUENCY-VALUES.md, FEATURE-FREQUENCY-LIMITS.md, FEATURE-PROFILE-STATISTICS.md, FEATURE-PROFILE-OUTPUT.md, FEATURE-CLI-ERRORS.md, FEATURE-TEST-GATE.md, FEATURE-FULL-VERIFICATION.md | call=2 | app=62303395010b target=935cb7e33c30
+
+  DONE  story=cli-input  state=closed/implemented  execution=20261023.223704.536Z-43b6712a  elapsed=3m22s
+git: block-3 | FEATURE-CLI-INPUT.md, FEATURE-CLI-COLUMNS.md, FEATURE-PROFILE-TYPES.md, FEATURE-FREQUENCY-VALUES.md, FEATURE-FREQUENCY-LIMITS.md, FEATURE-PROFILE-STATISTICS.md, FEATURE-PROFILE-OUTPUT.md, FEATURE-CLI-ERRORS.md, FEATURE-TEST-GATE.md, FEATURE-FULL-VERIFICATION.md | step_completed | app=unchanged target=3c582ff2fe91
+git: build complete CsvStat 7e99f9f46842
+git: build complete CsvStat 1a3ee9c65a54
+
+result: 12 built, 0 failed, 0 unchanged
+elapsed: 5 minutes 37 seconds
+Target - committed project workspace git store

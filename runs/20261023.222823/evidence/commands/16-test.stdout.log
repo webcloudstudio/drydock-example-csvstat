@@ -1,0 +1,23 @@
+PASS A1: csvstat /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/build/CsvStat/sources/employees.csv
+PASS A2: csvstat /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/build/CsvStat/sources/sensors.csv
+PASS A3: csvstat /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/build/CsvStat/sources/orders.csv
+PASS A4: csvstat /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/build/CsvStat/sources/header_only.csv
+PASS B1: csvstat --column salary /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/build/CsvStat/sources/employees.csv
+PASS B2: csvstat --column notes /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/build/CsvStat/sources/employees.csv
+PASS B3: csvstat --column temp_c /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/build/CsvStat/sources/sensors.csv
+PASS C1: csvstat --freq department /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/build/CsvStat/sources/employees.csv
+PASS C2: csvstat --freq sensor --top 2 /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/build/CsvStat/sources/sensors.csv
+PASS C3: csvstat --freq customer /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/build/CsvStat/sources/orders.csv
+PASS C4: csvstat --freq manager_id --top 3 /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/build/CsvStat/sources/employees.csv
+PASS C5: csvstat --freq battery /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/build/CsvStat/sources/sensors.csv
+PASS E1: csvstat /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/build/CsvStat/sources/ragged.csv
+PASS E2: csvstat --column nosuch /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/build/CsvStat/sources/orders.csv
+PASS E3: csvstat --freq nosuch /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/build/CsvStat/sources/orders.csv
+PASS E4: csvstat /tmp/tmp.SYgu6szQGz/no-such-file.csv
+PASS U1: csvstat 
+PASS U2: csvstat /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/build/CsvStat/sources/orders.csv /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/build/CsvStat/sources/sensors.csv
+PASS U3: csvstat --freq sensor --top 0 /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/build/CsvStat/sources/sensors.csv
+PASS U4: csvstat --top 3 /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/build/CsvStat/sources/sensors.csv
+PASS U5: csvstat --column qty --freq qty /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/build/CsvStat/sources/orders.csv
+PASS U6: csvstat --frobnicate /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261023.222823/build/CsvStat/sources/orders.csv
+CsvStat: 22 passed, 0 failed (of 22)

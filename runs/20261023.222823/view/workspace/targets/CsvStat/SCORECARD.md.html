@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/SCORECARD.md</title>
+<link rel="stylesheet" href="../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/SCORECARD.md</h1><div class="filenav"><a href="../../../../index.html">&larr; Report</a><a href="../../../../workspace/targets/CsvStat/SCORECARD.md">Raw file</a></div></header>
+<article class="doc"><h1>Scorecard: CsvStat</h1>
+<h2>Specification</h2>
+<blockquote><p><strong>NOT YET RUN</strong> drydock score spec CsvStat</p></blockquote>
+<h2>Acceptance</h2>
+<blockquote><p><strong>PASSED</strong> drydock score ac CsvStat · 2026-10-23T22:38:41.114+00:00</p></blockquote>
+<p>PASS 27   FAIL 0   UNVERIFIED 0   PREPASSED 8   (35 AC total)</p>
+<h2>Build</h2>
+<blockquote><p><strong>RECORDED</strong> drydock score build CsvStat</p></blockquote>
+<p>Blocks: 3   Repaired: 1   Failed: 0<br>Tokens: 990,498 (cached 876,160, output 18,927)   Cache hit rate: 90.2%</p>
+<h2>Release</h2>
+<blockquote><p><strong>RELEASED</strong> drydock score release CsvStat · 2026-10-23T22:39:19.755+00:00</p></blockquote>
+<ul><li>Verdict: PASSED</li></ul>
+<p>CsvStat: PASSED — 8 of 8</p>
+<p>st-001  MET       [&quot;sh&quot;, &quot;sources/run.sh&quot;] exited 0; sources/run.sh: governed gate exited 0; facts: CsvStat: 22 passed, 0 failed (of 22) st-002  MET       bin/test.sh:1-5; probe: sh bin/test.sh exited 0 st-003  MET       go.mod:1-3; probe: go build ./cmd/csvstat exited 0 st-004  MET       internal/csvstat/csvstat.go:100-136; probe: valid inference produced all required type classifications st-005  MET       sources/run.sh: A1-A4 passed; facts: 22 passed, 0 failed st-006  MET       sources/run.sh: C1-C5 passed; internal/csvstat/csvstat.go:250-270 st-007  MET       internal/csvstat/csvstat.go:21-43; probe: all five malformed cases returned rc=3 and stdout_bytes=0; sources/run.sh: E1-E3 passed st-008  MET       internal/cli/cli.go:43-73; probe: unreadable returned rc=1 and usage cases returned rc=2 with stdout_bytes=0; sources/run.sh: E4 and U1-U6 passed reported: Build directory has uncommitted changes</p>
+<h2>Project acceptance</h2>
+<div class="scroll"><table><thead><tr><th>ID</th><th>Type</th><th>Criterion</th><th>Verdict</th><th>Observed</th></tr></thead><tbody><tr><td>st-001</td><td>technical</td><td>The completed csvstat shall make sh sources/run.sh exit zero; that script&#x27;s exit status is the sole acceptance verdict.</td><td>MET</td><td>[&quot;sh&quot;, &quot;sources/run.sh&quot;] exited 0; sources/run.sh: governed gate exited 0; facts: CsvStat: 22 passed, 0 failed (of 22)</td></tr><tr><td>st-002</td><td>technical</td><td>The application shall provide a POSIX-compatible bin/test.sh that exits zero when go vet and every automated test pass.</td><td>MET</td><td>bin/test.sh:1-5; probe: sh bin/test.sh exited 0</td></tr><tr><td>st-003</td><td>technical</td><td>The application root shall be a Go module from which go build ./cmd/csvstat produces the csvstat executable using only the standard library.</td><td>MET</td><td>go.mod:1-3; probe: go build ./cmd/csvstat exited 0</td></tr><tr><td>st-004</td><td>behavioral</td><td>The application shall assign each column the first of integer, number, date, boolean, and text that every non-null value satisfies, and empty when it has no non-null value.</td><td>MET</td><td>internal/csvstat/csvstat.go:100-136; probe: valid inference produced all required type classifications</td></tr><tr><td>st-005</td><td>behavioral</td><td>The application shall compute rows, nulls, distinct, min, max, sum, mean, and median for every column of the supplied data files, matching the known answers in sources/run.sh byte for byte.</td><td>MET</td><td>sources/run.sh: A1-A4 passed; facts: 22 passed, 0 failed</td></tr><tr><td>st-006</td><td>behavioral</td><td>When --freq is given, the application shall list the column&#x27;s non-null values by count descending then value ascending, at most --top rows.</td><td>MET</td><td>sources/run.sh: C1-C5 passed; internal/csvstat/csvstat.go:250-270</td></tr><tr><td>st-007</td><td>behavioral</td><td>If the file is empty, has an empty or repeated header name, has a ragged record, or a named column is absent, then the application shall exit 3 and write nothing to standard output.</td><td>MET</td><td>internal/csvstat/csvstat.go:21-43; probe: all five malformed cases returned rc=3 and stdout_bytes=0; sources/run.sh: E1-E3 passed</td></tr><tr><td>st-008</td><td>behavioral</td><td>If the file cannot be read, then the application shall exit 1; if the arguments are malformed, then the application shall exit 2; in both cases it shall write nothing to standard output.</td><td>MET</td><td>internal/cli/cli.go:43-73; probe: unreadable returned rc=1 and usage cases returned rc=2 with stdout_bytes=0; sources/run.sh: E4 and U1-U6 passed</td></tr></tbody></table></div>
+<p><strong>Advisory warnings:</strong></p>
+<ul><li>Build directory has uncommitted changes</li></ul></article>
+</main>
+</body>
+</html>

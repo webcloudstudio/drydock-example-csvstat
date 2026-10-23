@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/evidence/block-2.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/evidence/block-2.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/evidence/block-2.md">Raw file</a></div></header>
+<article class="doc"><h1>Evidence: Block 2 · Foundational (block-2)</h1>
+<ul><li>block type: block</li><li>date: 2026-10-23</li><li>resulting state: closed/verified</li><li>story points (combined assembled cost): 2664</li><li>execution id: 20261023.223346.352Z-49d1e67f</li></ul>
+<h2>Stories built</h2>
+<ul><li>Build the csvstat command entry point and module. (cli-foundation) [story]</li></ul>
+<h2>Stacked context</h2>
+<ul><li>stack: go_compact.md (SP 1374)</li><li>compass: COMPASS.md (SP 628)</li><li>implements: FEATURE-CLI-FOUNDATION.md (SP 450)</li><li>context: ARCHITECTURE_compact.md (SP 146)</li></ul>
+<h2>Build directory changes</h2>
+<ul><li>internal/cli/cli.go</li><li>internal/cli/cli_test.go</li></ul>
+<h2>Pre-build acceptance observation</h2>
+<ul><li>GREEN (prepassed): cli-foundation-build (FEATURE-CLI-FOUNDATION.md)</li></ul>
+<p>intent: The declared command package builds successfully. return code: 0</p>
+<ul><li>GREEN (prepassed): cli-foundation-help (FEATURE-CLI-FOUNDATION.md)</li></ul>
+<p>intent: The executable provides a successful help invocation. return code: 0 stdout: usage: csvstat [flags] file.csv</p>
+<p>-help show command usage</p>
+<ul><li>GREEN (prepassed): cli-foundation-usage (FEATURE-CLI-FOUNDATION.md)</li></ul>
+<p>intent: A missing file argument is reported as a usage failure. return code: 0 stdout: usage: csvstat [flags] file.csv</p>
+<h2>Post-build programmatic acceptance</h2>
+<ul><li>PASS: cli-foundation-build (FEATURE-CLI-FOUNDATION.md)</li></ul>
+<p>intent: The declared command package builds successfully. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0</p>
+<ul><li>PASS: cli-foundation-help (FEATURE-CLI-FOUNDATION.md)</li></ul>
+<p>intent: The executable provides a successful help invocation. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: Usage: csvstat [--column &lt;name&gt;] &lt;file&gt; csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</p>
+<p>Options: --column &lt;name&gt;  profile one column by name --freq &lt;name&gt;    show the most frequent values for one column --top &lt;n&gt;        maximum number of frequent values to show (default 10) --help           show this help text</p>
+<ul><li>PASS: cli-foundation-usage (FEATURE-CLI-FOUNDATION.md)</li></ul>
+<p>intent: A missing file argument is reported as a usage failure. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: Usage: csvstat [--column &lt;name&gt;] &lt;file&gt; csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</p>
+<p>Options: --column &lt;name&gt;  profile one column by name --freq &lt;name&gt;    show the most frequent values for one column --top &lt;n&gt;        maximum number of frequent values to show (default 10) --help           show this help text</p>
+<h2>Build summary</h2>
+<p>RESULT: SUCCESS</p>
+<p>FILES CHANGED:</p>
+<ul><li>internal/cli/cli.go</li><li>internal/cli/cli_test.go</li></ul>
+<p>SUMMARY: Implemented CLI flags, help text, invocation validation, exit codes, and focused tests. <code>sh bin/test.sh</code> and declared build/help/usage checks pass.</p>
+<p>BLOCKERS:</p>
+<ul><li>None</li></ul></article>
+</main>
+</body>
+</html>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/prompt_outputs/20261023.222921.164Z_csvstat_plan_codex.output.txt</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/prompt_outputs/20261023.222921.164Z_csvstat_plan_codex.output.txt</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/prompt_outputs/20261023.222921.164Z_csvstat_plan_codex.output.txt">Raw file</a></div></header>
+<article class="doc"><pre>=== BEGIN ARTIFACT TOPOLOGY.md ===
+## Declarations
+
+## story architecture
+summary:      Define the CsvStat command architecture and module boundaries.
+type:         foundational
+kind:         capability
+phase:        1
+implements:   ARCHITECTURE.md
+stack:        go.md
+provides:     csvstat architecture
+acceptance:   yes
+instructions: |
+  Establish the Go module layout, command boundary, internal package responsibilities, standard-library-only constraint, and error/output contracts for CsvStat.
+  Keep application logic separate from process exit handling and preserve all supplied sources as read-only test assets.
+
+## story cli-foundation
+summary:      Build the csvstat command entry point and module.
+type:         foundational
+kind:         capability
+phase:        1
+implements:   FEATURE-CLI-FOUNDATION.md
+covers:       CLI-001
+accepts:       st-003
+depends:      architecture
+stack:        go.md
+provides:     ./cmd/csvstat, csvstat help
+consumes:     csvstat architecture
+acceptance:   yes
+instructions: |
+  Create the Go module and ./cmd/csvstat executable using only the standard library.
+  Implement the documented invocation surface and useful help text for profile and frequency forms.
+  Keep process exit handling in main and expose testable command behavior internally.
+
+## story cli-input
+summary:      Read, normalize, and structurally validate CSV input.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-CLI-INPUT.md
+covers:       CLI-002
+accepts:       st-007
+depends:      cli-foundation
+stack:        go.md
+context:      sources/employees.csv, sources/sensors.csv, sources/orders.csv, sources/header_only.csv, sources/ragged.csv
+context_roles: |
+  sources/employees.csv: asset
+  sources/sensors.csv: asset
+  sources/orders.csv: asset
+  sources/header_only.csv: asset
+  sources/ragged.csv: asset
+provides:     RFC 4180 CSV parsing, trimmed records, structural validation
+consumes:     ./cmd/csvstat
+acceptance:   yes
+instructions: |
+  Implement CSV loading with encoding/csv.
+  Trim headers and values before downstream processing, preserve quoted fields, reject empty files, invalid headers, and ragged records, and retain rejected-record line information for diagnostics.
+  Do not read or embed answers from the supplied grader.
+
+## story cli-columns
+summary:      Resolve named columns and classify null values.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-CLI-COLUMNS.md
+covers:       CLI-003
+depends:      cli-input
+stack:        go.md
+provides:     column lookup, null normalization
+consumes:     RFC 4180 CSV parsing, trimmed records, structural validation
+acceptance:   yes
+instructions: |
+  Implement recognition of empty, NA, N/A, and NULL values case-insensitively after trimming.
+  Resolve --column and --freq names against the validated header and reject absent names without producing stdout.
+  Preserve the command&#x27;s usage-versus-rejected-input exit-code distinction.
+
+## story profile-types
+summary:      Infer each column type using the specified precedence.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-PROFILE-TYPES.md
+covers:       PROFILE-001
+accepts:       st-004
+depends:      cli-columns
+stack:        go.md
+provides:     integer, number, date, boolean, text, and empty inference
+consumes:     column lookup, null normalization
+acceptance:   yes
+instructions: |
+  Infer each column from non-null values in the required order: integer, number, date, boolean, then text.
+  Validate integer and number lexical forms, validate real calendar dates, handle case-insensitive booleans, and classify all-null columns as empty.
+
+## story profile-statistics
+summary:      Compute exact profile statistics and decimal formatting.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-PROFILE-STATISTICS.md
+covers:       PROFILE-002
+accepts:       st-005
+depends:      profile-types
+stack:        go.md
+provides:     rows, nulls, distinct, extrema, sum, mean, median
+consumes:     inferred column types, normalized records
+acceptance:   yes
+instructions: |
+  Compute every required profile statistic from the normalized records.
+  Use exact arithmetic, including exact decimal sums, means, and medians, and round once half away from zero to exactly two decimal places.
+  Apply type-specific extrema and leave nonnumeric statistic fields empty.
+
+## story profile-output
+summary:      Render profile results as CSV.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-PROFILE-OUTPUT.md
+covers:       PROFILE-003
+depends:      profile-statistics
+stack:        go.md
+provides:     profile CSV output
+consumes:     rows, nulls, distinct, extrema, sum, mean, median
+acceptance:   yes
+instructions: |
+  Emit the exact profile header and rows in source-column order, or only the requested named column.
+  Use encoding/csv so commas, quotes, and newlines are RFC-compliant, and emit empty fields as empty CSV fields.
+
+## story frequency-values
+summary:      Aggregate and order frequent non-null column values.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-FREQUENCY-VALUES.md
+covers:       FREQ-001
+accepts:       st-006
+depends:      cli-columns
+stack:        go.md
+provides:     frequency aggregation and deterministic ordering
+consumes:     column lookup, null normalization
+acceptance:   yes
+instructions: |
+  Count distinct non-null values for the requested column.
+  Sort by descending count and then bytewise ascending value, excluding all null spellings and preserving exact normalized values.
+
+## story frequency-limits
+summary:      Validate and apply frequency row limits.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-FREQUENCY-LIMITS.md
+covers:       FREQ-002
+depends:      frequency-values
+stack:        go.md
+provides:     --top validation and frequency CSV output
+consumes:     frequency aggregation and deterministic ordering
+acceptance:   yes
+instructions: |
+  Implement --top with default five and positive-integer validation.
+  Reject --top without --freq, limit output after ordering, and render the value,count CSV header and rows.
+
+## story cli-errors
+summary:      Map operational, usage, and rejected-input failures.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-CLI-ERRORS.md
+covers:       CLI-004
+accepts:       st-007, st-008
+depends:      cli-columns, profile-output, frequency-limits
+stack:        go.md
+provides:     exit-code and diagnostic contract
+consumes:     CSV validation, column lookup, profile output, frequency output
+acceptance:   yes
+instructions: |
+  Centralize command validation and error mapping.
+  Return 1 for file open/read failures, 2 for malformed arguments, and 3 for rejected input.
+  Write no stdout on failure and write one diagnostic line to stderr naming the file and rejected record line when applicable.
+
+## story test-gate
+summary:      Provide the Go vet and test project gate.
+type:         service
+kind:         test harness
+phase:        1
+implements:   FEATURE-TEST-GATE.md
+covers:       TEST-001
+accepts:       st-002
+depends:      cli-foundation
+stack:        common.md, go.md
+provides:     bin/test.sh
+consumes:     Go module and command packages
+acceptance:   yes
+instructions: |
+  Add a POSIX-compatible bin/test.sh that runs go vet ./... and go test ./... from the application root.
+  Ensure it exits zero only when both commands succeed and add focused Go tests for the implemented behavior.
+
+## story full-verification
+summary:      Run the complete supplied CsvStat conformance suite.
+type:         service
+kind:         test harness
+phase:        1
+implements:   FEATURE-FULL-VERIFICATION.md
+covers:       VERIFY-001
+accepts:       st-001
+depends:      architecture, cli-foundation, cli-input, cli-columns, profile-types, profile-statistics, profile-output, frequency-values, frequency-limits, cli-errors, test-gate
+stack:        common.md, go.md
+context:      sources/run.sh, sources/employees.csv, sources/sensors.csv, sources/orders.csv, sources/header_only.csv, sources/ragged.csv
+context_roles: |
+  sources/run.sh: stage
+  sources/employees.csv: stage
+  sources/sensors.csv: stage
+  sources/orders.csv: stage
+  sources/header_only.csv: stage
+  sources/ragged.csv: stage
+provides:     full CsvStat conformance verification
+consumes:     bin/test.sh, ./cmd/csvstat, complete CsvStat implementation
+acceptance:   yes
+instructions: |
+  Assemble the completed CLI and execute the supplied sources/run.sh without filtering, modification, or reinterpretation.
+  Treat its exit status as the release verification result and preserve the supplied sources byte-for-byte.
+=== END ARTIFACT ===</pre></article>
+</main>
+</body>
+</html>

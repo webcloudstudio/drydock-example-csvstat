@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-CLI-FOUNDATION.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-CLI-FOUNDATION.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-CLI-FOUNDATION.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: CLI Foundation</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261023 V1</td></tr><tr><td>Description</td><td>Provides the csvstat executable and documented command invocation surface.</td></tr><tr><td>Depends On</td><td>ARCHITECTURE.md</td></tr><tr><td>Provides</td><td>./cmd/csvstat, csvstat help</td></tr><tr><td>Consumes</td><td>csvstat architecture</td></tr></tbody></table></div>
+<h2>Intent</h2>
+<p>Provide a Go module and executable at <code>./cmd/csvstat</code> with profile and frequency invocation forms.</p>
+<h2>Invocation</h2>
+<ul><li><code>csvstat [--column &lt;name&gt;] &lt;file&gt;</code></li><li><code>csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</code></li></ul>
+<p>The command supports useful help text for these forms and keeps process termination in <code>main</code>.</p>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC cli-foundation-build ===<br>Intent: The declared command package builds successfully. import subprocess</p>
+<p>result = subprocess.run( [&quot;go&quot;, &quot;build&quot;, &quot;-o&quot;, &quot;csvstat-ac&quot;, &quot;./cmd/csvstat&quot;], capture_output=True, text=True, ) print(result.stdout) print(result.stderr) assert result.returncode == 0 === END AC cli-foundation-build ===</p>
+<p>=== AC cli-foundation-help ===<br>Intent: The executable provides a successful help invocation. import subprocess</p>
+<p>result = subprocess.run( [&quot;./csvstat-ac&quot;, &quot;--help&quot;], capture_output=True, text=True, ) print(result.stdout) print(result.stderr) assert result.returncode == 0 === END AC cli-foundation-help ===</p>
+<p>=== AC cli-foundation-usage ===<br>Intent: A missing file argument is reported as a usage failure. import subprocess</p>
+<p>result = subprocess.run( [&quot;./csvstat-ac&quot;], capture_output=True, text=True, ) print(result.stdout) print(result.stderr) assert result.returncode == 2 === END AC cli-foundation-usage ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>The executable is a Go main package at <code>./cmd/csvstat</code>.</li><li>Only <code>main</code> calls <code>os.Exit</code>.</li><li>No third-party modules are introduced.</li></ul></article>
+</main>
+</body>
+</html>

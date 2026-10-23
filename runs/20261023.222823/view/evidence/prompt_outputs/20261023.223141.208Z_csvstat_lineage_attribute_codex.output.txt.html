@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/prompt_outputs/20261023.223141.208Z_csvstat_lineage_attribute_codex.output.txt</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/prompt_outputs/20261023.223141.208Z_csvstat_lineage_attribute_codex.output.txt</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/prompt_outputs/20261023.223141.208Z_csvstat_lineage_attribute_codex.output.txt">Raw file</a></div></header>
+<article class="doc"><pre>&lt;requirement name=&quot;build-csvstat-command&quot; stories=&quot;cli-foundation&quot;&gt;
+Builds ./cmd/csvstat with `go build` and compares every command&#x27;s exit code and standard output
+&lt;/requirement&gt;
+&lt;requirement name=&quot;profile-every-column&quot; stories=&quot;cli-input,cli-columns,profile-types,profile-statistics,profile-output&quot;&gt;
+# ── A. Every column of each data file ──────────────────────────────────────────────────
+&lt;/requirement&gt;
+&lt;requirement name=&quot;profile-selected-column&quot; stories=&quot;cli-columns,profile-types,profile-statistics,profile-output&quot;&gt;
+# ── B. One column ────────────────────────────────────────────────────────────────────────
+&lt;/requirement&gt;
+&lt;requirement name=&quot;calculate-frequencies&quot; stories=&quot;cli-input,cli-columns,frequency-values,frequency-limits&quot;&gt;
+# ── C. Frequencies ───────────────────────────────────────────────────────────────────────
+&lt;/requirement&gt;
+&lt;requirement name=&quot;reject-invalid-input&quot; stories=&quot;cli-input,cli-errors&quot;&gt;
+# ── E. Rejected input and operational failures ───────────────────────────────────────────
+&lt;/requirement&gt;
+&lt;requirement name=&quot;reject-usage-errors&quot; stories=&quot;frequency-limits,cli-errors&quot;&gt;
+# ── U. Usage errors ──────────────────────────────────────────────────────────────────────
+&lt;/requirement&gt;
+&lt;unattached story=&quot;architecture&quot;/&gt;
+&lt;unattached story=&quot;profile-output&quot;/&gt;
+&lt;unattached story=&quot;test-gate&quot;/&gt;
+&lt;unattached story=&quot;full-verification&quot;/&gt;</pre></article>
+</main>
+</body>
+</html>

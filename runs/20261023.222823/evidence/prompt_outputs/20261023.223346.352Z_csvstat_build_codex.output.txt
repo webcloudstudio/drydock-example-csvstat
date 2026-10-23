@@ -1,0 +1,11 @@
+RESULT: SUCCESS
+
+FILES CHANGED:
+- internal/cli/cli.go
+- internal/cli/cli_test.go
+
+SUMMARY:
+Implemented CLI flags, help text, invocation validation, exit codes, and focused tests. `sh bin/test.sh` and declared build/help/usage checks pass.
+
+BLOCKERS:
+- None

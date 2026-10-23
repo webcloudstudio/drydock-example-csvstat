@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/evidence/block-1.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/evidence/block-1.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/evidence/block-1.md">Raw file</a></div></header>
+<article class="doc"><h1>Evidence: Block 1 · Foundational (block-1)</h1>
+<ul><li>block type: block</li><li>date: 2026-10-23</li><li>resulting state: closed/verified</li><li>story points (combined assembled cost): 6226</li><li>execution id: 20261023.223246.637Z-942037e8</li></ul>
+<h2>Stories built</h2>
+<ul><li>Define the CsvStat command architecture and module boundaries. (architecture) [story]</li></ul>
+<h2>Reusable compacts</h2>
+<ul><li>ARCHITECTURE_compact.md</li></ul>
+<h2>Stacked context</h2>
+<ul><li>implements: go.md (SP 4944)</li><li>compass: COMPASS.md (SP 628)</li><li>implements: ARCHITECTURE.md (SP 584)</li></ul>
+<h2>Build directory changes</h2>
+<ul><li>bin/test.sh</li><li>cmd/csvstat/main.go</li><li>go.mod</li><li>internal/cli/cli.go</li><li>internal/cli/cli_test.go</li><li>internal/csvstat/csvstat.go</li><li>internal/csvstat/csvstat_test.go</li></ul>
+<h2>Pre-build acceptance observation</h2>
+<ul><li>RED: architecture-build (ARCHITECTURE.md)</li></ul>
+<p>intent: The application architecture builds as the declared Go command. return code: 1 stdout: go: cannot find main module, but found .git/config in /mnt/c/Users/barlo/projects/drydock/uat/CsvStat to create a module there, run: cd ../../../.. &amp;&amp; go mod init stderr: --- drydock: values at failure --- result = CompletedProcess(args=[&#x27;go&#x27;, &#x27;build&#x27;, &#x27;./cmd/csvstat&#x27;], returncode=1, stdout=&#x27;&#x27;, stderr=&#x27;go: cannot find main module, but found .git/config in /mnt/c/Users/barlo/projects/drydock/uat/CsvStat\n\tto create a module there, run:\n\tcd ../../../.. &amp;&amp; go mod init\n&#x27;) --- drydock: end values --- Traceback (most recent call last): File &quot;architecture-build.py&quot;, line 10, in &lt;module&gt; assert result.returncode == 0 ^^^^^^^^^^^^^^^^^^^^^^ AssertionError</p>
+<ul><li>RED: architecture-vet (ARCHITECTURE.md)</li></ul>
+<p>intent: The declared Go packages pass static analysis. return code: 1 stdout: pattern ./...: directory prefix . does not contain main module or its selected dependencies stderr: --- drydock: values at failure --- result = CompletedProcess(args=[&#x27;go&#x27;, &#x27;vet&#x27;, &#x27;./...&#x27;], returncode=1, stdout=&#x27;&#x27;, stderr=&#x27;pattern ./...: directory prefix . does not contain main module or its selected dependencies\n&#x27;) --- drydock: end values --- Traceback (most recent call last): File &quot;architecture-vet.py&quot;, line 10, in &lt;module&gt; assert result.returncode == 0 ^^^^^^^^^^^^^^^^^^^^^^ AssertionError</p>
+<h2>Post-build programmatic acceptance</h2>
+<ul><li>PASS: architecture-build (ARCHITECTURE.md)</li></ul>
+<p>intent: The application architecture builds as the declared Go command. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0</p>
+<ul><li>PASS: architecture-vet (ARCHITECTURE.md)</li></ul>
+<p>intent: The declared Go packages pass static analysis. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0</p>
+<h2>Build summary</h2>
+<p>&lt;reusable-compact filename=&quot;ARCHITECTURE.md&quot;&gt;</p>
+<ul><li>Go CLI architecture: <code>cmd/csvstat</code> handles process startup and <code>os.Exit</code>; <code>internal/cli</code> handles flags, dispatch, diagnostics, and exit codes; <code>internal/csvstat</code> owns CSV loading, normalization, profiling, frequencies, and rendering; <code>bin/test.sh</code> runs verification.</li><li>Standard library only; Go 1.22+.</li><li>Success writes CSV to stdout; diagnostics use stderr.</li><li>Exit codes: 1 operational failure, 2 usage failure, 3 rejected input.</li></ul>
+<p>&lt;/reusable-compact&gt;</p>
+<p>RESULT: SUCCESS</p>
+<p>FILES CHANGED:</p>
+<ul><li>go.mod</li><li>cmd/csvstat/main.go</li><li>internal/cli/cli.go</li><li>internal/cli/cli_test.go</li><li>internal/csvstat/csvstat.go</li><li>internal/csvstat/csvstat_test.go</li><li>bin/test.sh</li></ul>
+<p>SUMMARY: Established the Go module, command boundary, internal package boundaries, CSV loading foundation, tests, and verification launcher. <code>go build ./cmd/csvstat</code>, <code>go vet ./...</code>, and <code>./bin/test.sh</code> pass.</p>
+<p>BLOCKERS:</p>
+<ul><li>None</li></ul></article>
+</main>
+</body>
+</html>

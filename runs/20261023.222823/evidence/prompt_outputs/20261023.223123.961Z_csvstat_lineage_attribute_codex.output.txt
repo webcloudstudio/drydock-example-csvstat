@@ -1,0 +1,27 @@
+<requirement name="read-normalize-validate-csv" stories="cli-input,cli-errors">
+order_id,order_date,customer,qty,unit_price,coupon,ref,shipped
+5000,2025-02-01,Acme Corp ,1,116.70,,A7,2025-03-18
+5017,2025-02-05,Umbrella,9,62.85,WELCOME,-3,2025-02-30
+</requirement>
+<requirement name="resolve-columns-and-null-values" stories="cli-columns">
+order_id,order_date,customer,qty,unit_price,coupon,ref,shipped
+</requirement>
+<requirement name="infer-column-types" stories="profile-types">
+order_id,order_date,customer,qty,unit_price,coupon,ref,shipped
+</requirement>
+<requirement name="aggregate-frequent-values" stories="frequency-values">
+Acme Corp
+Globex
+Initech
+Umbrella
+Hooli
+</requirement>
+<requirement name="compute-profile-statistics" stories="profile-statistics">
+5000,2025-02-01,Acme Corp ,1,116.70,,A7,2025-03-18
+</requirement>
+<unattached story="architecture"/>
+<unattached story="cli-foundation"/>
+<unattached story="frequency-limits"/>
+<unattached story="profile-output"/>
+<unattached story="test-gate"/>
+<unattached story="full-verification"/>
