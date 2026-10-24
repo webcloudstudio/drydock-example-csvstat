@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a16553-0db8-7d33-b5ce-5f8f69116584"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"<requirement name=\"read-csv-records\" stories=\"csv-ingestion\">\nsku,price,in_stock\nA1,9.99,true\nA2,4.50,false\nA4,3.00,false\n</requirement>\n<requirement name=\"reject-ragged-record\" stories=\"csv-validation\">\nA3,1.25,true,extra\n</requirement>\n<unattached story=\"architecture\"/>\n<unattached story=\"cli-contract\"/>\n<unattached story=\"cli-help\"/>\n<unattached story=\"type-inference\"/>\n<unattached story=\"statistics\"/>\n<unattached story=\"frequencies\"/>\n<unattached story=\"test-gate\"/>\n<unattached story=\"conformance\"/>"}}
-{"type":"turn.completed","usage":{"input_tokens":12671,"cached_input_tokens":10240,"cache_write_input_tokens":0,"output_tokens":596,"reasoning_output_tokens":444}}

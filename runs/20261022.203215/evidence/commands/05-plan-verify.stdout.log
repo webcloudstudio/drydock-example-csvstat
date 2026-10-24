@@ -1,5 +1,0 @@
-Drydock 0.2.0  Copyright (c) 2026 Web Cloud Studio. All rights reserved.
-plan verify: CsvStat
-  24 acceptance criteria in 10 files: every one can run
-  ⚠  9 criteria: captures a program's output and prints none of it; print its pass/fail counts before asserting so repair can see progress
-       FEATURE-COLUMN-STATISTICS.md [statistics-profile-shape], FEATURE-COLUMN-STATISTICS.md [statistics-selected-column], FEATURE-COLUMN-STATISTICS.md [statistics-exact-rounding], FEATURE-FREQUENCY.md [frequency-ordering], FEATURE-FREQUENCY.md [frequency-top-limit], and 4 more

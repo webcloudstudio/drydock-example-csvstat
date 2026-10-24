@@ -1,4 +1,0 @@
-{"type":"thread.started","thread_id":"01a16552-d398-7712-a547-8c255cd39889"}
-{"type":"turn.started"}
-{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"<requirement name=\"read-header-only-csv\" stories=\"csv-ingestion\">\nsku,price,in_stock\n</requirement>\n<unattached story=\"architecture\"/>\n<unattached story=\"cli-contract\"/>\n<unattached story=\"cli-help\"/>\n<unattached story=\"csv-validation\"/>\n<unattached story=\"type-inference\"/>\n<unattached story=\"statistics\"/>\n<unattached story=\"frequencies\"/>\n<unattached story=\"test-gate\"/>\n<unattached story=\"conformance\"/>"}}
-{"type":"turn.completed","usage":{"input_tokens":12637,"cached_input_tokens":10240,"cache_write_input_tokens":0,"output_tokens":366,"reasoning_output_tokens":260}}
