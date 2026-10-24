@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/ERRORS.md</title>
+<link rel="stylesheet" href="../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/ERRORS.md</h1><div class="filenav"><a href="../../../../index.html">&larr; Report</a><a href="../../../../workspace/targets/CsvStat/ERRORS.md">Raw file</a></div></header>
+<article class="doc"><h1>BIG ERRORS — action required</h1>
+<ul><li>Command: <code>plan</code></li><li>Phase: post-output validation</li><li>State: Error</li><li>Timestamp: 2026-10-24T22:22:15+00:00</li><li>Execution ID: 20261024.221736.728Z-83d1740b</li><li>Challenge Execution ID: -</li><li>Classification: plan generation stalled</li><li>Evidence / logs: /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261024.221659/workspace/logs</li></ul>
+<h2>Diagnostic</h2>
+<p>Blueprint generation stalled after TOPOLOGY.md was accepted and frozen, after 3 Stage 2 pass(es). last rejection: the response broke the artifact delimiter contract; emit every file between its own BEGIN and END delimiters topology:  1  (22 stories declared) specs:     5 / 22  accepted manifest:  0  (not serialized) missing:   type-date -&gt; FEATURE-DateType.md type-boolean-text -&gt; FEATURE-BooleanTextTypes.md stats-counts -&gt; FEATURE-Counts.md decimals -&gt; FEATURE-DecimalFormat.md stats-minmax -&gt; FEATURE-MinMax.md stats-summean -&gt; FEATURE-SumMean.md stats-median -&gt; FEATURE-Median.md profile-all -&gt; FEATURE-ProfileAll.md profile-column -&gt; FEATURE-ProfileColumn.md … (10 more lines truncated)</p>
+<h2>Recovery</h2>
+<p>Inspect the failed Stage 2 batch, then run: drydock plan CsvStat</p></article>
+</main>
+</body>
+</html>

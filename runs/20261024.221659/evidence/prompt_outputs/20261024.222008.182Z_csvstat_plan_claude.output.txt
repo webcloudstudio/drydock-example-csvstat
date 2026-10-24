@@ -1,0 +1,1458 @@
+=== BEGIN ARTIFACT FEATURE-DateType.md ===
+# FEATURE: Date Type Inference
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261024 V1 |
+| Description | Infer the date column type from YYYY-MM-DD values that are real calendar dates. |
+| Depends On  | FEATURE-NumericTypes.md |
+| Provides    | InferType date |
+
+## Questions
+
+- None.
+
+## Purpose
+
+After integer and number have been ruled out for a column, the column is `date` when every non-null
+value matches `YYYY-MM-DD` and names a real calendar date. A value such as `2025-02-30` has the right
+shape but is not a calendar date, so it fails the date test and the column falls through to the next
+candidate type (`boolean`, then `text`).
+
+## Trigger
+
+Type inference runs once per column after the file has been read, trimmed, and nulls classified.
+
+## Sequence
+
+1. Take the trimmed non-null values of the column.
+2. If every value is an integer, or every value is a number, the earlier types win (FEATURE-NumericTypes.md).
+3. Otherwise test each value: exactly four digits, a hyphen, two digits, a hyphen, two digits.
+4. Validate the year, month, and day as a real calendar date, with leap years honored
+   (`2024-02-29` is valid, `2025-02-29` is not). `time.Parse` with layout `2006-01-02` plus the
+   strict shape check is sufficient.
+5. The column is `date` only when every non-null value passes. Otherwise inference continues.
+
+## Reads
+
+- Trimmed non-null values of one column.
+
+## Writes
+
+- The inferred type token `date` for the column. Nothing is persisted.
+
+## Acceptance Notes
+
+- Single-digit month or day (`2025-2-3`) is not the `YYYY-MM-DD` shape and is not a date.
+- Month 00 or 13 and day 00 are not dates.
+- Null values never disqualify a date column.
+- A column that mixes dates and other values is not a date column.
+
+## Programmatic Acceptance
+
+=== AC date-type-valid-column ===
+Intent: A column of valid YYYY-MM-DD values, including a leap day, is typed as date.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+values = ["2024-02-29", "2025-12-31", "2015-08-27"]
+rows = [["id", "d"]] + [[str(i), v] for i, v in enumerate(values)]
+result = profile(rows)
+assert result[0][0] == "column"
+by_name = {r[0]: r for r in result[1:]}
+assert by_name["d"][1] == "date"
+=== END AC date-type-valid-column ===
+
+=== AC date-type-invalid-calendar-falls-to-text ===
+Intent: A value with the date shape that is not a real calendar date makes the column text.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+bad_values = ["2025-02-30", "2025-02-29", "2025-13-01", "2025-00-10", "2025-04-31"]
+for bad in bad_values:
+    rows = [["id", "d"], ["1", "2025-01-15"], ["2", bad]]
+    result = profile(rows)
+    by_name = {r[0]: r for r in result[1:]}
+    assert by_name["d"][1] == "text", (bad, by_name["d"])
+=== END AC date-type-invalid-calendar-falls-to-text ===
+
+=== AC date-type-wrong-shape ===
+Intent: Values that are not zero-padded YYYY-MM-DD are not dates.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+for odd in ["2025-2-3", "2025/02/03", "20250203", "2025-02-03T08:00"]:
+    rows = [["id", "d"], ["1", "2025-01-15"], ["2", odd]]
+    result = profile(rows)
+    by_name = {r[0]: r for r in result[1:]}
+    assert by_name["d"][1] == "text", (odd, by_name["d"])
+=== END AC date-type-wrong-shape ===
+
+=== AC date-type-nulls-ignored ===
+Intent: Null values and padded dates do not prevent a date column from being typed as date.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+rows = [
+    ["id", "d"],
+    ["1", "2025-03-01"],
+    ["2", ""],
+    ["3", "NA"],
+    ["4", "n/a"],
+    ["5", "null"],
+    ["6", "  2025-03-02  "],
+]
+result = profile(rows)
+by_name = {r[0]: r for r in result[1:]}
+assert by_name["d"][1] == "date", by_name["d"]
+=== END AC date-type-nulls-ignored ===
+
+=== AC date-type-integer-wins-over-date ===
+Intent: A column of digits only keeps its integer type; the date test is applied after the numeric tests.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+rows = [["id", "n", "d"], ["1", "20250101", "2025-01-01"], ["2", "20250102", "2025-01-02"]]
+result = profile(rows)
+by_name = {r[0]: r for r in result[1:]}
+assert by_name["n"][1] == "integer", by_name["n"]
+assert by_name["d"][1] == "date", by_name["d"]
+=== END AC date-type-integer-wins-over-date ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Calendar validity is decided by the file's values only; no date, type, or value list is hardcoded.
+- Only the standard library is used for date validation.
+- Date columns keep their original text in `min` and `max`; no reformatting of dates occurs.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-BooleanTextTypes.md ===
+# FEATURE: Boolean, Text, and Empty Type Inference
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261024 V1 |
+| Description | Infer the boolean, text, and empty column types as the last steps of type inference. |
+| Depends On  | FEATURE-DateType.md |
+| Provides    | InferType boolean, InferType text, InferType empty |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Complete the type inference order `integer`, `number`, `date`, `boolean`, `text`, plus the special
+`empty` type. A column is `boolean` when every non-null value equals `true` or `false` ignoring case.
+Any column that satisfies no earlier type is `text`. A column with no non-null values at all is `empty`.
+
+## Trigger
+
+Type inference runs once per column after reading, trimming, and null classification.
+
+## Sequence
+
+1. If the column has zero non-null values, its type is `empty`, and the `min`, `max`, `sum`, `mean`,
+   and `median` fields are written empty.
+2. Otherwise apply `integer`, `number`, `date` in order (earlier features).
+3. If every non-null value, compared case-insensitively, is `true` or `false`, the type is `boolean`.
+4. Otherwise the type is `text`.
+
+## Reads
+
+- Trimmed non-null values of one column.
+
+## Writes
+
+- The inferred type token for the column (`boolean`, `text`, or `empty`). Nothing is persisted.
+
+## Acceptance Notes
+
+- `1` and `0` are integers, never booleans.
+- `yes` and `no` are text.
+- A value consisting only of spaces is trimmed to empty and is null.
+- A file with a header and no rows gives every column the type `empty` with zero counts.
+- Every `empty` column writes empty `min`, `max`, `sum`, `mean`, and `median`.
+
+## Programmatic Acceptance
+
+=== AC boolean-type-case-insensitive ===
+Intent: A column of true and false in any letter case is typed as boolean.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+values = ["true", "FALSE", "True", "false", "TRUE", "False"]
+rows = [["id", "b"]] + [[str(i), v] for i, v in enumerate(values)]
+result = profile(rows)
+by_name = {r[0]: r for r in result[1:]}
+assert by_name["b"][1] == "boolean", by_name["b"]
+=== END AC boolean-type-case-insensitive ===
+
+=== AC boolean-type-needs-every-value ===
+Intent: One non-boolean value makes a column text, and 1/0 or yes/no columns are not boolean.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+mixed = ["true", "false", "maybe"]
+yesno = ["yes", "no", "yes"]
+bits = ["1", "0", "1"]
+rows = [["id", "mixed", "yesno", "bits"]]
+for i in range(3):
+    rows.append([str(i), mixed[i], yesno[i], bits[i]])
+result = profile(rows)
+by_name = {r[0]: r for r in result[1:]}
+assert by_name["mixed"][1] == "text", by_name["mixed"]
+assert by_name["yesno"][1] == "text", by_name["yesno"]
+assert by_name["bits"][1] == "integer", by_name["bits"]
+=== END AC boolean-type-needs-every-value ===
+
+=== AC boolean-type-nulls-ignored ===
+Intent: Null spellings do not disqualify a boolean column.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+values = ["true", "", "NA", "N/A", "NULL", "false", "  "]
+rows = [["id", "b"]] + [[str(i), v] for i, v in enumerate(values)]
+result = profile(rows)
+by_name = {r[0]: r for r in result[1:]}
+assert by_name["b"][1] == "boolean", by_name["b"]
+=== END AC boolean-type-nulls-ignored ===
+
+=== AC text-type-fallback ===
+Intent: A column of arbitrary words, and one holding an invalid date beside valid dates, is typed as text.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+words = ["alpha", "beta", "relocating to Austin, TX"]
+dates = ["2025-03-01", "2025-02-30", "2025-03-02"]
+rows = [["id", "w", "d"]]
+for i in range(3):
+    rows.append([str(i), words[i], dates[i]])
+result = profile(rows)
+by_name = {r[0]: r for r in result[1:]}
+assert by_name["w"][1] == "text", by_name["w"]
+assert by_name["d"][1] == "text", by_name["d"]
+=== END AC text-type-fallback ===
+
+=== AC empty-type-all-null-column ===
+Intent: A column whose every value is null is typed empty and its statistic fields are written empty.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+nulls = ["", "NA", "null", " ", "N/A", "NULL"]
+rows = [["id", "e"]] + [[str(i), v] for i, v in enumerate(nulls)]
+result = profile(rows)
+header = result[0]
+by_name = {r[0]: dict(zip(header, r)) for r in result[1:]}
+e = by_name["e"]
+assert e["type"] == "empty", e
+assert e["rows"] == str(len(nulls)), e
+assert e["nulls"] == str(len(nulls)), e
+assert e["distinct"] == str(0), e
+for field in ["min", "max", "sum", "mean", "median"]:
+    assert e[field] == "", (field, e)
+=== END AC empty-type-all-null-column ===
+
+=== AC empty-type-header-only-file ===
+Intent: A file with a header and no data rows types every column empty with zero counts.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+names = ["sku", "price", "in_stock"]
+result = profile([names])
+header = result[0]
+assert len(result) == 1 + len(names), result
+for name, row in zip(names, result[1:]):
+    rec = dict(zip(header, row))
+    assert rec["column"] == name, rec
+    assert rec["type"] == "empty", rec
+    assert rec["rows"] == str(0), rec
+    assert rec["nulls"] == str(0), rec
+    assert rec["distinct"] == str(0), rec
+=== END AC empty-type-header-only-file ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- No column type is hardcoded; every type comes from the values of the file examined.
+- `empty` is assigned only when there are no non-null values; it is never assigned to a column that has any non-null value.
+- Standard library only.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-Counts.md ===
+# FEATURE: Row, Null, and Distinct Counts
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261024 V1 |
+| Description | Report the rows, nulls, and distinct count of every column. |
+| Depends On  | FEATURE-BooleanTextTypes.md |
+| Provides    | stats rows, stats nulls, stats distinct |
+
+## Questions
+
+- None.
+
+## Purpose
+
+For every column the profile reports three counts: `rows` (data records), `nulls` (null values), and
+`distinct` (different non-null values). They are computed from the trimmed values of the column.
+
+## Trigger
+
+Computed once per column when the profile is built.
+
+## Sequence
+
+1. `rows` is the number of data records, excluding the header. It is the same for every column.
+2. `nulls` counts values that are empty or equal `NA`, `N/A`, or `NULL` ignoring case after trimming.
+3. `distinct` counts the different non-null values, compared as exact strings after trimming. Case
+   differs, so `Acme` and `acme` are two values. `Globex` and `  Globex  ` are one value.
+
+## Reads
+
+- Trimmed values of one column.
+
+## Writes
+
+- Three integer fields written as plain decimal integers.
+
+## Acceptance Notes
+
+- A header-only file gives `rows`, `nulls`, and `distinct` of zero for every column.
+- A null never contributes to `distinct`.
+- A quoted field containing a comma is one value.
+
+## Programmatic Acceptance
+
+=== AC counts-rows-nulls-distinct ===
+Intent: rows, nulls, and distinct match counts derived from the values the criterion wrote.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+def is_null(v):
+    t = v.strip()
+    return t == "" or t.upper() in {"NA", "N/A", "NULL"}
+
+
+values = ["red", "blue", "red", "", "NA", "blue", "green", "n/a", "NULL", "red"]
+rows = [["id", "c"]] + [[str(i), v] for i, v in enumerate(values)]
+result = profile(rows)
+header = result[0]
+by_name = {r[0]: dict(zip(header, r)) for r in result[1:]}
+c = by_name["c"]
+non_null = [v.strip() for v in values if not is_null(v)]
+assert c["rows"] == str(len(values)), c
+assert c["nulls"] == str(len(values) - len(non_null)), c
+assert c["distinct"] == str(len(set(non_null))), c
+assert by_name["id"]["rows"] == c["rows"], by_name
+=== END AC counts-rows-nulls-distinct ===
+
+=== AC counts-distinct-trims-and-is-case-sensitive ===
+Intent: Padding does not create a new distinct value, while a case difference does.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+values = ["Globex", "  Globex  ", "Globex ", "globex", "Acme Corp ", "Acme Corp"]
+rows = [["id", "c"]] + [[str(i), v] for i, v in enumerate(values)]
+result = profile(rows)
+header = result[0]
+c = {r[0]: dict(zip(header, r)) for r in result[1:]}["c"]
+expected = len({v.strip() for v in values})
+assert c["distinct"] == str(expected), c
+assert c["nulls"] == str(0), c
+=== END AC counts-distinct-trims-and-is-case-sensitive ===
+
+=== AC counts-quoted-comma-is-one-value ===
+Intent: A quoted field containing a comma is counted as a single value.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydict_placeholder import nothing  # noqa
+=== END AC counts-quoted-comma-is-one-value ===
+
+=== AC counts-header-only ===
+Intent: A file with only a header reports zero rows, nulls, and distinct for each column.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+names = ["a", "b", "c"]
+result = profile([names])
+header = result[0]
+assert len(result) == 1 + len(names), result
+for row in result[1:]:
+    rec = dict(zip(header, row))
+    for field in ["rows", "nulls", "distinct"]:
+        assert rec[field] == str(0), rec
+=== END AC counts-header-only ===
+
+=== AC counts-single-column-selection ===
+Intent: The counts reported for one column through --column equal those in the full profile.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+
+def run(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+values = ["x", "y", "", "x", "NA"]
+rows = [["id", "c"]] + [[str(i), v] for i, v in enumerate(values)]
+full = run(rows)
+one = run(rows, "--column", "c")
+header = full[0]
+assert one[0] == header, (one[0], header)
+assert len(one) == 2, one
+full_c = [r for r in full[1:] if r[0] == "c"][0]
+for field in ["rows", "nulls", "distinct"]:
+    idx = header.index(field)
+    assert one[1][idx] == full_c[idx], field
+=== END AC counts-single-column-selection ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Counts are computed from the file examined; none is hardcoded.
+- Distinct is a comparison of exact trimmed strings, never case-folded or numerically normalized.
+- Counts are written as plain integers.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-DecimalFormat.md ===
+# FEATURE: Decimal Formatting
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261024 V1 |
+| Description | Format exact decimal statistics with two places, rounded once half away from zero. |
+| Depends On  | ARCHITECTURE.md |
+| Provides    | FormatDecimal |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Every `number` column `min`, `max`, and `sum`, and every `mean` and `median` of an integer or number
+column, is written with exactly two decimal places. The value is held exactly as a `math/big` rational
+and rounded once at output, half away from zero. Integer `min`, `max`, and `sum` are written as plain
+integers.
+
+## Trigger
+
+Called whenever a profile field holds a decimal value.
+
+## Sequence
+
+1. Take the exact value as a `*big.Rat`.
+2. Multiply by 100, then round to an integer with ties going away from zero (for example `0.005`
+   becomes `0.01` and `-0.005` becomes `-0.01`).
+3. Write the integer part, a decimal point, and exactly two fraction digits. No thousands separator.
+4. Write a leading `-` only when the rounded result is non-zero and negative. A value that rounds to
+   zero is written `0.00` with no sign (decision Q-002).
+
+## Reads
+
+- An exact rational value.
+
+## Writes
+
+- A string of the form `-?[0-9]+\.[0-9]{2}`.
+
+## Acceptance Notes
+
+- Rounding happens once, on the exact value, never on an already rounded intermediate and never through
+  `float64`.
+- `1012.50`, `-12.21`, and `0.00` are well formed outputs.
+- The mean of `0.01` and `0.02` is exactly `0.015` and is written `0.02`.
+
+## Programmatic Acceptance
+
+=== AC decimal-single-value-rounding ===
+Intent: A one-value number column writes min, max, sum, mean, and median as the value rounded half away from zero to two places.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from decimal import Decimal, ROUND_HALF_UP
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+def two_places(d):
+    q = d.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    if q == 0:
+        q = abs(q)
+    return format(q, "f")
+
+
+inputs = ["0.005", "-0.005", "2.675", "-2.675", "1.005", "1012.5", "123456789.125", "0.001", "-0.001", "0.00"]
+for text in inputs:
+    result = profile([["id", "v"], ["1", text]])
+    header = result[0]
+    rec = {r[0]: dict(zip(header, r)) for r in result[1:]}["v"]
+    expected = two_places(Decimal(text))
+    assert rec["type"] == "number", (text, rec)
+    for field in ["min", "max", "sum", "mean", "median"]:
+        assert rec[field] == expected, (text, field, rec)
+=== END AC decimal-single-value-rounding ===
+
+=== AC decimal-mean-is-exact ===
+Intent: The mean is computed exactly and rounded once, so a tie in the exact mean rounds away from zero.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from decimal import Decimal, ROUND_HALF_UP, getcontext
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+getcontext().prec = 50
+
+
+def two_places(d):
+    q = d.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    if q == 0:
+        q = abs(q)
+    return format(q, "f")
+
+
+for pair in [("0.01", "0.02"), ("-0.01", "-0.02"), ("1.10", "2.25"), ("0.10", "0.15")]:
+    result = profile([["id", "v"], ["1", pair[0]], ["2", pair[1]]])
+    header = result[0]
+    rec = {r[0]: dict(zip(header, r)) for r in result[1:]}["v"]
+    values = [Decimal(p) for p in pair]
+    mean = sum(values) / len(values)
+    assert rec["mean"] == two_places(mean), (pair, rec)
+    assert rec["median"] == two_places(mean), (pair, rec)
+    assert rec["sum"] == two_places(sum(values)), (pair, rec)
+=== END AC decimal-mean-is-exact ===
+
+=== AC decimal-no-negative-zero ===
+Intent: A negative value that rounds to zero is written without a minus sign.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+result = profile([["id", "v"], ["1", "-0.001"], ["2", "-0.002"]])
+header = result[0]
+rec = {r[0]: dict(zip(header, r)) for r in result[1:]}["v"]
+for field in ["min", "max", "sum", "mean", "median"]:
+    assert not rec[field].startswith("-"), (field, rec)
+    assert float(rec[field]) == 0.0, (field, rec)
+=== END AC decimal-no-negative-zero ===
+
+=== AC decimal-integer-columns-plain-and-mean-two-places ===
+Intent: Integer min, max, and sum are plain integers while integer mean and median use two decimal places.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+values = [1, 2, 10]
+rows = [["id", "v"]] + [[str(i), str(v)] for i, v in enumerate(values)]
+result = profile(rows)
+header = result[0]
+rec = {r[0]: dict(zip(header, r)) for r in result[1:]}["v"]
+assert rec["type"] == "integer", rec
+assert rec["min"] == str(min(values)), rec
+assert rec["max"] == str(max(values)), rec
+assert rec["sum"] == str(sum(values)), rec
+assert rec["mean"] == format(sum(values) / len(values), ".2f"), rec
+assert rec["median"] == format(2, ".2f"), rec
+=== END AC decimal-integer-columns-plain-and-mean-two-places ===
+
+=== AC decimal-no-thousands-separator ===
+Intent: Large decimal totals are written without a thousands separator and unquoted.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from decimal import Decimal
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return out, list(csv.reader(io.StringIO(out)))
+
+
+values = ["1000000.50", "2000000.25", "3000000.75"]
+rows = [["id", "v"]] + [[str(i), v] for i, v in enumerate(values)]
+raw, result = profile(rows)
+header = result[0]
+rec = {r[0]: dict(zip(header, r)) for r in result[1:]}["v"]
+total = sum(Decimal(v) for v in values)
+assert rec["sum"] == format(total, ".2f"), rec
+assert "," not in rec["sum"], rec
+=== END AC decimal-no-thousands-separator ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Never use `float64` to compute or round a statistic; use `math/big`.
+- Round exactly once, half away from zero, at the moment of writing.
+- No thousands separator and no locale-dependent formatting.
+- A result that rounds to zero carries no minus sign.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-MinMax.md ===
+# FEATURE: Minimum and Maximum
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261024 V1 |
+| Description | Report the min and max of every column according to the ordering rule of its type. |
+| Depends On  | FEATURE-Counts.md, FEATURE-DecimalFormat.md |
+| Provides    | stats min, stats max |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Each column row carries a `min` and a `max` computed over its non-null values, using the ordering
+rule of the column's inferred type.
+
+## Trigger
+
+Computed once per column when the profile is built.
+
+## Sequence
+
+| Type | Rule |
+|---|---|
+| `integer` | Numerically smallest and largest, written as plain integers. |
+| `number` | Numerically smallest and largest, written with two decimals (FEATURE-DecimalFormat.md). |
+| `date` | Earliest and latest date, written as in the file. |
+| `boolean` | `min` is `false` if any value is false, else `true`; `max` is `true` if any value is true, else `false`. Written in lower case. |
+| `text` | Smallest and largest by byte value of the trimmed string. |
+| `empty` | Both fields empty. |
+
+## Reads
+
+- Trimmed non-null values of one column and its inferred type.
+
+## Writes
+
+- The `min` and `max` fields of the profile row.
+
+## Acceptance Notes
+
+- Integer ordering is numeric: `9` is less than `10`, and `-3` is less than both.
+- Text ordering is by bytes, so upper case letters sort before lower case letters, and `10` sorts before `9`.
+- Nulls never take part.
+
+## Programmatic Acceptance
+
+=== AC minmax-integer-numeric-order ===
+Intent: Integer min and max are numeric, include negatives, and ignore nulls.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+values = ["9", "10", "-3", "NA", "100", ""]
+rows = [["id", "v"]] + [[str(i), v] for i, v in enumerate(values)]
+result = profile(rows)
+header = result[0]
+rec = {r[0]: dict(zip(header, r)) for r in result[1:]}["v"]
+numbers = [int(v) for v in values if v not in ("NA", "")]
+assert rec["type"] == "integer", rec
+assert rec["min"] == str(min(numbers)), rec
+assert rec["max"] == str(max(numbers)), rec
+=== END AC minmax-integer-numeric-order ===
+
+=== AC minmax-number-two-decimals ===
+Intent: Number min and max are numeric and written with two decimals.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from decimal import Decimal
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+values = ["3.5", "-12.21", "29.81", "N/A", "7.25", "0.1"]
+rows = [["id", "v"]] + [[str(i), v] for i, v in enumerate(values)]
+result = profile(rows)
+header = result[0]
+rec = {r[0]: dict(zip(header, r)) for r in result[1:]}["v"]
+numbers = [Decimal(v) for v in values if v != "N/A"]
+assert rec["type"] == "number", rec
+assert rec["min"] == format(min(numbers), ".2f"), rec
+assert rec["max"] == format(max(numbers), ".2f"), rec
+=== END AC minmax-number-two-decimals ===
+
+=== AC minmax-date-earliest-latest ===
+Intent: Date min and max are the earliest and latest dates, written as they appear in the file.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+values = ["2022-05-14", "2015-08-27", "2025-06-02", "", "2018-11-08"]
+rows = [["id", "v"]] + [[str(i), v] for i, v in enumerate(values)]
+result = profile(rows)
+header = result[0]
+rec = {r[0]: dict(zip(header, r)) for r in result[1:]}["v"]
+dates = [v for v in values if v]
+assert rec["type"] == "date", rec
+assert rec["min"] == min(dates), rec
+assert rec["max"] == max(dates), rec
+=== END AC minmax-date-earliest-latest ===
+
+=== AC minmax-boolean-rules ===
+Intent: Boolean min is false if any value is false and max is true if any value is true, in lower case.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+cases = [
+    ["TRUE", "False", "true"],
+    ["true", "TRUE", "True"],
+    ["false", "FALSE", "False"],
+    ["True", "", "NA"],
+]
+for values in cases:
+    rows = [["id", "v"]] + [[str(i), v] for i, v in enumerate(values)]
+    result = profile(rows)
+    header = result[0]
+    rec = {r[0]: dict(zip(header, r)) for r in result[1:]}["v"]
+    lowered = [v.lower() for v in values if v not in ("", "NA")]
+    expected_min = "false" if "false" in lowered else "true"
+    expected_max = "true" if "true" in lowered else "false"
+    assert rec["type"] == "boolean", rec
+    assert rec["min"] == expected_min, (values, rec)
+    assert rec["max"] == expected_max, (values, rec)
+=== END AC minmax-boolean-rules ===
+
+=== AC minmax-text-byte-order ===
+Intent: Text min and max are by byte value, so capitals precede lower case and 10 precedes 9.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+cases = [
+    ["apple", "Banana", "cherry", "Zed", "NA"],
+    ["10", "9", "x"],
+    ["  pad  ", "pad", "Pad"],
+]
+for values in cases:
+    rows = [["id", "v"]] + [[str(i), v] for i, v in enumerate(values)]
+    result = profile(rows)
+    header = result[0]
+    rec = {r[0]: dict(zip(header, r)) for r in result[1:]}["v"]
+    texts = [v.strip().encode() for v in values if v.strip().upper() not in ("", "NA", "N/A", "NULL")]
+    assert rec["type"] == "text", (values, rec)
+    assert rec["min"].encode() == min(texts), (values, rec)
+    assert rec["max"].encode() == max(texts), (values, rec)
+=== END AC minmax-text-byte-order ===
+
+=== AC minmax-empty-column ===
+Intent: An empty column writes empty min and max fields.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+values = ["", "NA", "NULL"]
+rows = [["id", "v"]] + [[str(i), v] for i, v in enumerate(values)]
+result = profile(rows)
+header = result[0]
+rec = {r[0]: dict(zip(header, r)) for r in result[1:]}["v"]
+assert rec["type"] == "empty", rec
+assert rec["min"] == "", rec
+assert rec["max"] == "", rec
+=== END AC minmax-empty-column ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Min and max are computed from the file examined; no value is hardcoded.
+- Text ordering is by byte value, never locale collation or case folding.
+- Number min and max use `math/big` values and the shared two-decimal formatter.
+=== END ARTIFACT ===
+
+Wait — one block above is broken. Re-emitting FEATURE-Counts.md in full, corrected.
+
+=== BEGIN ARTIFACT FEATURE-Counts.md ===
+# FEATURE: Row, Null, and Distinct Counts
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261024 V1 |
+| Description | Report the rows, nulls, and distinct count of every column. |
+| Depends On  | FEATURE-BooleanTextTypes.md |
+| Provides    | stats rows, stats nulls, stats distinct |
+
+## Questions
+
+- None.
+
+## Purpose
+
+For every column the profile reports three counts: `rows` (data records), `nulls` (null values), and
+`distinct` (different non-null values). They are computed from the trimmed values of the column.
+
+## Trigger
+
+Computed once per column when the profile is built.
+
+## Sequence
+
+1. `rows` is the number of data records, excluding the header. It is the same for every column.
+2. `nulls` counts values that are empty or equal `NA`, `N/A`, or `NULL` ignoring case after trimming.
+3. `distinct` counts the different non-null values, compared as exact strings after trimming. Case
+   differs, so `Acme` and `acme` are two values. `Globex` and `  Globex  ` are one value.
+
+## Reads
+
+- Trimmed values of one column.
+
+## Writes
+
+- Three integer fields written as plain decimal integers.
+
+## Acceptance Notes
+
+- A header-only file gives `rows`, `nulls`, and `distinct` of zero for every column.
+- A null never contributes to `distinct`.
+- A quoted field containing a comma is one value.
+
+## Programmatic Acceptance
+
+=== AC counts-rows-nulls-distinct ===
+Intent: rows, nulls, and distinct match counts derived from the values the criterion wrote.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+def is_null(v):
+    t = v.strip()
+    return t == "" or t.upper() in {"NA", "N/A", "NULL"}
+
+
+values = ["red", "blue", "red", "", "NA", "blue", "green", "n/a", "NULL", "red"]
+rows = [["id", "c"]] + [[str(i), v] for i, v in enumerate(values)]
+result = profile(rows)
+header = result[0]
+by_name = {r[0]: dict(zip(header, r)) for r in result[1:]}
+c = by_name["c"]
+non_null = [v.strip() for v in values if not is_null(v)]
+assert c["rows"] == str(len(values)), c
+assert c["nulls"] == str(len(values) - len(non_null)), c
+assert c["distinct"] == str(len(set(non_null))), c
+assert by_name["id"]["rows"] == c["rows"], by_name
+=== END AC counts-rows-nulls-distinct ===
+
+=== AC counts-distinct-trims-and-is-case-sensitive ===
+Intent: Padding does not create a new distinct value, while a case difference does.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+values = ["Globex", "  Globex  ", "Globex ", "globex", "Acme Corp ", "Acme Corp"]
+rows = [["id", "c"]] + [[str(i), v] for i, v in enumerate(values)]
+result = profile(rows)
+header = result[0]
+c = {r[0]: dict(zip(header, r)) for r in result[1:]}["c"]
+expected = len({v.strip() for v in values})
+assert c["distinct"] == str(expected), c
+assert c["nulls"] == str(0), c
+=== END AC counts-distinct-trims-and-is-case-sensitive ===
+
+=== AC counts-quoted-comma-is-one-value ===
+Intent: A quoted field containing a comma is counted as a single value.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+values = ["remote, part-time", "mentor", "remote, part-time", "", "mentor"]
+rows = [["id", "notes"]] + [[str(i), v] for i, v in enumerate(values)]
+result = profile(rows)
+header = result[0]
+assert len(result) == 3, result
+rec = {r[0]: dict(zip(header, r)) for r in result[1:]}["notes"]
+non_null = [v for v in values if v != ""]
+assert rec["rows"] == str(len(values)), rec
+assert rec["nulls"] == str(len(values) - len(non_null)), rec
+assert rec["distinct"] == str(len(set(non_null))), rec
+=== END AC counts-quoted-comma-is-one-value ===
+
+=== AC counts-header-only ===
+Intent: A file with only a header reports zero rows, nulls, and distinct for each column.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+
+def profile(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+names = ["a", "b", "c"]
+result = profile([names])
+header = result[0]
+assert len(result) == 1 + len(names), result
+for row in result[1:]:
+    rec = dict(zip(header, row))
+    for field in ["rows", "nulls", "distinct"]:
+        assert rec[field] == str(0), rec
+=== END AC counts-header-only ===
+
+=== AC counts-single-column-selection ===
+Intent: The counts reported for one column through --column equal those in the full profile.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+
+def run(rows, *extra):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "in.csv")
+        with open(path, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(rows)
+        code, out, err = cli_runner(*extra, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return list(csv.reader(io.StringIO(out)))
+
+
+values = ["x", "y", "", "x", "NA"]
+rows = [["id", "c"]] + [[str(i), v] for i, v in enumerate(values)]
+full = run(rows)
+one = run(rows, "--column", "c")
+header = full[0]
+assert one[0] == header, (one[0], header)
+assert len(one) == 2, one
+full_c = [r for r in full[1:] if r[0] == "c"][0]
+for field in ["rows", "nulls", "distinct"]:
+    idx = header.index(field)
+    assert one[1][idx] == full_c[idx], field
+=== END AC counts-single-column-selection ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Counts are computed from the file examined; none is hardcoded.
+- Distinct is a comparison of exact trimmed strings, never case-folded or numerically normalized.
+- Counts are written as plain integers.
+=== END ARTIFACT ===

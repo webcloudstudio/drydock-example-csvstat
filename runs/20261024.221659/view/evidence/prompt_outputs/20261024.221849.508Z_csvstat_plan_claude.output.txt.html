@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/prompt_outputs/20261024.221849.508Z_csvstat_plan_claude.output.txt</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/prompt_outputs/20261024.221849.508Z_csvstat_plan_claude.output.txt</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/prompt_outputs/20261024.221849.508Z_csvstat_plan_claude.output.txt">Raw file</a></div></header>
+<article class="doc"><pre>=== BEGIN ARTIFACT ARCHITECTURE.md ===
+# ARCHITECTURE: CsvStat
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261024 V1 |
+| Description | Module layout, package boundaries, and technical decisions for the CsvStat command-line CSV profiler. |
+| Depends On  | None |
+| Provides    | go.mod, cmd/csvstat, internal/cli Run |
+
+## Questions
+
+- None.
+
+## Purpose
+
+CsvStat is a single-binary Go command-line tool. It reads one CSV file, infers a type per column,
+and writes either a profile CSV or a frequency CSV to standard output. Failures write nothing to
+standard output, one diagnostic line to standard error, and exit with a distinct code.
+
+## Technology Stack
+
+Derived from `TECHNOLOGY_STACK.md`; that file is the decision of record.
+
+| Technology | Where it applies |
+|---|---|
+| Go 1.22 or newer, standard library only | Every package; no third-party module in `go.mod` |
+| go test and go vet | Automated tests and `bin/test.sh` |
+| CSV (`encoding/csv`) | Reading the input file and writing all standard output |
+| POSIX sh | `bin/test.sh` and the supplied grader |
+
+## Module Layout
+
+```text
+go.mod                    module csvstat, go 1.22 or newer, no require lines
+cmd/csvstat/main.go       package main: calls cli.Run(os.Args[1:], os.Stdout, os.Stderr) and os.Exit
+internal/cli              Run(args []string, stdout, stderr io.Writer) int; argument parsing, exit codes
+internal/reader           Read, IsNull, ErrRejected; file reading, trimming, validation, null rule
+internal/infer            Infer; column type inference
+internal/stats            counts, min, max, sum, mean, median using math/big
+internal/format           FormatDecimal; two-decimal half-away-from-zero formatting
+internal/output           profile and frequency CSV writers
+bin/test.sh               POSIX sh: go vet ./... then go test ./...
+```
+
+Only `main` calls `os.Exit`. `cli.Run` uses a local `flag.FlagSet` with `flag.ContinueOnError` and
+discarded flag output, and is tested with `bytes.Buffer`.
+
+## Data Flow
+
+1. `cli.Run` parses and validates arguments (usage errors exit 2 before the file is opened).
+2. `reader.Read` opens the file; failure to open or read exits 1.
+3. `reader.Read` parses with `encoding/csv`, trims, and validates; rejection exits 3.
+4. `infer.Infer` types each column from its non-null values.
+5. `stats` computes exact values; `format` rounds once when writing.
+6. `output` writes CSV with `\n` line endings to standard output; exit 0.
+
+Output is assembled in memory and written only after every step succeeds, so a failing command
+never writes to standard output.
+
+## Exit Codes
+
+| Code | Meaning |
+|---|---|
+| 0 | Success |
+| 1 | File cannot be opened or read |
+| 2 | Usage error |
+| 3 | Rejected input: empty file, empty or repeated header name, ragged record, unknown column name |
+
+## Technical Decisions
+
+- Sums, means, and medians use `math/big` rationals and are rounded once, half away from zero.
+- Application code never reads `sources/run.sh` or any supplied data file and embeds no statistic.
+- Diagnostics go to standard error and are never compared.
+
+## Module Ownership
+
+| Boundary | Owning module | Low-level APIs allowed |
+|---|---|---|
+| Input file access | `internal/reader` | `os.Open`, `encoding/csv` reader |
+| Standard output | `internal/output` | `encoding/csv` writer |
+| Process exit | `cmd/csvstat` | `os.Exit` |
+| Persistence, configuration, file store, external services | None; the tool has none | None |
+
+## Programmatic Acceptance
+
+=== AC arch-module-builds ===
+Intent: The application root is a Go module whose ./cmd/csvstat package builds with go build.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import os
+import subprocess
+import tempfile
+
+with tempfile.TemporaryDirectory() as work:
+    target = os.path.join(work, &quot;csvstat&quot;)
+    result = subprocess.run([&quot;go&quot;, &quot;build&quot;, &quot;-o&quot;, target, &quot;./cmd/csvstat&quot;], capture_output=True, text=True)
+    print(result.stdout)
+    print(result.stderr)
+    assert result.returncode == 0
+    assert os.path.isfile(target)
+=== END AC arch-module-builds ===
+
+=== AC arch-stdlib-only ===
+Intent: go.mod declares a Go version of 1.22 or newer and no third-party requirement.
+
+import re
+
+with open(&quot;go.mod&quot;, encoding=&quot;utf-8&quot;) as handle:
+    text = handle.read()
+version = re.search(r&quot;^go\s+(\d+)\.(\d+)&quot;, text, re.MULTILINE)
+assert version is not None
+assert (int(version.group(1)), int(version.group(2))) &gt;= (1, 22)
+assert re.search(r&quot;^\s*require\b&quot;, text, re.MULTILINE) is None
+assert re.search(r&quot;^\s*replace\b&quot;, text, re.MULTILINE) is None
+=== END AC arch-stdlib-only ===
+
+=== AC arch-vet-clean ===
+Intent: go vet reports no problem across the module.
+Requires: executable=go; scope=test
+
+import subprocess
+
+result = subprocess.run([&quot;go&quot;, &quot;vet&quot;, &quot;./...&quot;], capture_output=True, text=True)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0
+=== END AC arch-vet-clean ===
+
+=== AC arch-layout ===
+Intent: The main package and the internal packages named by the architecture exist, and main delegates to cli.Run.
+
+import os
+
+assert os.path.isfile(os.path.join(&quot;cmd&quot;, &quot;csvstat&quot;, &quot;main.go&quot;))
+assert os.path.isdir(os.path.join(&quot;internal&quot;, &quot;cli&quot;))
+with open(os.path.join(&quot;cmd&quot;, &quot;csvstat&quot;, &quot;main.go&quot;), encoding=&quot;utf-8&quot;) as handle:
+    main_source = handle.read()
+assert &quot;cli.Run&quot; in main_source
+assert &quot;os.Exit&quot; in main_source
+=== END AC arch-layout ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Standard library only; no third-party module and no vendored toolchain.
+- Do not modify, rewrite, regenerate, or substitute any file under `sources/`.
+- Do not read `sources/run.sh` or any supplied data file from application code, and do not hardcode a statistic, type, or value list.
+- Only `cmd/csvstat` calls `os.Exit`.
+- A failing command writes nothing to standard output.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-CliArguments.md ===
+# FEATURE: Command Line Arguments
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261024 V1 |
+| Description | Parse the csvstat options that precede exactly one file argument and reject malformed argument lists with exit 2. |
+| Depends On  | ARCHITECTURE.md |
+| Provides    | --column, --freq, --top parsing |
+
+## Questions
+
+- None.
+
+## Purpose
+
+`cli.Run` accepts these forms:
+
+```text
+csvstat [--column &lt;name&gt;] &lt;file&gt;
+csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;
+```
+
+Options precede the file and exactly one file is required. Parsing uses a local `flag.FlagSet`
+with `flag.ContinueOnError` and discarded flag output. Arguments are validated before the file is
+opened, so a usage error never depends on the file&#x27;s existence.
+
+## Behavior
+
+| Input | Result |
+|---|---|
+| No arguments | exit 2 |
+| Two or more positional arguments | exit 2 |
+| Unknown option | exit 2 |
+| Option with no value (`--column`, `--freq`, `--top` as last argument) | exit 2 |
+| `--top` not a positive integer (`0`, negative, non-numeric) | exit 2 |
+| `--top` without `--freq` | exit 2 |
+| `--column` together with `--freq` | exit 2 |
+| Option placed after the file | the option is an extra positional argument: exit 2 (decision Q-001) |
+
+Every usage error writes nothing to standard output and one diagnostic line to standard error.
+`--top` defaults to 5 when `--freq` is given alone. The parsed result carries the column name, the
+frequency column, the top count, and the file path for the command stories that follow.
+
+## Programmatic Acceptance
+
+=== AC cli-no-arguments ===
+Intent: Running with no arguments is a usage error with empty standard output.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import cli_runner
+
+code, out, err = cli_runner()
+print(out)
+print(err)
+assert code == 2
+assert out == &quot;&quot;
+=== END AC cli-no-arguments ===
+
+=== AC cli-extra-file ===
+Intent: Two file arguments are a usage error with empty standard output.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import os
+import tempfile
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as work:
+    first = os.path.join(work, &quot;first.csv&quot;)
+    second = os.path.join(work, &quot;second.csv&quot;)
+    for path in (first, second):
+        with open(path, &quot;w&quot;, encoding=&quot;utf-8&quot;, newline=&quot;&quot;) as handle:
+            handle.write(&quot;a,b\n1,2\n&quot;)
+    code, out, err = cli_runner(first, second)
+    print(out)
+    print(err)
+    assert code == 2
+    assert out == &quot;&quot;
+=== END AC cli-extra-file ===
+
+=== AC cli-unknown-option ===
+Intent: An unknown option is a usage error even when the file exists.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import os
+import tempfile
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as work:
+    path = os.path.join(work, &quot;data.csv&quot;)
+    with open(path, &quot;w&quot;, encoding=&quot;utf-8&quot;, newline=&quot;&quot;) as handle:
+        handle.write(&quot;a,b\n1,2\n&quot;)
+    code, out, err = cli_runner(&quot;--frobnicate&quot;, path)
+    print(out)
+    print(err)
+    assert code == 2
+    assert out == &quot;&quot;
+=== END AC cli-unknown-option ===
+
+=== AC cli-usage-before-open ===
+Intent: Argument validation happens before the file is opened, so a usage error on a missing file is exit 2 and not exit 1.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import os
+import tempfile
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as work:
+    missing = os.path.join(work, &quot;no-such-file.csv&quot;)
+    code, out, err = cli_runner(&quot;--frobnicate&quot;, missing)
+    print(out)
+    print(err)
+    assert code == 2
+    assert out == &quot;&quot;
+=== END AC cli-usage-before-open ===
+
+=== AC cli-missing-option-value ===
+Intent: An option with no value is a usage error.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import os
+import tempfile
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as work:
+    path = os.path.join(work, &quot;data.csv&quot;)
+    with open(path, &quot;w&quot;, encoding=&quot;utf-8&quot;, newline=&quot;&quot;) as handle:
+        handle.write(&quot;a,b\n1,2\n&quot;)
+    for option in (&quot;--column&quot;, &quot;--freq&quot;):
+        code, out, err = cli_runner(path, option)
+        print(option, code, out, err)
+        assert code == 2
+        assert out == &quot;&quot;
+    code, out, err = cli_runner(&quot;--freq&quot;, &quot;a&quot;, path, &quot;--top&quot;)
+    assert code == 2
+    assert out == &quot;&quot;
+=== END AC cli-missing-option-value ===
+
+=== AC cli-top-invalid ===
+Intent: A --top value that is not a positive integer is a usage error.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import os
+import tempfile
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as work:
+    path = os.path.join(work, &quot;data.csv&quot;)
+    with open(path, &quot;w&quot;, encoding=&quot;utf-8&quot;, newline=&quot;&quot;) as handle:
+        handle.write(&quot;a,b\n1,2\n&quot;)
+    for bad in (&quot;0&quot;, &quot;-1&quot;, &quot;abc&quot;, &quot;1.5&quot;):
+        code, out, err = cli_runner(&quot;--freq&quot;, &quot;a&quot;, &quot;--top&quot;, bad, path)
+        print(bad, code, out, err)
+        assert code == 2
+        assert out == &quot;&quot;
+=== END AC cli-top-invalid ===
+
+=== AC cli-top-without-freq ===
+Intent: --top without --freq is a usage error.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import os
+import tempfile
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as work:
+    path = os.path.join(work, &quot;data.csv&quot;)
+    with open(path, &quot;w&quot;, encoding=&quot;utf-8&quot;, newline=&quot;&quot;) as handle:
+        handle.write(&quot;a,b\n1,2\n&quot;)
+    code, out, err = cli_runner(&quot;--top&quot;, &quot;3&quot;, path)
+    print(out)
+    print(err)
+    assert code == 2
+    assert out == &quot;&quot;
+=== END AC cli-top-without-freq ===
+
+=== AC cli-column-with-freq ===
+Intent: --column combined with --freq is a usage error.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import os
+import tempfile
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as work:
+    path = os.path.join(work, &quot;data.csv&quot;)
+    with open(path, &quot;w&quot;, encoding=&quot;utf-8&quot;, newline=&quot;&quot;) as handle:
+        handle.write(&quot;a,b\n1,2\n&quot;)
+    code, out, err = cli_runner(&quot;--column&quot;, &quot;a&quot;, &quot;--freq&quot;, &quot;a&quot;, path)
+    print(out)
+    print(err)
+    assert code == 2
+    assert out == &quot;&quot;
+=== END AC cli-column-with-freq ===
+
+=== AC cli-option-after-file ===
+Intent: An option placed after the file counts as an extra file argument and is a usage error.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import os
+import tempfile
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as work:
+    path = os.path.join(work, &quot;data.csv&quot;)
+    with open(path, &quot;w&quot;, encoding=&quot;utf-8&quot;, newline=&quot;&quot;) as handle:
+        handle.write(&quot;a,b\n1,2\n&quot;)
+    code, out, err = cli_runner(path, &quot;--column&quot;, &quot;a&quot;)
+    print(out)
+    print(err)
+    assert code == 2
+    assert out == &quot;&quot;
+=== END AC cli-option-after-file ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- A usage error writes nothing to standard output.
+- Arguments are validated before the input file is opened.
+- Flag package output is discarded; diagnostics go to standard error only.
+- Only `main` calls `os.Exit`; `Run` returns the exit code.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-CsvReading.md ===
+# FEATURE: CSV Reading
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261024 V1 |
+| Description | Read a UTF-8 RFC 4180 CSV file with trimmed header and values and reject malformed files. |
+| Depends On  | ARCHITECTURE.md |
+| Provides    | reader.Read, ErrRejected |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Package `internal/reader` opens a file and returns a table: the header names and the data records,
+all trimmed of leading and trailing spaces.
+
+## Behavior
+
+1. The file is UTF-8 CSV as RFC 4180 defines it, read with `encoding/csv`. The first record is the header.
+2. The reader sets `FieldsPerRecord = -1` so a ragged record is detected by this package and reported with its line number.
+3. Every header name and every value is trimmed of leading and trailing spaces before any other rule applies.
+4. The file is rejected when it is empty, when a header name is empty after trimming, when a header name repeats, or when any record has a different field count from the header.
+5. A CSV syntax error from `encoding/csv`, such as a bare quote, is also a rejection (decision Q-003).
+6. A header with no data records is valid and yields zero rows.
+7. A rejection returns an error that satisfies `errors.Is(err, reader.ErrRejected)` and carries the file name and, for a record-level rejection, the record&#x27;s line number. The `cli` package maps it to exit 3.
+8. A file that cannot be opened or read returns an error that is not `ErrRejected`; the `cli` package maps it to exit 1.
+9. Quoted fields may contain commas, quotes, and newlines.
+
+## Required Go tests
+
+The build writes these tests in `internal/reader`, each writing its own file under `t.TempDir()`:
+
+| Test | Proves |
+|---|---|
+| `TestReadTrimsHeaderAndValues` | padded header names and values are trimmed |
+| `TestReadQuotedComma` | a quoted field containing a comma is one value |
+| `TestReadHeaderOnly` | a header with no records yields zero rows |
+| `TestReadRejectsEmptyFile` | a zero-byte file is `ErrRejected` |
+| `TestReadRejectsEmptyHeaderName` | an empty header name is `ErrRejected` |
+| `TestReadRejectsRepeatedHeaderName` | a repeated header name is `ErrRejected` |
+| `TestReadRejectsRaggedRecord` | a record with an extra field is `ErrRejected` and its message names the line number |
+| `TestReadMissingFileIsNotRejected` | an unopenable file is an error that is not `ErrRejected` |
+
+## Programmatic Acceptance
+
+=== AC reading-trims ===
+Intent: The reader trims header names and values.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/reader&quot;, &quot;TestReadTrimsHeaderAndValues&quot;)
+print(result.status)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC reading-trims ===
+
+=== AC reading-quoted-comma ===
+Intent: A quoted field containing a comma is read as a single value.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/reader&quot;, &quot;TestReadQuotedComma&quot;)
+print(result.status)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC reading-quoted-comma ===
+
+=== AC reading-header-only ===
+Intent: A header with no data records is a valid table with zero rows.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/reader&quot;, &quot;TestReadHeaderOnly&quot;)
+print(result.status)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC reading-header-only ===
+
+=== AC reading-rejects-empty ===
+Intent: An empty file is rejected.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/reader&quot;, &quot;TestReadRejectsEmptyFile&quot;)
+print(result.status)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC reading-rejects-empty ===
+
+=== AC reading-rejects-empty-header ===
+Intent: An empty header name is rejected.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/reader&quot;, &quot;TestReadRejectsEmptyHeaderName&quot;)
+print(result.status)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC reading-rejects-empty-header ===
+
+=== AC reading-rejects-repeated-header ===
+Intent: A repeated header name is rejected.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/reader&quot;, &quot;TestReadRejectsRepeatedHeaderName&quot;)
+print(result.status)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC reading-rejects-repeated-header ===
+
+=== AC reading-rejects-ragged ===
+Intent: A record whose field count differs from the header is rejected and the error names its line number.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/reader&quot;, &quot;TestReadRejectsRaggedRecord&quot;)
+print(result.status)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC reading-rejects-ragged ===
+
+=== AC reading-missing-file ===
+Intent: An unopenable file yields an error distinct from a rejection.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/reader&quot;, &quot;TestReadMissingFileIsNotRejected&quot;)
+print(result.status)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC reading-missing-file ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Use `encoding/csv` only; no hand-rolled CSV parser.
+- Trimming applies to header names and values before every other rule.
+- Rejection errors name the file; record-level rejections also name the line number. Diagnostics go to standard error only.
+- The reader never writes to standard output.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-NullValues.md ===
+# FEATURE: Null Values
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261024 V1 |
+| Description | Classify a trimmed value as null when it is empty or equals NA, N/A, or NULL ignoring case. |
+| Depends On  | FEATURE-CsvReading.md |
+| Provides    | IsNull |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Package `internal/reader` exports `IsNull(value string) bool`. Values are already trimmed by the
+reader. All other statistics treat null values as absent from type inference, distinct counts,
+min, max, sum, mean, median, and frequency output, while they still count toward `rows` and `nulls`.
+
+## Behavior
+
+- Empty string is null.
+- `NA`, `N/A`, and `NULL`, compared ignoring case (`na`, `n/a`, `Null`), are null.
+- Every other value is non-null, including `NAN`, `none`, `0`, `-`, and `N/A ` with interior differences such as `N / A`.
+- A value that was only spaces becomes empty after trimming and is therefore null.
+
+## Required Go tests
+
+Written in `internal/reader`:
+
+| Test | Proves |
+|---|---|
+| `TestIsNullEmpty` | the empty string is null |
+| `TestIsNullTokensIgnoreCase` | `NA`, `N/A`, `NULL` in upper, lower, and mixed case are null |
+| `TestIsNullRejectsOtherValues` | `NAN`, `none`, `0`, `-`, `nullx`, and `N / A` are non-null |
+| `TestReadSpacesOnlyValueIsNull` | a value of only spaces, read through `Read`, is null |
+
+## Programmatic Acceptance
+
+=== AC nulls-empty ===
+Intent: The empty string is null.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/reader&quot;, &quot;TestIsNullEmpty&quot;)
+print(result.status)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC nulls-empty ===
+
+=== AC nulls-tokens ===
+Intent: NA, N/A, and NULL are null in any letter case.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/reader&quot;, &quot;TestIsNullTokensIgnoreCase&quot;)
+print(result.status)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC nulls-tokens ===
+
+=== AC nulls-other-values ===
+Intent: Values that merely resemble null tokens are non-null.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/reader&quot;, &quot;TestIsNullRejectsOtherValues&quot;)
+print(result.status)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC nulls-other-values ===
+
+=== AC nulls-spaces-only ===
+Intent: A value of only spaces is trimmed to empty and classified as null.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/reader&quot;, &quot;TestReadSpacesOnlyValueIsNull&quot;)
+print(result.status)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC nulls-spaces-only ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- The null set is exactly empty, `NA`, `N/A`, `NULL`, case-insensitive; no other token is null.
+- Null classification runs on trimmed values.
+- Null values are never listed in frequency output.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-NumericTypes.md ===
+# FEATURE: Numeric Types
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261024 V1 |
+| Description | Infer integer and number column types, testing integer before number. |
+| Depends On  | FEATURE-NullValues.md |
+| Provides    | InferType integer, number |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Package `internal/infer` exports `Infer(values []string) string`, where `values` are the trimmed
+values of one column. A column&#x27;s type is the first matching type, in order, that every non-null
+value satisfies. This story implements `integer` and `number`; later stories add `date`, `boolean`,
+`text`, and `empty` to the same function. Until they land, a column matching neither numeric type
+returns `text`.
+
+## Behavior
+
+- `integer`: every non-null value matches `-?[0-9]+`.
+- `number`: every non-null value matches `-?[0-9]+(\.[0-9]+)?`.
+- `integer` is tested before `number`, so a column of whole numbers is `integer` and one containing any decimal value is `number`.
+- Null values (per `IsNull`) are skipped.
+- No leading `+`, no exponent, no `1.`, no `.5`, no thousands separator, and no surrounding text match either type.
+- A column mixing numeric and non-numeric values does not match.
+- Examples from the supplied data: a column of ids is integer, a column of prices with two decimals is number, a column containing `A7` and `12.5` is not numeric.
+
+## Required Go tests
+
+Written in `internal/infer`:
+
+| Test | Proves |
+|---|---|
+| `TestInferInteger` | whole numbers including negatives are integer |
+| `TestInferNumberWhenAnyDecimal` | one decimal value among whole numbers makes number |
+| `TestIntegerWinsOverNumber` | a column satisfying both is integer |
+| `TestInferSkipsNulls` | null values do not prevent a numeric type |
+| `TestInferRejectsMalformedNumbers` | `1.`, `.5`, `+1`, `1e3`, `1,5`, and `12abc` are neither integer nor number |
+| `TestInferMixedIsNotNumeric` | a column with a numeric and a non-numeric value is neither type |
+
+## Programmatic Acceptance
+
+=== AC numeric-integer ===
+Intent: Columns of whole numbers, negatives included, are typed integer.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/infer&quot;, &quot;TestInferInteger&quot;)
+print(result.status)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC numeric-integer ===
+
+=== AC numeric-number ===
+Intent: A column with any decimal value is typed number.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/infer&quot;, &quot;TestInferNumberWhenAnyDecimal&quot;)
+print(result.status)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC numeric-number ===
+
+=== AC numeric-integer-first ===
+Intent: Integer is assigned before number when both would match.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/infer&quot;, &quot;TestIntegerWinsOverNumber&quot;)
+print(result.status)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC numeric-integer-first ===
+
+=== AC numeric-skips-nulls ===
+Intent: Null values are ignored when inferring a numeric type.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/infer&quot;, &quot;TestInferSkipsNulls&quot;)
+print(result.status)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC numeric-skips-nulls ===
+
+=== AC numeric-rejects-malformed ===
+Intent: Malformed numerals match neither numeric type.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/infer&quot;, &quot;TestInferRejectsMalformedNumbers&quot;)
+print(result.status)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC numeric-rejects-malformed ===
+
+=== AC numeric-mixed ===
+Intent: A column mixing numeric and non-numeric values is not numeric.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/infer&quot;, &quot;TestInferMixedIsNotNumeric&quot;)
+print(result.status)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC numeric-mixed ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Types are decided only from the file examined; no column name or value list is hardcoded.
+- Integer is always tested before number.
+- Inference ignores null values and never mutates its input.
+=== END ARTIFACT ===</pre></article>
+</main>
+</body>
+</html>
