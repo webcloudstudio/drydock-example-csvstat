@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/LINEAGE.json</title>
+<link rel="stylesheet" href="../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/LINEAGE.json</h1><div class="filenav"><a href="../../../../index.html">&larr; Report</a><a href="../../../../workspace/targets/CsvStat/LINEAGE.json">Raw file</a></div></header>
+<article class="doc"><pre>{
+  &quot;version&quot;: 1,
+  &quot;import&quot;: {
+    &quot;root&quot;: &quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261024.203847/sources&quot;,
+    &quot;format&quot;: &quot;markdown&quot;
+  },
+  &quot;sources&quot;: {
+    &quot;INSTRUCTIONS.md&quot;: {
+      &quot;state&quot;: &quot;current&quot;,
+      &quot;versions&quot;: [
+        {
+          &quot;commit&quot;: &quot;d658503&quot;,
+          &quot;date&quot;: &quot;2026-10-24&quot;,
+          &quot;hash&quot;: &quot;a4a0357965923ada8afb3528e85c937802a26eb02db8685900dbe0e9566c7a57&quot;,
+          &quot;release&quot;: &quot;&quot;,
+          &quot;state&quot;: &quot;consumed&quot;,
+          &quot;via&quot;: &quot;plan&quot;,
+          &quot;ticket&quot;: null,
+          &quot;requirements&quot;: [
+            {
+              &quot;name&quot;: &quot;go-stdlib-module&quot;,
+              &quot;text&quot;: &quot;Implement in Go 1.22 or newer using only the standard library. The application root is a Go module, and its executable is the main package at `./cmd/csvstat`. Tests run under `go test`.&quot;,
+              &quot;stories&quot;: [
+                &quot;foundation&quot;,
+                &quot;module-build&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;run-harness&quot;,
+              &quot;text&quot;: &quot;`sources/run.sh` is the scoring entry point. It is supplied, not authored, and is staged verbatim into the application root with the data files. `drydock uat` runs `sh sources/run.sh` from the completed application root and takes its exit code and output as the score.&quot;,
+              &quot;stories&quot;: [
+                &quot;verification&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;command-options&quot;,
+              &quot;text&quot;: &quot;csvstat [--column &lt;name&gt;] &lt;file&gt;\ncsvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;&quot;,
+              &quot;stories&quot;: [
+                &quot;cli-options&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;column-option&quot;,
+              &quot;text&quot;: &quot;`--column &lt;name&gt;` | Profile only the named column.&quot;,
+              &quot;stories&quot;: [
+                &quot;column-select&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;freq-top-options&quot;,
+              &quot;text&quot;: &quot;`--freq &lt;name&gt;` | List the most frequent values of the named column instead of profiling.&quot;,
+              &quot;stories&quot;: [
+                &quot;cli-options&quot;,
+                &quot;frequencies&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;option-combinations&quot;,
+              &quot;text&quot;: &quot;`--column` and `--freq` cannot be combined. `--top` is valid only with `--freq`.&quot;,
+              &quot;stories&quot;: [
+                &quot;usage-errors&quot;,
+                &quot;cli-options&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;read-csv&quot;,
+              &quot;text&quot;: &quot;The file is UTF-8 CSV as RFC 4180 defines it, read with Go&#x27;s `encoding/csv`. The first record is the header.&quot;,
+              &quot;stories&quot;: [
+                &quot;csv-reading&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;trim-values&quot;,
+              &quot;text&quot;: &quot;Every header name and every value is trimmed of leading and trailing spaces before any other rule applies.&quot;,
+              &quot;stories&quot;: [
+                &quot;null-trim&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;reject-malformed-file&quot;,
+              &quot;text&quot;: &quot;The file is **rejected** when it is empty, when a header name is empty or repeated, or when any record has a different number of fields from the header.&quot;,
+              &quot;stories&quot;: [
+                &quot;reject-malformed&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;null-values&quot;,
+              &quot;text&quot;: &quot;**Null.** A value is null when it is empty, or when it equals `NA`, `N/A`, or `NULL` ignoring case. All other values are non-null.&quot;,
+              &quot;stories&quot;: [
+                &quot;null-trim&quot;,
+                &quot;row-counts&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;type-inference&quot;,
+              &quot;text&quot;: &quot;A column&#x27;s type is the first of these that every non-null value satisfies:&quot;,
+              &quot;stories&quot;: [
+                &quot;type-inference&quot;,
+                &quot;date-type&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;empty-type&quot;,
+              &quot;text&quot;: &quot;A column with no non-null values has type `empty`.&quot;,
+              &quot;stories&quot;: [
+                &quot;type-inference&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;profile-output&quot;,
+              &quot;text&quot;: &quot;Header `column,type,rows,nulls,distinct,min,max,sum,mean,median`, then one row per column in file order (or the one named by `--column`).&quot;,
+              &quot;stories&quot;: [
+                &quot;csv-output&quot;,
+                &quot;column-select&quot;,
+                &quot;row-counts&quot;,
+                &quot;type-inference&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;count-fields&quot;,
+              &quot;text&quot;: &quot;`rows` | Number of data records. `nulls` | Number of null values. `distinct` | Number of different non-null values, compared as exact strings after trimming.&quot;,
+              &quot;stories&quot;: [
+                &quot;row-counts&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;min-max-fields&quot;,
+              &quot;text&quot;: &quot;`min`, `max` | `integer`: the smallest and largest value as an integer. `number`: as a decimal. `date`: earliest and latest. `boolean`: `false` if any value is false, else `true`; `true` if any value is true, else `false`. `text`: smallest and largest by byte value. `empty`: empty.&quot;,
+              &quot;stories&quot;: [
+                &quot;min-max&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;numeric-stat-fields&quot;,
+              &quot;text&quot;: &quot;`sum` | `integer`: the integer total. `number`: the decimal total. Otherwise empty. `mean` | `integer` and `number`: total divided by non-null count. Otherwise empty. `median` | `integer` and `number`: the middle value of the sorted non-null values, or the mean of the two middle values when the count is even. Otherwise empty.&quot;,
+              &quot;stories&quot;: [
+                &quot;numeric-stats&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;decimal-formatting&quot;,
+              &quot;text&quot;: &quot;**Decimals.** Every `number` `min`, `max`, and `sum`, and every `mean` and `median`, is written with exactly two decimal places, rounded half away from zero from the exact value, with a leading `-` when negative and no thousands separator: `1012.50`, `-12.21`, `0.00`. Integer `min`, `max`, and `sum` are written as plain integers.&quot;,
+              &quot;stories&quot;: [
+                &quot;numeric-stats&quot;,
+                &quot;min-max&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;frequency-output&quot;,
+              &quot;text&quot;: &quot;Header `value,count`, then one row per distinct non-null value of the column, ordered by count descending, then value ascending by byte value, at most `--top` rows. Null values are not listed. A column with no non-null values writes only the header.&quot;,
+              &quot;stories&quot;: [
+                &quot;frequencies&quot;,
+                &quot;csv-output&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;output-format&quot;,
+              &quot;text&quot;: &quot;CSV on standard output with `\\n` line endings. A field that contains a comma, a double quote, or a newline is quoted as RFC 4180 specifies; Go&#x27;s `encoding/csv` writer produces this format.&quot;,
+              &quot;stories&quot;: [
+                &quot;csv-output&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;failure-diagnostics&quot;,
+              &quot;text&quot;: &quot;A failing command writes nothing to standard output and one diagnostic line to standard error naming the file and, for a rejected record, its line number.&quot;,
+              &quot;stories&quot;: [
+                &quot;usage-errors&quot;,
+                &quot;reject-malformed&quot;,
+                &quot;unreadable-file&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;exit-unreadable&quot;,
+              &quot;text&quot;: &quot;`1` | Operational failure: the file cannot be opened or read.&quot;,
+              &quot;stories&quot;: [
+                &quot;unreadable-file&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;exit-usage&quot;,
+              &quot;text&quot;: &quot;`2` | Usage error: missing or extra file, unknown option, missing option value, `--top` not a positive integer, `--top` without `--freq`, `--column` with `--freq`.&quot;,
+              &quot;stories&quot;: [
+                &quot;usage-errors&quot;,
+                &quot;cli-options&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;exit-rejected&quot;,
+              &quot;text&quot;: &quot;`3` | Rejected: empty file, empty or repeated header name, ragged record, or a column name that is not in the header.&quot;,
+              &quot;stories&quot;: [
+                &quot;reject-malformed&quot;,
+                &quot;column-select&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;test-script&quot;,
+              &quot;text&quot;: &quot;The completed application provides a POSIX-compatible `bin/test.sh` that runs `go vet ./...` and `go test ./...` from the application root and exits zero only when both pass. The suite covers each type, each statistic, null handling, rounding, each output form, and each exit code using files written by the tests.&quot;,
+              &quot;stories&quot;: [
+                &quot;test-script&quot;
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    &quot;employees.csv&quot;: {
+      &quot;state&quot;: &quot;current&quot;,
+      &quot;versions&quot;: [
+        {
+          &quot;commit&quot;: &quot;d658503&quot;,
+          &quot;date&quot;: &quot;2026-10-24&quot;,
+          &quot;hash&quot;: &quot;057f30060e45647dbb5773a0f2cef7fa541bbd462f5a65746083d7a169222ee0&quot;,
+          &quot;release&quot;: &quot;&quot;,
+          &quot;state&quot;: &quot;consumed&quot;,
+          &quot;via&quot;: &quot;plan&quot;,
+          &quot;ticket&quot;: null,
+          &quot;requirements&quot;: []
+        }
+      ]
+    },
+    &quot;header_only.csv&quot;: {
+      &quot;state&quot;: &quot;current&quot;,
+      &quot;versions&quot;: [
+        {
+          &quot;commit&quot;: &quot;d658503&quot;,
+          &quot;date&quot;: &quot;2026-10-24&quot;,
+          &quot;hash&quot;: &quot;428b2fe8db619499f227e2ce2a56cebcf5149c161e680c5a65d792d74211f449&quot;,
+          &quot;release&quot;: &quot;&quot;,
+          &quot;state&quot;: &quot;consumed&quot;,
+          &quot;via&quot;: &quot;plan&quot;,
+          &quot;ticket&quot;: null,
+          &quot;requirements&quot;: [
+            {
+              &quot;name&quot;: &quot;profile-header-only-file&quot;,
+              &quot;text&quot;: &quot;sku,price,in_stock&quot;,
+              &quot;stories&quot;: [
+                &quot;csv-reading&quot;,
+                &quot;row-counts&quot;,
+                &quot;type-inference&quot;,
+                &quot;csv-output&quot;
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    &quot;orders.csv&quot;: {
+      &quot;state&quot;: &quot;current&quot;,
+      &quot;versions&quot;: [
+        {
+          &quot;commit&quot;: &quot;d658503&quot;,
+          &quot;date&quot;: &quot;2026-10-24&quot;,
+          &quot;hash&quot;: &quot;93026827c46e9b0eab4a7e4e4eefc7518265dc56712f044061006b85adeb6ae8&quot;,
+          &quot;release&quot;: &quot;&quot;,
+          &quot;state&quot;: &quot;consumed&quot;,
+          &quot;via&quot;: &quot;plan&quot;,
+          &quot;ticket&quot;: null,
+          &quot;requirements&quot;: []
+        }
+      ]
+    },
+    &quot;ragged.csv&quot;: {
+      &quot;state&quot;: &quot;current&quot;,
+      &quot;versions&quot;: [
+        {
+          &quot;commit&quot;: &quot;d658503&quot;,
+          &quot;date&quot;: &quot;2026-10-24&quot;,
+          &quot;hash&quot;: &quot;fd838208607b5e74d69d29662bd4961928d69fdd80a5e2752ece90f78b333465&quot;,
+          &quot;release&quot;: &quot;&quot;,
+          &quot;state&quot;: &quot;consumed&quot;,
+          &quot;via&quot;: &quot;plan&quot;,
+          &quot;ticket&quot;: null,
+          &quot;requirements&quot;: [
+            {
+              &quot;name&quot;: &quot;reject-ragged-records&quot;,
+              &quot;text&quot;: &quot;A3,1.25,true,extra&quot;,
+              &quot;stories&quot;: [
+                &quot;reject-malformed&quot;
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    &quot;run.sh&quot;: {
+      &quot;state&quot;: &quot;current&quot;,
+      &quot;versions&quot;: [
+        {
+          &quot;commit&quot;: &quot;d658503&quot;,
+          &quot;date&quot;: &quot;2026-10-24&quot;,
+          &quot;hash&quot;: &quot;8f598aabc017377364ec4a99f5c34bb81e06d68c9ef7b191513c6e9d3999bcbb&quot;,
+          &quot;release&quot;: &quot;&quot;,
+          &quot;state&quot;: &quot;consumed&quot;,
+          &quot;via&quot;: &quot;plan&quot;,
+          &quot;ticket&quot;: null,
+          &quot;requirements&quot;: [
+            {
+              &quot;name&quot;: &quot;build-csvstat-module&quot;,
+              &quot;text&quot;: &quot;Builds ./cmd/csvstat with `go build`&quot;,
+              &quot;stories&quot;: [
+                &quot;foundation&quot;,
+                &quot;module-build&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;profile-every-column&quot;,
+              &quot;text&quot;: &quot;A. Every column of each data file&quot;,
+              &quot;stories&quot;: [
+                &quot;csv-reading&quot;,
+                &quot;null-trim&quot;,
+                &quot;row-counts&quot;,
+                &quot;type-inference&quot;,
+                &quot;date-type&quot;,
+                &quot;min-max&quot;,
+                &quot;numeric-stats&quot;,
+                &quot;csv-output&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;profile-one-column&quot;,
+              &quot;text&quot;: &quot;B. One column&quot;,
+              &quot;stories&quot;: [
+                &quot;column-select&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;column-frequencies&quot;,
+              &quot;text&quot;: &quot;C. Frequencies&quot;,
+              &quot;stories&quot;: [
+                &quot;frequencies&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;reject-malformed-input&quot;,
+              &quot;text&quot;: &quot;check E1 3 \&quot;$DATA/ragged.csv\&quot; &lt; /dev/null&quot;,
+              &quot;stories&quot;: [
+                &quot;reject-malformed&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;unreadable-file-exit&quot;,
+              &quot;text&quot;: &quot;check E4 1 \&quot;$MISSING\&quot; &lt; /dev/null&quot;,
+              &quot;stories&quot;: [
+                &quot;unreadable-file&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;usage-errors&quot;,
+              &quot;text&quot;: &quot;U. Usage errors&quot;,
+              &quot;stories&quot;: [
+                &quot;usage-errors&quot;,
+                &quot;cli-options&quot;
+              ]
+            },
+            {
+              &quot;name&quot;: &quot;conformance-gate&quot;,
+              &quot;text&quot;: &quot;Exit 0 only when the build succeeds and every check passes.&quot;,
+              &quot;stories&quot;: [
+                &quot;verification&quot;
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    &quot;sensors.csv&quot;: {
+      &quot;state&quot;: &quot;current&quot;,
+      &quot;versions&quot;: [
+        {
+          &quot;commit&quot;: &quot;d658503&quot;,
+          &quot;date&quot;: &quot;2026-10-24&quot;,
+          &quot;hash&quot;: &quot;159d38499f5e2df7e2bfe5245c20e7f76c9d5f091aa497567b47bf707bde3c20&quot;,
+          &quot;release&quot;: &quot;&quot;,
+          &quot;state&quot;: &quot;consumed&quot;,
+          &quot;via&quot;: &quot;plan&quot;,
+          &quot;ticket&quot;: null,
+          &quot;requirements&quot;: []
+        }
+      ]
+    }
+  }
+}
+</pre></article>
+</main>
+</body>
+</html>

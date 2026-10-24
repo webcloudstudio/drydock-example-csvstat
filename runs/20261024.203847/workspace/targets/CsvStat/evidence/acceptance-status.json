@@ -1,0 +1,585 @@
+{
+  "criteria": {
+    "accept-header-only": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "c608e33b1017974b481c3fe2bab7a10f02b3e61dad6a8147366ba756e147ef37",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "architecture-executable-builds": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "67680a73c9c65249eee878790d9640216e565933204285fff9552e3068c451db",
+      "updated_at": "2026-10-24T20:56:24+00:00",
+      "detail": ""
+    },
+    "architecture-module-layout": {
+      "status": "VALID",
+      "error_code": "product-missing",
+      "code_sha256": "91a0c6502829a2e65f0f94569d38e0102673085f6d11ba0d9dae84c87b53301b",
+      "updated_at": "2026-10-24T20:56:24+00:00",
+      "detail": ""
+    },
+    "architecture-only-main-exits": {
+      "status": "PREBUILD_PASSES",
+      "error_code": "empty-tree",
+      "code_sha256": "eba729880b44df2e9fb483ef193ffac6569d72b99003e1e856d02125fc5be955",
+      "updated_at": "2026-10-24T20:56:24+00:00",
+      "detail": ""
+    },
+    "column-select-absent-name": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "c54e6fb82c3395832cbcaa841b23994f76e3e3a819e86a29c0f76c8a566f0df9",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "column-select-case-sensitive": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "92fe2c492ad86b7e5ddcd76e360828d90bc184c2032184f52de87b167e680df9",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "column-select-matches-full-profile-row": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "5b3ead9ea16c64f329e15f83034d1d2cb80ae9243db728dff2019a560d53b16d",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "column-select-one-row": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "6398cab6dc7448ba35a476cca7592a70dc36d30abaa62bd28baf7f9a3f66e318",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "column-select-trimmed-header": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "9bc9eea7776829d19c8b838579b1d3a13b77ab47000f4d414c3b3ad841ce171b",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "counts-all-null-column": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "752a02b96fd37df86fa35a757226bf48c53715dfab06f6e4a60842737fe1fddd",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "counts-header-only": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "27bdd206f63d6f9268d69a1e861b745b5c1bf55b9aad8fd4ac61e1893d0a56ab",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "counts-rows-nulls-distinct": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "38eb7b81ac88d907c82507daa35471ab82bdedb437e707353cd8de3b9fd3caad",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "counts-trimmed-distinct": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "521bb01ee0f55029aa30d79b390721718176c7547ab55c733e2b61f9672d8d79",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "csvreading-empty-input": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "89df636e08979a8fcd53bd19b252c02dacf01b56fe47038caa77abb02fa38f73",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "csvreading-header-and-rows": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "4d65b80c4373229cba02ae497fb07f9dce5cffbb4cb71c4f505fb63b44f1bfe5",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "csvreading-invalid-utf8-accepted": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "658b196fb2cd3ec026baeecb2a0d36386e298311fc60e6e087d983c39f04ff91",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "csvreading-line-numbers": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "61d0908b5a1195b9714189f64611a245b76cf110081a5dac520a41fb213501fb",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "csvreading-quoted-comma": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "f5eb2ad958033027a72363ccd75a677288ee31f1590329754eb740880b45bee8",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "csvreading-ragged-returned": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "cc8f829f83eb0a8a75e7f4a26255871956ab1f132eaa6a3c3a0d8920bd1ca21a",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "date-invalid-calendar-day": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "884f7fd07256c7755a7c5529aa3d2b49b377b0e7833520830dba696e58ea252a",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "date-non-leap-and-month-bounds": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "3f56e4a57ab4547657aaf03aad862bec6c5b7614bca502fe3e64cc20604f55ee",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "date-nulls-and-timestamps": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "c2252e10c2bee273e6d73b07d0064495176b590f294721df10f8188a2448043d",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "date-valid-column": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "ef463623ad6324b2d2834a696f01a3503b4705f7089d8ce7a40c886e028967a1",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "freq-absent-column": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "ffa46597d065626e20452e10c5f434a59072f482dac23b17fb69baee1c062dd5",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "freq-all-null-column": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "2b8d5ac15b7df957384d43625304d6bc4b02dccc93405a64bcda2c92f9e0c53d",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "freq-case-sensitive-name": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "ff0ce4f94bdaaf9061b2633347f9afb8f4b0da0927c895288e39ddb4f479d0c6",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "freq-order-and-default-top": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "34b1e52662659563e70ea56f54da1dabce1d188a51c0be62df91d55f799ac840",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "freq-top-limit": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "9ec2f7f54a7ceb7db57d2ac32c09305c24fa5c60d2aee4a41d85add590601e1e",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "freq-trim-and-nulls": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "42631e80f7ffc0a1461e7e2bde5b09e042ba4bf5980c2042ce73f429f6f096c2",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "full-conformance": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "a745db6bae77338bbe5f5707f5706b69bfb9c1a86d509f05c8be7df058539d87",
+      "updated_at": "2026-10-24T21:24:16+00:00",
+      "detail": ""
+    },
+    "minmax-date-boolean-text": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "54f7d5cce546cf82a3b19b02cf1a2450455c4ad4f376a8a381d8853a225bf7e0",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "minmax-empty-and-nulls": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "3216b7aa7111d3f5c00945e7623238f86034aef99d2006824699c64546184002",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "minmax-integer": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "6ff3ba9810aad7928044bd699c53f0981bfe8eff4229a54e9860f51ad076d642",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "minmax-number-negative": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "c1236a08abe352b919f42031a3e87bf76b799f56ca0b11f5da0523f6a6f5d460",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "minmax-number-two-places": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "028ca3b9d2108a3cc374803ba8b9b2249d7091fd34188c197654688a7ce8e550",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "modulebuild-binary-runs": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "e182ecd95b45f8ba4eef5391884c7bb221e790243a1aaf4b862eb404d663f751",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "modulebuild-go-build-succeeds": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "ab5dcbd8d1d3c1b6bda275e578457567b16900a68331adb8eb5cef6ca1f25b10",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "modulebuild-standard-library-only": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "b6eeded4736215f535a62c63380fb08b8e98a5cb0b4ef1f57577fb36f6c74833",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "nulltrim-null-spellings": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "535480537af094b7ec4eff3d2366b2dc95890f4a26d11f99fc20be70a3b20273",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "nulltrim-trim-before-null": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "00883ec5bb7adc086e68f14b445849e4b2be4e1f9308fd4aedd891802e1e1561",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "nulltrim-trim-spaces": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "d63a734f0bb35c7fdf5e97ae3bb4c9de0e84be1aac2f1b23b09e2602d34a85de",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "nulltrim-trim-table": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "6dd9103b081e7260aa2cce5074f3966dea62349a989f9777967f7254ca5d61df",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "numeric-blank-for-non-numeric": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "cbe797821548d40553ea56b3418d47c02fe4932d1b1b104fcad678f785f3db52",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "numeric-exact-large-sum": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "792378edb38c7f8de56c3633cb475dd461b61c91062ae9d73daac1cb636da3ac",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "numeric-half-away-negative": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "df2682df2cb1d376ac5a3ed866af94e4b09889fa38e313be45963d13c223e90e",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "numeric-integer-odd-median": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "687fd945556dd16f2e1098fe9fc78877ba4d8844993d9327ca7bea82de3d3960",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "numeric-integer-stats": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "0241acc823525bd644b26815b0ed974b6e2443083f55311ed80f8993b302d79d",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "numeric-number-stats-rounding": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "6cad77c2999d7d3111d74b5df2cac693af404c0ecf5fd41462c56354ab2cda89",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "options-column-profiles-one": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "3d867e96aefc0891bbf474d6d98a27a58c4e2cc6eda2f7d5cf71d89511c22599",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "options-freq-default-top": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "b2c15fd43e820ffe8cc2443ab50fd5340b965e4bf6aaf05029009eddd12466ca",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "options-freq-explicit-top": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "589f36928cabc4cb82840c7e21ac53538f9f76195f8b37dc0911438b2ca9637a",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "options-freq-top-larger-than-distinct": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "d8baf1611e5970f437032d8d550f8afaa8a1db0f522b1cd77650a4d122519571",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "options-no-option-profiles-all": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "b7c5bc5176bad1c05fa72c8ec00c17988863bf5e0fdb41503fa27abbc6e8b967",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "output-column-single-row": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "de601f5a2417aca7abab1ed07fea2677e4bfaf3ac8922502191dc84ff5732664",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "output-failure-silent-stdout": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "50b8e35edb814b3314cd422c24cc540a89e5333084139449aa423d5cae252259",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "output-freq-quoting": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "018f67abf778c559805f9f67249bcf7bb946852b4115043b751d23618ce5ea7e",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "output-newline-endings": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "c0db2ab27535b1ee2b988fcc70bf4b19cf07388a1ecc8c2355452677fc5ad635",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "output-profile-quoting": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "88db0397693547fe594857e021ae77540ae89eeb677686d5cf5ebb5b57f35fd9",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "output-profile-shape": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "2e024880783869098b9c08ea887dc1b062edb55933925e493e03cc1b32191d5c",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "reject-empty-file": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "43379b7cda95be7f77419b10b857300de3cb5f44a7b45cc3a3219a8c927c1a2e",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "reject-empty-header-name": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "5f323ce1e2b2ed5ac31dfe1ceb3657ef58061ee27ccf3c5670ccf7b0ea593570",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "reject-ragged-fixture": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "ffc13597b9c02d67dca5270a3209d8ae96e81e4877e72028229b1a56ab8e6fc5",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "reject-repeated-header-name": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "d30a42b573444632049cc169b218abff80e72e34c01084357af9eaf67e74a185",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "reject-short-and-long-records": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "3e5e31424caedc6db06e988a0b3d59edcd950e158b372d65c3da0dc7534baf51",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "testscript-exists-and-passes": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "44eeeed38baf059514c4ad9626015b3c7bf77f45aa3b762fd08d3f015b6b3c9a",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "testscript-fails-on-failing-test": {
+      "status": "VALID",
+      "error_code": "product-missing",
+      "code_sha256": "14ed78a7e687b0f4800730f8f75c378db3cb15256cdad7839cd7f4fb14a4bf13",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "testscript-fails-on-vet-finding": {
+      "status": "VALID",
+      "error_code": "product-missing",
+      "code_sha256": "29a849916596a245e660c55a00d42e82d77c34eeafc30aa662a736608ec64afb",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "testscript-passes-on-clean-module": {
+      "status": "VALID",
+      "error_code": "product-missing",
+      "code_sha256": "7d1ecc2980574fe990dab48059aa23b5bfb2240f0254a654babc7d05d50a6d93",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "type-boolean-case-insensitive": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "70d3a43e2230226953c926147aa201e0d5cc52c1e43f03bea6eabf480adf9671",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "type-header-only-empty": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "b15eed2d68dc19f26b399e78d327069a08045acf5c106a8a8423778fa2351e76",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "type-integer-and-number": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "e840051ebf5aae321af9c0716fa275406f40e6614b143a6d65e831078631e34e",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "type-nulls-ignored": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "3350c651f483a16052455a427915a5d0808900ebd87b15922f06d133666e76aa",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "type-text-fallback": {
+      "status": "ALWAYS_PASSES",
+      "error_code": "vacuous",
+      "code_sha256": "36002ed3101149feb46fff17d5ba145b5d8d8831ece521800576cc378a63e014",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": "proof contains no assertion, raise, or failing exit"
+    },
+    "unreadable-directory-path": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "2b65b33aa15820bac8054b4e9e65a9fd23b4c4db9b1f20d1f336121e98b5f73d",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "unreadable-missing-file": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "93b9db855cd4382a6e61c14048a3f126a65a4b7553b12c7fa39311da4f5c44d7",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "unreadable-not-confused-with-rejected": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "a569d59f9649489f3b55c8a11318c1312a4fea693cb44945aa0c846048df55a7",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "usage-column-with-freq": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "3c80d88447bc1133d6334d80bf9640f7f8523e49305e71d440e48d707af9cf6a",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "usage-decided-before-file-open": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "5882ec9451b5ebc3cbc2910235a580e487d4b73f69290b99d8c096f70ebc96eb",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "usage-invalid-top": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "4d470e5554c12adfbca499a65e21fd18766a3159524016e55e9786cb8bf84f27",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "usage-missing-option-value": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "fd3857910c26517ca1b6b0aabbb1926dd3303b3478655eae09bcbd212ce49a2d",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "usage-missing-or-extra-file": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "93c77b3d45a78b7ff7ecadf70aef5fb22cd70a9bb15b8c3b1deee0b6e8e1c087",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "usage-top-without-freq": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "f360d056f5becaf0599be1b3db64fe713f1f049863f52f9014321b3b489c828c",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    },
+    "usage-unknown-option": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "8acfa0b6f2ccc75f830853046e9b5c0a262b580c92df4fa0f8a8f1aa685bf9c4",
+      "updated_at": "2026-10-24T21:01:09+00:00",
+      "detail": ""
+    }
+  }
+}

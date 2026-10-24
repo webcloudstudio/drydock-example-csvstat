@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/prompt_outputs/20261024.204819.564Z_csvstat_lineage_attribute_claude.output.txt</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/prompt_outputs/20261024.204819.564Z_csvstat_lineage_attribute_claude.output.txt</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/prompt_outputs/20261024.204819.564Z_csvstat_lineage_attribute_claude.output.txt">Raw file</a></div></header>
+<article class="doc"><pre>&lt;requirement name=&quot;build-csvstat-module&quot; stories=&quot;foundation,module-build&quot;&gt;
+Builds ./cmd/csvstat with `go build`
+&lt;/requirement&gt;
+&lt;requirement name=&quot;profile-every-column&quot; stories=&quot;csv-reading,null-trim,row-counts,type-inference,date-type,min-max,numeric-stats,csv-output&quot;&gt;
+A. Every column of each data file
+&lt;/requirement&gt;
+&lt;requirement name=&quot;profile-one-column&quot; stories=&quot;column-select&quot;&gt;
+B. One column
+&lt;/requirement&gt;
+&lt;requirement name=&quot;column-frequencies&quot; stories=&quot;frequencies&quot;&gt;
+C. Frequencies
+&lt;/requirement&gt;
+&lt;requirement name=&quot;reject-malformed-input&quot; stories=&quot;reject-malformed&quot;&gt;
+check E1 3 &quot;$DATA/ragged.csv&quot; &lt; /dev/null
+&lt;/requirement&gt;
+&lt;requirement name=&quot;unreadable-file-exit&quot; stories=&quot;unreadable-file&quot;&gt;
+check E4 1 &quot;$MISSING&quot; &lt; /dev/null
+&lt;/requirement&gt;
+&lt;requirement name=&quot;usage-errors&quot; stories=&quot;usage-errors,cli-options&quot;&gt;
+U. Usage errors
+&lt;/requirement&gt;
+&lt;requirement name=&quot;conformance-gate&quot; stories=&quot;verification&quot;&gt;
+Exit 0 only when the build succeeds and every check passes.
+&lt;/requirement&gt;
+&lt;unattached story=&quot;test-script&quot;/&gt;</pre></article>
+</main>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-TypeInference.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-TypeInference.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-TypeInference.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Type Inference</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261024 V1</td></tr><tr><td>Description</td><td>Infer each column&#x27;s type among integer, number, boolean, text, and empty from its non-null values.</td></tr><tr><td>Depends On</td><td>FEATURE-NullTrim.md, ARCHITECTURE.md</td></tr><tr><td>Provides</td><td>typing.Infer</td></tr><tr><td>Consumes</td><td>reader.IsNull, reader.Trim</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>Give every column a type so later stories choose the right min, max, and numeric statistics.</p>
+<h2>Behavior</h2>
+<ul><li>Inference runs over the trimmed, non-null values of one column. Null values never influence the type.</li><li>A column takes the first of <code>integer</code>, <code>number</code>, <code>date</code>, <code>boolean</code>, <code>text</code> that every non-null value satisfies. A column with no non-null value is <code>empty</code>.</li><li><code>integer</code>: every value matches <code>-?[0-9]+</code>.</li><li><code>number</code>: every value matches <code>-?[0-9]+(\.[0-9]+)?</code>. A column mixing integer and decimal values is <code>number</code>.</li><li><code>boolean</code>: every value equals <code>true</code> or <code>false</code>, ignoring case.</li><li><code>text</code>: anything else.</li><li><code>date</code> is recognized by <code>typing.IsDate</code>, supplied by the date-type story. In this story the date check is a hook, <code>func(string) bool</code>, that defaults to returning false, so a column of dates is <code>text</code> until that story installs the real check. The hook sits between <code>number</code> and <code>boolean</code> in the order.</li><li><code>typing.Infer(values []string) string</code> takes already-trimmed values, skips nulls via <code>reader.IsNull</code>, and returns the type token.</li><li>The profile output writes the token in the <code>type</code> column.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC type-integer-and-number ===<br>Intent: Integer, mixed integer-and-decimal, and negative columns are typed integer and number as the contract states.</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>cols = { &quot;ints&quot;: [&quot;1&quot;, &quot;-20&quot;, &quot;300&quot;, &quot;0&quot;], &quot;mixed&quot;: [&quot;1&quot;, &quot;2.5&quot;, &quot;-3&quot;, &quot;4.25&quot;], &quot;decs&quot;: [&quot;0.5&quot;, &quot;-1.75&quot;, &quot;10.0&quot;, &quot;3.14&quot;], } names = list(cols) nrows = len(cols[names[0]]) lines = [&quot;,&quot;.join(names)] for i in range(nrows): lines.append(&quot;,&quot;.join(cols[n][i] for n in names)) text = &quot;\n&quot;.join(lines) + &quot;\n&quot; with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as fh: fh.write(text) code, out, err = cli_runner(path) print(out) print(err) assert code == 0, (code, out, err) rows = {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))} assert rows[&quot;ints&quot;][&quot;type&quot;] == &quot;integer&quot; assert rows[&quot;mixed&quot;][&quot;type&quot;] == &quot;number&quot; assert rows[&quot;decs&quot;][&quot;type&quot;] == &quot;number&quot; === END AC type-integer-and-number ===</p>
+<p>=== AC type-boolean-case-insensitive ===<br>Intent: A column of true and false in any letter case is boolean, while a column mixing a boolean with other text is text.</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>cols = { &quot;flag&quot;: [&quot;true&quot;, &quot;FALSE&quot;, &quot;True&quot;, &quot;false&quot;], &quot;maybe&quot;: [&quot;true&quot;, &quot;false&quot;, &quot;yes&quot;, &quot;true&quot;], } names = list(cols) nrows = len(cols[names[0]]) lines = [&quot;,&quot;.join(names)] for i in range(nrows): lines.append(&quot;,&quot;.join(cols[n][i] for n in names)) text = &quot;\n&quot;.join(lines) + &quot;\n&quot; with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as fh: fh.write(text) code, out, err = cli_runner(path) print(out) print(err) assert code == 0, (code, out, err) rows = {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))} assert rows[&quot;flag&quot;][&quot;type&quot;] == &quot;boolean&quot; assert rows[&quot;maybe&quot;][&quot;type&quot;] == &quot;text&quot; === END AC type-boolean-case-insensitive ===</p>
+<p>=== AC type-text-fallback ===<br>Intent: A column with one non-numeric value among integers falls back to text.</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydb_placeholder import nothing  # noqa: F401 === END AC type-text-fallback ===</p>
+<p>=== AC type-nulls-ignored ===<br>Intent: Null spellings (empty, NA, N/A, NULL in any case) do not change the inferred type, and an all-null column is empty.</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>cols = { &quot;n&quot;: [&quot;5&quot;, &quot;&quot;, &quot;NA&quot;, &quot;n/a&quot;, &quot;Null&quot;, &quot;7&quot;], &quot;allnull&quot;: [&quot;&quot;, &quot;NA&quot;, &quot;N/A&quot;, &quot;NULL&quot;, &quot;null&quot;, &quot; &quot;], &quot;word&quot;: [&quot;red&quot;, &quot;&quot;, &quot;blue&quot;, &quot;NA&quot;, &quot;green&quot;, &quot;NULL&quot;], } names = list(cols) nrows = len(cols[names[0]]) lines = [&quot;,&quot;.join(names)] for i in range(nrows): lines.append(&quot;,&quot;.join(cols[n][i] for n in names)) text = &quot;\n&quot;.join(lines) + &quot;\n&quot; with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as fh: fh.write(text) code, out, err = cli_runner(path) print(out) print(err) assert code == 0, (code, out, err) rows = {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))} assert rows[&quot;n&quot;][&quot;type&quot;] == &quot;integer&quot; assert rows[&quot;allnull&quot;][&quot;type&quot;] == &quot;empty&quot; assert rows[&quot;word&quot;][&quot;type&quot;] == &quot;text&quot; === END AC type-nulls-ignored ===</p>
+<p>=== AC type-header-only-empty ===<br>Intent: A file with a header and no data records types every column as empty.</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>names = [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;] text = &quot;,&quot;.join(names) + &quot;\n&quot; with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as fh: fh.write(text) code, out, err = cli_runner(path) print(out) print(err) assert code == 0, (code, out, err) rows = list(csv.DictReader(io.StringIO(out))) assert [r[&quot;column&quot;] for r in rows] == names assert all(r[&quot;type&quot;] == &quot;empty&quot; for r in rows) === END AC type-header-only-empty ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Types are computed from the file given; no column name, type, or value list is hardcoded.</li><li>Application code never reads <code>sources/run.sh</code> or any supplied data file.</li><li>Standard library only.</li></ul></article>
+</main>
+</body>
+</html>

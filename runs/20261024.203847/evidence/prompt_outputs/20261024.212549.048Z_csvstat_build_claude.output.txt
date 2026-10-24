@@ -1,0 +1,17 @@
+I did not rerun the harness. The last run in this session passed 22 of 22 with exit 0, and nothing has changed since.
+
+This is the fifth identical job with the same repair feedback. Each pass gives the same result, so repeating it won't help. The gate is green, and the only open item is the zero-write rule in Drydock's build contract.
+
+RESULT: FAILED
+
+FILES CHANGED:
+- (none)
+
+SUMMARY:
+The terminal gate `sh sources/run.sh` passes: 22 passed, 0 failed (of 22), exit 0. This is the single `Suite: full` acceptance assertion for this block, and it passed on every run this session, most recently on the current tree. The earlier `bin/test.sh` (`go test ./...`) run also passed with no failures. I changed no files, and nothing under `sources/` was modified.
+
+FAILURE_SUMMARY: No files written; verification-only step with a green gate, so FAILED comes only from the zero-write rule.
+FAILURE_DETAIL: The acceptance assertion passes with no code change, so there is nothing to repair. Rule 14 requires at least one written file for RESULT: SUCCESS. Drydock's build contract needs a decision: either accept a passing verification-only step with zero file changes, or mark this block verified manually. Rerunning this job will keep producing FAILED until that rule changes.
+
+BLOCKERS:
+- None for the gate. The RESULT value depends on the zero-write rule and needs a decision from whoever owns the Drydock build contract.

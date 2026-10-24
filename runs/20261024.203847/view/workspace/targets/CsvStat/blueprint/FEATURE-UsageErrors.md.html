@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-UsageErrors.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-UsageErrors.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-UsageErrors.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Usage Errors</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261024 V1</td></tr><tr><td>Description</td><td>Reject invalid command lines with exit 2, nothing on standard output, and both synopses on standard error.</td></tr><tr><td>Depends On</td><td>FEATURE-CliOptions.md, ARCHITECTURE.md</td></tr><tr><td>Provides</td><td>exit 2 on usage errors</td></tr><tr><td>Consumes</td><td>--column, --freq, --top</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>Any malformed command line exits 2 before the file is opened. Standard output stays empty, and standard error receives both synopses so the user can see the valid forms.</p>
+<h2>Usage Errors</h2>
+<ul><li>No file argument, or more than one file argument.</li><li>An unknown option, including <code>--help</code> and <code>-h</code> (no help flag is defined).</li><li>An option that requires a value but has none.</li><li><code>--top</code> whose value is not a positive integer (zero, negative, or non-numeric).</li><li><code>--top</code> given without <code>--freq</code>.</li><li><code>--column</code> given together with <code>--freq</code>.</li></ul>
+<h2>Behavior</h2>
+<ul><li>Exit code is 2 for every case above.</li><li>Standard output is empty.</li><li>Standard error receives both synopses: <code>csvstat [--column &lt;name&gt;] &lt;file&gt;</code> and <code>csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</code>.</li><li>Usage errors are decided before the file is opened, so a nonexistent file never turns a usage error into exit 1.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC usage-missing-or-extra-file ===<br>Intent: No file argument and two file arguments each exit 2 with nothing on standard output.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import cli_runner</p>
+<p>cases = { &quot;none&quot;: [], &quot;two&quot;: [&quot;sources/orders.csv&quot;, &quot;sources/sensors.csv&quot;], } for label, args in cases.items(): code, out, err = cli_runner(*args) print(label, code, out, err) assert code == 2, (label, code, out, err) assert out == &quot;&quot;, (label, out) === END AC usage-missing-or-extra-file ===</p>
+<p>=== AC usage-unknown-option ===<br>Intent: An unknown option, including --help and -h, exits 2 with nothing on standard output.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import cli_runner</p>
+<p>for flag in (&quot;--frobnicate&quot;, &quot;--help&quot;, &quot;-h&quot;): code, out, err = cli_runner(flag, &quot;sources/orders.csv&quot;) print(flag, code, out, err) assert code == 2, (flag, code, out, err) assert out == &quot;&quot;, (flag, out) === END AC usage-unknown-option ===</p>
+<p>=== AC usage-missing-option-value ===<br>Intent: Options that need a value but have none exit 2 with nothing on standard output.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import cli_runner</p>
+<p>cases = { &quot;column&quot;: [&quot;--column&quot;], &quot;freq&quot;: [&quot;--freq&quot;], &quot;top&quot;: [&quot;--freq&quot;, &quot;sensor&quot;, &quot;sources/sensors.csv&quot;, &quot;--top&quot;], } for label, args in cases.items(): code, out, err = cli_runner(*args) print(label, code, out, err) assert code == 2, (label, code, out, err) assert out == &quot;&quot;, (label, out) === END AC usage-missing-option-value ===</p>
+<p>=== AC usage-invalid-top ===<br>Intent: A --top that is zero, negative, or not a number exits 2 with nothing on standard output.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import cli_runner</p>
+<p>for value in (&quot;0&quot;, &quot;-1&quot;, &quot;abc&quot;, &quot;1.5&quot;): code, out, err = cli_runner(&quot;--freq&quot;, &quot;sensor&quot;, &quot;--top&quot;, value, &quot;sources/sensors.csv&quot;) print(value, code, out, err) assert code == 2, (value, code, out, err) assert out == &quot;&quot;, (value, out) === END AC usage-invalid-top ===</p>
+<p>=== AC usage-top-without-freq ===<br>Intent: --top without --freq exits 2 with nothing on standard output.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import cli_runner</p>
+<p>code, out, err = cli_runner(&quot;--top&quot;, &quot;3&quot;, &quot;sources/sensors.csv&quot;) print(out) print(err) assert code == 2, (code, out, err) assert out == &quot;&quot;, out === END AC usage-top-without-freq ===</p>
+<p>=== AC usage-column-with-freq ===<br>Intent: --column combined with --freq exits 2 with nothing on standard output.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import cli_runner</p>
+<p>code, out, err = cli_runner(&quot;--column&quot;, &quot;qty&quot;, &quot;--freq&quot;, &quot;qty&quot;, &quot;sources/orders.csv&quot;) print(out) print(err) assert code == 2, (code, out, err) assert out == &quot;&quot;, out === END AC usage-column-with-freq ===</p>
+<p>=== AC usage-decided-before-file-open ===<br>Intent: A usage error on a nonexistent file still exits 2, not 1, because usage is checked before the file is opened.<br>Requires: executable=go; scope=test</p>
+<p>import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>work = tempfile.mkdtemp() missing = os.path.join(work, &quot;no-such-file.csv&quot;) assert not os.path.exists(missing)</p>
+<p>code, out, err = cli_runner(&quot;--top&quot;, &quot;3&quot;, missing) print(out) print(err) assert code == 2, (code, out, err) assert out == &quot;&quot;, out === END AC usage-decided-before-file-open ===</p>
+<h2>User Acceptance</h2>
+<ul><li>Standard error for a usage error shows both synopses, <code>csvstat [--column &lt;name&gt;] &lt;file&gt;</code> and <code>csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</code>.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>No help flag exists; <code>--help</code> and <code>-h</code> are unknown options.</li><li>A usage error never writes anything to standard output.</li><li>Usage errors are never reported as exit 1 or exit 3.</li></ul></article>
+</main>
+</body>
+</html>

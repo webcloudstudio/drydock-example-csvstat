@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-Counts.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-Counts.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-Counts.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Counts</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261024 V1</td></tr><tr><td>Description</td><td>Count rows, null values, and distinct non-null values for each column.</td></tr><tr><td>Depends On</td><td>FEATURE-NullTrim.md, ARCHITECTURE.md</td></tr><tr><td>Provides</td><td>profile.Counts</td></tr><tr><td>Consumes</td><td>reader.IsNull, reader.Trim</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>Supply the <code>rows</code>, <code>nulls</code>, and <code>distinct</code> fields of each profile row.</p>
+<h2>Behavior</h2>
+<ul><li><code>rows</code> is the number of data records (the header is not counted). A header-only file has <code>rows</code> 0 for every column.</li><li><code>nulls</code> is the number of values in the column that are null: empty after trimming, or equal to <code>NA</code>, <code>N/A</code>, or <code>NULL</code> ignoring case.</li><li><code>distinct</code> is the number of different non-null values, compared as exact strings after trimming. Comparison is case-sensitive, so <code>Acme</code> and <code>acme</code> are two values; <code>Globex</code> and <code>Globex</code> are one.</li><li>An all-null or zero-row column has <code>distinct</code> 0.</li><li><code>profile.Counts(values []string) (rows, nulls, distinct int)</code> takes trimmed values.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC counts-rows-nulls-distinct ===<br>Intent: rows, nulls, and distinct match the counts derived from the supplied column values.</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>NULLS = {&quot;&quot;, &quot;na&quot;, &quot;n/a&quot;, &quot;null&quot;} values = [&quot;apple&quot;, &quot;pear&quot;, &quot;apple&quot;, &quot;&quot;, &quot;NA&quot;, &quot;n/a&quot;, &quot;Null&quot;, &quot;fig&quot;, &quot;pear&quot;, &quot;apple&quot;] text = &quot;fruit\n&quot; + &quot;\n&quot;.join(values) + &quot;\n&quot; expected_rows = len(values) expected_nulls = sum(1 for v in values if v.strip().lower() in NULLS) expected_distinct = len({v.strip() for v in values if v.strip().lower() not in NULLS}) with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as fh: fh.write(text) code, out, err = cli_runner(path) print(out) print(err) assert code == 0, (code, out, err) rows = list(csv.DictReader(io.StringIO(out))) assert len(rows) == 1 r = rows[0] assert int(r[&quot;rows&quot;]) == expected_rows assert int(r[&quot;nulls&quot;]) == expected_nulls assert int(r[&quot;distinct&quot;]) == expected_distinct === END AC counts-rows-nulls-distinct ===</p>
+<p>=== AC counts-trimmed-distinct ===<br>Intent: Padded and unpadded spellings of one value count once, while differing case counts separately.</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>values = [&quot;  Globex  &quot;, &quot;Globex&quot;, &quot;Globex &quot;, &quot;globex&quot;, &quot;Acme&quot;] text = &quot;customer\n&quot; + &quot;\n&quot;.join(values) + &quot;\n&quot; expected_distinct = len({v.strip() for v in values}) with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as fh: fh.write(text) code, out, err = cli_runner(path) print(out) print(err) assert code == 0, (code, out, err) rows = list(csv.DictReader(io.StringIO(out))) assert int(rows[0][&quot;distinct&quot;]) == expected_distinct assert int(rows[0][&quot;nulls&quot;]) == 0 assert int(rows[0][&quot;rows&quot;]) == len(values) === END AC counts-trimmed-distinct ===</p>
+<p>=== AC counts-all-null-column ===<br>Intent: A column of only null spellings has nulls equal to rows and distinct zero.</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>values = [&quot;&quot;, &quot;NA&quot;, &quot;N/A&quot;, &quot;NULL&quot;, &quot;null&quot;, &quot; &quot;] text = &quot;a,b\n&quot; + &quot;\n&quot;.join(v + &quot;,x&quot; for v in values) + &quot;\n&quot; with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as fh: fh.write(text) code, out, err = cli_runner(path) print(out) print(err) assert code == 0, (code, out, err) rows = {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))} assert int(rows[&quot;a&quot;][&quot;rows&quot;]) == len(values) assert int(rows[&quot;a&quot;][&quot;nulls&quot;]) == len(values) assert int(rows[&quot;a&quot;][&quot;distinct&quot;]) == 0 assert int(rows[&quot;b&quot;][&quot;nulls&quot;]) == 0 assert int(rows[&quot;b&quot;][&quot;distinct&quot;]) == 1 === END AC counts-all-null-column ===</p>
+<p>=== AC counts-header-only ===<br>Intent: A header-only file reports zero rows, zero nulls, and zero distinct for every column.</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>names = [&quot;sku&quot;, &quot;price&quot;, &quot;in_stock&quot;] text = &quot;,&quot;.join(names) + &quot;\n&quot; with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as fh: fh.write(text) code, out, err = cli_runner(path) print(out) print(err) assert code == 0, (code, out, err) rows = list(csv.DictReader(io.StringIO(out))) assert [r[&quot;column&quot;] for r in rows] == names for r in rows: assert int(r[&quot;rows&quot;]) == 0 assert int(r[&quot;nulls&quot;]) == 0 assert int(r[&quot;distinct&quot;]) == 0 === END AC counts-header-only ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Counts are computed from the file given; none is hardcoded.</li><li>Distinct comparison is exact and case-sensitive on trimmed strings.</li></ul></article>
+</main>
+</body>
+</html>

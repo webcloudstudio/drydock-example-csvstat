@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/VERIFICATION.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/VERIFICATION.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/VERIFICATION.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Verification</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261024 V1</td></tr><tr><td>Description</td><td>Terminal release verification: the supplied conformance harness passes in full.</td></tr><tr><td>Depends On</td><td>FEATURE-ModuleBuild.md, FEATURE-TestScript.md, FEATURE-CsvReading.md, FEATURE-NullTrim.md, FEATURE-RejectMalformed.md, FEATURE-UnreadableFile.md, FEATURE-CliOptions.md, FEATURE-ColumnSelect.md, FEATURE-UsageErrors.md, FEATURE-TypeInference.md, FEATURE-DateType.md, FEATURE-Counts.md, FEATURE-MinMax.md, FEATURE-NumericStats.md, FEATURE-Frequencies.md, FEATURE-CsvOutput.md</td></tr><tr><td>Provides</td><td>sh sources/run.sh</td></tr><tr><td>Consumes</td><td>go build ./cmd/csvstat</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>Once every implementation story is closed, the supplied harness <code>sources/run.sh</code> builds <code>./cmd/csvstat</code> and runs its 22 checks against the supplied data files. This is the only story that runs the whole suite. Nothing under <code>sources/</code> is modified, and application code never reads <code>sources/run.sh</code> or embeds an answer.</p>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC full-conformance ===<br>Intent: The supplied grader builds csvstat and passes all of its checks.<br>Suite: full<br>Requires: executable=go; scope=test</p>
+<p>import os import subprocess import sys</p>
+<p>result = subprocess.run( [&quot;sh&quot;, &quot;sources/run.sh&quot;], capture_output=True, text=True, env={**os.environ}, ) print(result.stdout) print(result.stderr, file=sys.stderr) assert result.returncode == 0 === END AC full-conformance ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Do not modify, rewrite, regenerate, or substitute any file under <code>sources/</code>.</li><li>Application code does not read <code>sources/run.sh</code> or any supplied data file, and does not hardcode</li></ul>
+<p>a statistic, a type, or a value list.</p></article>
+</main>
+</body>
+</html>

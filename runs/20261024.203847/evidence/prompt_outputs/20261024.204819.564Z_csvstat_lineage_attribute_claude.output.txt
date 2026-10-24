@@ -1,0 +1,25 @@
+<requirement name="build-csvstat-module" stories="foundation,module-build">
+Builds ./cmd/csvstat with `go build`
+</requirement>
+<requirement name="profile-every-column" stories="csv-reading,null-trim,row-counts,type-inference,date-type,min-max,numeric-stats,csv-output">
+A. Every column of each data file
+</requirement>
+<requirement name="profile-one-column" stories="column-select">
+B. One column
+</requirement>
+<requirement name="column-frequencies" stories="frequencies">
+C. Frequencies
+</requirement>
+<requirement name="reject-malformed-input" stories="reject-malformed">
+check E1 3 "$DATA/ragged.csv" < /dev/null
+</requirement>
+<requirement name="unreadable-file-exit" stories="unreadable-file">
+check E4 1 "$MISSING" < /dev/null
+</requirement>
+<requirement name="usage-errors" stories="usage-errors,cli-options">
+U. Usage errors
+</requirement>
+<requirement name="conformance-gate" stories="verification">
+Exit 0 only when the build succeeds and every check passes.
+</requirement>
+<unattached story="test-script"/>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-CliOptions.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-CliOptions.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-CliOptions.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: CLI Options</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261024 V1</td></tr><tr><td>Description</td><td>Parse the --column, --freq, and --top options and the single file argument into a request value.</td></tr><tr><td>Depends On</td><td>ARCHITECTURE.md</td></tr><tr><td>Provides</td><td>--column, --freq, --top</td></tr><tr><td>Consumes</td><td>cli.Run</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p><code>internal/cli</code> parses arguments with a local <code>flag.FlagSet</code> created with <code>flag.ContinueOnError</code> and produces a request value that the profile and frequency stories consume. This story owns the accepted forms; the rejection of invalid forms belongs to the usage-errors story.</p>
+<h2>Command Forms</h2>
+<pre><code>csvstat [--column &lt;name&gt;] &lt;file&gt;
+csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</code></pre>
+<div class="scroll"><table><thead><tr><th>Option</th><th>Meaning</th></tr></thead><tbody><tr><td><code>--column &lt;name&gt;</code></td><td>Profile only the named column.</td></tr><tr><td><code>--freq &lt;name&gt;</code></td><td>List the most frequent values of the named column instead of profiling.</td></tr><tr><td><code>--top &lt;n&gt;</code></td><td>With <code>--freq</code>, list at most <code>&lt;n&gt;</code> values. A positive integer; default <code>5</code>.</td></tr></tbody></table></div>
+<h2>Behavior</h2>
+<ul><li>Options precede exactly one file argument.</li><li>With no option, every column is profiled.</li><li><code>--column &lt;name&gt;</code> produces a profile containing only that column.</li><li><code>--freq &lt;name&gt;</code> produces the frequency list with header <code>value,count</code>.</li><li><code>--top</code> defaults to 5 when <code>--freq</code> is given without it.</li><li>The parsed request carries: file path, column name (optional), freq name (optional), and top count.</li><li>Only <code>main</code> calls <code>os.Exit</code>; <code>Run</code> returns the exit code.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC options-no-option-profiles-all ===<br>Intent: With only a file argument, every column is profiled in file order.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>names = [&quot;alpha&quot;, &quot;beta&quot;, &quot;gamma&quot;] work = tempfile.mkdtemp() path = os.path.join(work, &quot;data.csv&quot;) with open(path, &quot;w&quot;, encoding=&quot;utf-8&quot;) as handle: handle.write(&quot;,&quot;.join(names) + &quot;\n1,2,3\n4,5,6\n&quot;)</p>
+<p>code, out, err = cli_runner(path) print(out) print(err) assert code == 0, (code, out, err) rows = list(csv.reader(io.StringIO(out))) assert [row[0] for row in rows[1:]] == names, rows === END AC options-no-option-profiles-all ===</p>
+<p>=== AC options-column-profiles-one ===<br>Intent: --column profiles exactly the named column.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>names = [&quot;alpha&quot;, &quot;beta&quot;, &quot;gamma&quot;] chosen = names[1] work = tempfile.mkdtemp() path = os.path.join(work, &quot;data.csv&quot;) with open(path, &quot;w&quot;, encoding=&quot;utf-8&quot;) as handle: handle.write(&quot;,&quot;.join(names) + &quot;\n1,2,3\n4,5,6\n&quot;)</p>
+<p>code, out, err = cli_runner(&quot;--column&quot;, chosen, path) print(out) print(err) assert code == 0, (code, out, err) rows = list(csv.reader(io.StringIO(out))) assert len(rows) == 2, rows assert rows[1][0] == chosen, rows === END AC options-column-profiles-one ===</p>
+<p>=== AC options-freq-default-top ===<br>Intent: --freq without --top lists at most five values.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>default_top = 5 distinct = 8 work = tempfile.mkdtemp() path = os.path.join(work, &quot;data.csv&quot;) with open(path, &quot;w&quot;, encoding=&quot;utf-8&quot;) as handle: handle.write(&quot;v\n&quot;) for index in range(distinct): handle.write(&quot;item%d\n&quot; % index)</p>
+<p>code, out, err = cli_runner(&quot;--freq&quot;, &quot;v&quot;, path) print(out) print(err) assert code == 0, (code, out, err) rows = list(csv.reader(io.StringIO(out))) assert len(rows) - 1 == default_top, rows === END AC options-freq-default-top ===</p>
+<p>=== AC options-freq-explicit-top ===<br>Intent: --top limits the frequency list to the requested number of rows.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>limit = 2 distinct = 6 work = tempfile.mkdtemp() path = os.path.join(work, &quot;data.csv&quot;) with open(path, &quot;w&quot;, encoding=&quot;utf-8&quot;) as handle: handle.write(&quot;v\n&quot;) for index in range(distinct): handle.write(&quot;item%d\n&quot; % index)</p>
+<p>code, out, err = cli_runner(&quot;--freq&quot;, &quot;v&quot;, &quot;--top&quot;, str(limit), path) print(out) print(err) assert code == 0, (code, out, err) rows = list(csv.reader(io.StringIO(out))) assert len(rows) - 1 == limit, rows === END AC options-freq-explicit-top ===</p>
+<p>=== AC options-freq-top-larger-than-distinct ===<br>Intent: A --top larger than the number of distinct values lists every distinct value.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>distinct = 3 limit = 50 work = tempfile.mkdtemp() path = os.path.join(work, &quot;data.csv&quot;) with open(path, &quot;w&quot;, encoding=&quot;utf-8&quot;) as handle: handle.write(&quot;v\n&quot;) for index in range(distinct): handle.write(&quot;item%d\n&quot; % index)</p>
+<p>code, out, err = cli_runner(&quot;--freq&quot;, &quot;v&quot;, &quot;--top&quot;, str(limit), path) print(out) print(err) assert code == 0, (code, out, err) rows = list(csv.reader(io.StringIO(out))) assert len(rows) - 1 == distinct, rows === END AC options-freq-top-larger-than-distinct ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Only <code>main</code> calls <code>os.Exit</code>; <code>Run</code> returns an exit code.</li><li>Parsing uses a local <code>flag.FlagSet</code> with <code>flag.ContinueOnError</code>, never the global flag set.</li><li>Options always precede the file argument.</li><li>Only the Go standard library is used.</li></ul></article>
+</main>
+</body>
+</html>

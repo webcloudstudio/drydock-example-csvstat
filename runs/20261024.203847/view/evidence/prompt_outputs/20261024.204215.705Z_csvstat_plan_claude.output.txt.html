@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/prompt_outputs/20261024.204215.705Z_csvstat_plan_claude.output.txt</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/prompt_outputs/20261024.204215.705Z_csvstat_plan_claude.output.txt</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/prompt_outputs/20261024.204215.705Z_csvstat_plan_claude.output.txt">Raw file</a></div></header>
+<article class="doc"><pre>=== BEGIN ARTIFACT ARCHITECTURE.md ===
+# ARCHITECTURE: CsvStat
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261024 V1 |
+| Description | Module layout, package boundaries, and exit-code contract for the csvstat command-line CSV profiler. |
+| Depends On  | None |
+| Provides    | cli.Run, cmd/csvstat |
+
+## Questions
+
+- None.
+
+## Purpose
+
+csvstat is a single-pass command-line tool. It reads one CSV file, validates it, infers column types, and writes either a column profile or a value-frequency list as CSV on standard output. It has no persistence, network use, or configuration file.
+
+## Technology Stack
+
+Derived from `TECHNOLOGY_STACK.md`:
+
+- Go 1.22 or newer, standard library only, no third-party modules. The root `go.mod` declares no requirements.
+- `go test` with `go vet` behind `bin/test.sh`.
+- CSV read and written through `encoding/csv`.
+- POSIX sh for `bin/test.sh` and the supplied grader `sources/run.sh`.
+
+## Module Layout
+
+```text
+go.mod                    module csvstat, go 1.22 or newer, no require lines
+cmd/csvstat/main.go       package main; calls cli.Run and passes the result to os.Exit
+internal/cli              Run(args []string, stdout, stderr io.Writer) int
+internal/reader           Read, Trim, IsNull, rejection checks
+internal/typing           Infer, IsDate
+internal/profile          Counts, MinMax, NumericStats
+internal/freq             Top
+internal/output           WriteProfile, WriteFreq
+bin/test.sh               go vet ./... then go test ./...
+```
+
+Only `main` calls `os.Exit`. `cli.Run` uses a local `flag.FlagSet` with `flag.ContinueOnError` and is tested with `bytes.Buffer` writers.
+
+## Exit Codes
+
+| Code | Meaning |
+|---|---|
+| 0 | Success |
+| 1 | The file cannot be opened or read |
+| 2 | Usage error |
+| 3 | Rejected input: empty file, empty or repeated header name, ragged record, or an absent column name |
+
+A failing command writes nothing to standard output and one or more diagnostic lines to standard error. Output is buffered and written only on success.
+
+## Module Ownership
+
+| Boundary | Owner | Notes |
+|---|---|---|
+| Persistence | none | No persistent state exists. |
+| Configuration | none | Behavior is set only by command-line options. |
+| File access | internal/cli | Opens the named file read-only and hands a reader to internal/reader. |
+| External services | none | No network use. |
+
+## Constraints
+
+- Statistics (sum, mean, median) are computed with `math/big` exact values and rounded once, half away from zero, when written.
+- Application code never reads `sources/run.sh` or any supplied data file and never embeds an expected value.
+
+## Programmatic Acceptance
+
+=== AC architecture-module-layout ===
+Intent: The application root is a Go 1.22+ module with no requirements and the declared entry point and CLI package directory.
+Requires: executable=go; scope=test
+
+from pathlib import Path
+import re
+
+mod = Path(&quot;go.mod&quot;).read_text()
+found = re.search(r&quot;^go (\d+)\.(\d+)&quot;, mod, re.M)
+assert found is not None, mod
+assert (int(found.group(1)), int(found.group(2))) &gt;= (1, 22)
+assert re.search(r&quot;^\s*require\b&quot;, mod, re.M) is None
+assert Path(&quot;cmd/csvstat/main.go&quot;).is_file()
+assert Path(&quot;internal/cli&quot;).is_dir()
+=== END AC architecture-module-layout ===
+
+=== AC architecture-executable-builds ===
+Intent: The cmd/csvstat main package builds and the built executable runs to a normal process exit.
+Requires: executable=go; scope=test
+
+from drydock_go import cli_runner
+
+code, out, err = cli_runner()
+print(out)
+print(err)
+assert isinstance(code, int)
+assert code &gt;= 0
+=== END AC architecture-executable-builds ===
+
+=== AC architecture-only-main-exits ===
+Intent: No non-test Go source outside cmd/ calls os.Exit.
+
+from pathlib import Path
+
+offenders = []
+for path in Path(&quot;internal&quot;).rglob(&quot;*.go&quot;):
+    if path.name.endswith(&quot;_test.go&quot;):
+        continue
+    if &quot;os.Exit(&quot; in path.read_text():
+        offenders.append(str(path))
+assert offenders == [], offenders
+=== END AC architecture-only-main-exits ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Do not add third-party modules; `go.mod` carries no `require` lines.
+- Do not modify, rewrite, regenerate, or substitute any file under `sources/`.
+- Do not read `sources/run.sh` or any supplied data file from application code, and do not hardcode a statistic, a type, or a value list.
+- Diagnostics go to standard error and are never part of the compared output.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-ModuleBuild.md ===
+# FEATURE: Module Build
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261024 V1 |
+| Description | The application root builds the csvstat executable with go build using only the standard library. |
+| Depends On  | ARCHITECTURE.md |
+| Provides    | go build ./cmd/csvstat |
+
+## Questions
+
+- None.
+
+## Purpose
+
+`go build ./cmd/csvstat` run from the application root produces the `csvstat` executable for the host platform. The executable has no runtime dependency beyond itself, and the module uses only the Go standard library.
+
+## Behavior
+
+- The root `go.mod` declares no `require` directives and no `replace` directives.
+- No `go.sum` file is needed and none is committed.
+- `go build -o &lt;path&gt; ./cmd/csvstat` succeeds from the application root and writes an executable file.
+- The built binary starts and exits normally with no arguments.
+
+## Programmatic Acceptance
+
+=== AC modulebuild-go-build-succeeds ===
+Intent: go build of ./cmd/csvstat from the application root succeeds and writes an executable file.
+Requires: executable=go; scope=test
+
+import os
+import subprocess
+import tempfile
+from pathlib import Path
+
+with tempfile.TemporaryDirectory() as tmp:
+    target = Path(tmp) / &quot;csvstat-built&quot;
+    result = subprocess.run(
+        [&quot;go&quot;, &quot;build&quot;, &quot;-o&quot;, str(target), &quot;./cmd/csvstat&quot;],
+        capture_output=True, text=True,
+    )
+    print(result.stdout)
+    print(result.stderr)
+    assert result.returncode == 0
+    assert target.is_file()
+    assert os.access(target, os.X_OK)
+=== END AC modulebuild-go-build-succeeds ===
+
+=== AC modulebuild-standard-library-only ===
+Intent: The module declares no requirements or replacements and has no checksum file.
+
+from pathlib import Path
+import re
+
+mod = Path(&quot;go.mod&quot;).read_text()
+assert re.search(r&quot;^\s*require\b&quot;, mod, re.M) is None
+assert re.search(r&quot;^\s*replace\b&quot;, mod, re.M) is None
+assert not Path(&quot;go.sum&quot;).exists()
+=== END AC modulebuild-standard-library-only ===
+
+=== AC modulebuild-binary-runs ===
+Intent: The built executable starts and ends with a normal process exit status.
+Requires: executable=go; scope=test
+
+import subprocess
+import tempfile
+from pathlib import Path
+
+with tempfile.TemporaryDirectory() as tmp:
+    target = Path(tmp) / &quot;csvstat-built&quot;
+    build = subprocess.run(
+        [&quot;go&quot;, &quot;build&quot;, &quot;-o&quot;, str(target), &quot;./cmd/csvstat&quot;],
+        capture_output=True, text=True,
+    )
+    print(build.stderr)
+    assert build.returncode == 0
+    run = subprocess.run([str(target)], capture_output=True, text=True)
+    print(run.stdout)
+    print(run.stderr)
+    assert run.returncode &gt;= 0
+=== END AC modulebuild-binary-runs ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Standard library only; no third-party modules.
+- Do not modify anything under `sources/`.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-TestScript.md ===
+# FEATURE: Test Script
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261024 V1 |
+| Description | bin/test.sh runs go vet and go test from the application root and exits zero only when both pass. |
+| Depends On  | FEATURE-ModuleBuild.md |
+| Provides    | bin/test.sh |
+
+## Questions
+
+- None.
+
+## Purpose
+
+`bin/test.sh` is the single project test entry point. It is written in POSIX sh.
+
+## Behavior
+
+- The script resolves the application root from its own location (the parent of the directory holding the script), changes into it, and does not depend on the caller&#x27;s working directory.
+- It runs `go vet ./...`, then `go test ./...`.
+- It exits zero only when both commands pass; a failure of either exits non-zero. It must not mask the first failure.
+- It uses no bash-only syntax.
+- The application&#x27;s own tests are written by the build agent beside the code and cover each type, each statistic, null handling, rounding, each output form, and each exit code using files written by the tests.
+
+## Programmatic Acceptance
+
+=== AC testscript-exists-and-passes ===
+Intent: bin/test.sh exists and exits zero on the application root.
+Requires: executable=go; scope=test
+
+import subprocess
+from pathlib import Path
+
+script = Path(&quot;bin/test.sh&quot;)
+assert script.is_file()
+result = subprocess.run([&quot;sh&quot;, str(script)], capture_output=True, text=True)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0
+=== END AC testscript-exists-and-passes ===
+
+=== AC testscript-fails-on-failing-test ===
+Intent: bin/test.sh exits non-zero when a test in the module fails.
+Requires: executable=go; scope=test
+
+import shutil
+import subprocess
+import tempfile
+from pathlib import Path
+
+with tempfile.TemporaryDirectory() as tmp:
+    root = Path(tmp)
+    (root / &quot;bin&quot;).mkdir()
+    shutil.copy(&quot;bin/test.sh&quot;, root / &quot;bin&quot; / &quot;test.sh&quot;)
+    (root / &quot;go.mod&quot;).write_text(&quot;module tmpmod\n\ngo 1.22\n&quot;)
+    (root / &quot;x.go&quot;).write_text(&quot;package tmpmod\n&quot;)
+    (root / &quot;x_test.go&quot;).write_text(
+        &#x27;package tmpmod\n\nimport &quot;testing&quot;\n\nfunc TestFails(t *testing.T) {\n\tt.Fatal(&quot;expected failure&quot;)\n}\n&#x27;
+    )
+    result = subprocess.run([&quot;sh&quot;, str(root / &quot;bin&quot; / &quot;test.sh&quot;)], capture_output=True, text=True)
+    print(result.stdout)
+    print(result.stderr)
+    assert result.returncode != 0
+=== END AC testscript-fails-on-failing-test ===
+
+=== AC testscript-fails-on-vet-finding ===
+Intent: bin/test.sh exits non-zero when go vet reports a finding even though tests pass.
+Requires: executable=go; scope=test
+
+import shutil
+import subprocess
+import tempfile
+from pathlib import Path
+
+with tempfile.TemporaryDirectory() as tmp:
+    root = Path(tmp)
+    (root / &quot;bin&quot;).mkdir()
+    shutil.copy(&quot;bin/test.sh&quot;, root / &quot;bin&quot; / &quot;test.sh&quot;)
+    (root / &quot;go.mod&quot;).write_text(&quot;module tmpmod\n\ngo 1.22\n&quot;)
+    (root / &quot;x.go&quot;).write_text(
+        &#x27;package tmpmod\n\nimport &quot;fmt&quot;\n\nfunc Bad() string {\n\treturn fmt.Sprintf(&quot;%d&quot;, &quot;text&quot;)\n}\n&#x27;
+    )
+    (root / &quot;x_test.go&quot;).write_text(
+        &#x27;package tmpmod\n\nimport &quot;testing&quot;\n\nfunc TestPasses(t *testing.T) {\n\t_ = Bad()\n}\n&#x27;
+    )
+    result = subprocess.run([&quot;sh&quot;, str(root / &quot;bin&quot; / &quot;test.sh&quot;)], capture_output=True, text=True)
+    print(result.stdout)
+    print(result.stderr)
+    assert result.returncode != 0
+=== END AC testscript-fails-on-vet-finding ===
+
+=== AC testscript-passes-on-clean-module ===
+Intent: bin/test.sh exits zero for a module whose vet and tests are clean, from a different working directory.
+Requires: executable=go; scope=test
+
+import shutil
+import subprocess
+import tempfile
+from pathlib import Path
+
+with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as elsewhere:
+    root = Path(tmp)
+    (root / &quot;bin&quot;).mkdir()
+    shutil.copy(&quot;bin/test.sh&quot;, root / &quot;bin&quot; / &quot;test.sh&quot;)
+    (root / &quot;go.mod&quot;).write_text(&quot;module tmpmod\n\ngo 1.22\n&quot;)
+    (root / &quot;x.go&quot;).write_text(&quot;package tmpmod\n\nfunc One() int { return 1 }\n&quot;)
+    (root / &quot;x_test.go&quot;).write_text(
+        &#x27;package tmpmod\n\nimport &quot;testing&quot;\n\nfunc TestOne(t *testing.T) {\n\tif One() != 1 {\n\t\tt.Fatal(&quot;bad&quot;)\n\t}\n}\n&#x27;
+    )
+    result = subprocess.run(
+        [&quot;sh&quot;, str(root / &quot;bin&quot; / &quot;test.sh&quot;)], capture_output=True, text=True, cwd=elsewhere
+    )
+    print(result.stdout)
+    print(result.stderr)
+    assert result.returncode == 0
+=== END AC testscript-passes-on-clean-module ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- POSIX sh only; no bash-only features.
+- The script never modifies files under `sources/`.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-CsvReading.md ===
+# FEATURE: CSV Reading
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261024 V1 |
+| Description | Read a UTF-8 RFC 4180 CSV stream with encoding/csv into a header, data records, and record line numbers. |
+| Depends On  | ARCHITECTURE.md |
+| Provides    | reader.Read |
+
+## Questions
+
+- None.
+
+## Purpose
+
+`internal/reader` parses the input file into a table that later stories trim, validate, type, and profile.
+
+## Interface
+
+```text
+package reader
+
+type Table struct {
+    Header []string   // first record
+    Rows   [][]string // later records, in file order
+    Lines  []int      // 1-based input line on which each row starts; len(Lines) == len(Rows)
+}
+
+func Read(r io.Reader) (Table, error)
+```
+
+## Behavior
+
+- Parsing uses `encoding/csv` with `FieldsPerRecord = -1`, so a record whose field count differs from the header is returned as-is. Ragged detection belongs to the reject-malformed story.
+- The first record is the header; every later record is a data row. Line numbers come from the csv reader&#x27;s field positions.
+- A quoted field containing a comma, a quote, or a newline stays inside one value.
+- An empty input returns a zero Table and a nil error; the caller rejects it.
+- Bytes that are not valid UTF-8 are not a rejection condition; they are read as `encoding/csv` reads them.
+- A syntax error reported by `encoding/csv` is returned unchanged; the caller chooses the exit status.
+- Values are returned untrimmed here; trimming is the null-trim story.
+
+## Test Names
+
+The build agent writes these tests in `internal/reader` with exactly these names:
+
+- `TestReadHeaderThenRows`: first record is the header and later records are rows, in order.
+- `TestReadQuotedComma`: a quoted field containing a comma is one value.
+- `TestReadInvalidUTF8NotRejected`: a field containing a byte that is not valid UTF-8 is read with a nil error.
+- `TestReadRaggedRecordReturned`: a record with an extra field is returned unchanged with a nil error.
+- `TestReadLineNumbers`: Lines holds the starting line of each row, counting a multi-line quoted field correctly.
+- `TestReadEmptyInput`: empty input returns an empty Table and a nil error.
+
+## Programmatic Acceptance
+
+=== AC csvreading-header-and-rows ===
+Intent: The first record is the header and later records are data rows in order.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/reader&quot;, &quot;TestReadHeaderThenRows&quot;)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC csvreading-header-and-rows ===
+
+=== AC csvreading-quoted-comma ===
+Intent: A quoted comma stays inside a single value.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/reader&quot;, &quot;TestReadQuotedComma&quot;)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC csvreading-quoted-comma ===
+
+=== AC csvreading-invalid-utf8-accepted ===
+Intent: Invalid UTF-8 bytes do not cause rejection.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/reader&quot;, &quot;TestReadInvalidUTF8NotRejected&quot;)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC csvreading-invalid-utf8-accepted ===
+
+=== AC csvreading-ragged-returned ===
+Intent: A record with a different field count is returned for later rejection rather than failing the read.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/reader&quot;, &quot;TestReadRaggedRecordReturned&quot;)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC csvreading-ragged-returned ===
+
+=== AC csvreading-line-numbers ===
+Intent: Each row carries the input line on which it starts.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/reader&quot;, &quot;TestReadLineNumbers&quot;)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC csvreading-line-numbers ===
+
+=== AC csvreading-empty-input ===
+Intent: Empty input yields an empty table and no error.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/reader&quot;, &quot;TestReadEmptyInput&quot;)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC csvreading-empty-input ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Use only `encoding/csv` for parsing; no hand-written CSV parser.
+- Do not read any file under `sources/` from application code.
+- Do not reject a file for containing bytes that are not valid UTF-8.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-NullTrim.md ===
+# FEATURE: Null and Trim
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261024 V1 |
+| Description | Trim header names and values of surrounding spaces and classify null values. |
+| Depends On  | FEATURE-CsvReading.md |
+| Provides    | reader.Trim, reader.IsNull |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Every later rule operates on trimmed values and on the null classification defined here.
+
+## Interface
+
+```text
+package reader
+
+func TrimTable(t Table) Table   // trims every header name and every value
+func Trim(s string) string      // removes leading and trailing spaces
+func IsNull(s string) bool      // s is already trimmed
+```
+
+## Behavior
+
+- `Trim` removes leading and trailing space characters (U+0020) only, and is applied to every header name and every value before any other rule.
+- `IsNull` is true when the trimmed value is empty, or equals `NA`, `N/A`, or `NULL` ignoring case. Every other value is non-null.
+- A value consisting only of spaces trims to empty and is therefore null.
+- Distinctness elsewhere is compared on the trimmed string, so a padded value and its trimmed form are the same value.
+
+## Test Names
+
+The build agent writes these tests in `internal/reader` with exactly these names:
+
+- `TestTrimSpaces`: leading and trailing spaces are removed and interior spaces are kept.
+- `TestIsNullSpellings`: empty, NA, N/A, NULL in upper, lower, and mixed case are null; a near miss such as &quot;NAN&quot; or &quot;N A&quot; is not.
+- `TestTrimBeforeNull`: a value of only spaces is null after trimming.
+- `TestTrimTableHeaderAndRows`: TrimTable trims header names and every row value and preserves Lines.
+
+## Programmatic Acceptance
+
+=== AC nulltrim-trim-spaces ===
+Intent: Trim removes surrounding spaces only.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/reader&quot;, &quot;TestTrimSpaces&quot;)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC nulltrim-trim-spaces ===
+
+=== AC nulltrim-null-spellings ===
+Intent: Empty, NA, N/A, and NULL in any case are null and nothing else is.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/reader&quot;, &quot;TestIsNullSpellings&quot;)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC nulltrim-null-spellings ===
+
+=== AC nulltrim-trim-before-null ===
+Intent: A value made only of spaces is null once trimmed.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/reader&quot;, &quot;TestTrimBeforeNull&quot;)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC nulltrim-trim-before-null ===
+
+=== AC nulltrim-trim-table ===
+Intent: TrimTable trims header names and all row values and keeps line numbers.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/reader&quot;, &quot;TestTrimTableHeaderAndRows&quot;)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC nulltrim-trim-table ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Null spellings are exactly empty, `NA`, `N/A`, and `NULL` ignoring case; do not add others.
+- Do not read any file under `sources/` from application code.
+=== END ARTIFACT ===</pre></article>
+</main>
+</body>
+</html>

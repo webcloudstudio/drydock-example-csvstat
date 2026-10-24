@@ -1,0 +1,290 @@
+[
+  {
+    "id": "Q-001",
+    "type": "choice",
+    "severity": "low",
+    "origin": "plan",
+    "blueprint": "FEATURE-UsageErrors.md",
+    "story": "usage-errors",
+    "status": "recommended",
+    "archived": false,
+    "title": "Help flag behavior",
+    "description": "The brief defines no help option. Options weighed: treat --help and -h as unknown options (exit 2), or add a help flag exiting 0.",
+    "options": [
+      {
+        "value": "unknown-option",
+        "label": "--help and -h are unknown options, exit 2"
+      },
+      {
+        "value": "help-flag",
+        "label": "Add a help flag that exits 0"
+      }
+    ],
+    "system_choice": "unknown-option"
+  },
+  {
+    "id": "Q-002",
+    "type": "choice",
+    "severity": "low",
+    "origin": "plan",
+    "blueprint": "FEATURE-CsvReading.md",
+    "story": "csv-reading",
+    "status": "recommended",
+    "archived": false,
+    "title": "Invalid UTF-8 input",
+    "description": "The brief's rejection list is exhaustive and omits invalid UTF-8. Options: reject with exit 3, or read bytes as encoding/csv does.",
+    "options": [
+      {
+        "value": "accept",
+        "label": "Do not reject; read as encoding/csv reads"
+      },
+      {
+        "value": "reject",
+        "label": "Reject with exit 3"
+      }
+    ],
+    "system_choice": "accept"
+  },
+  {
+    "id": "Q-003",
+    "type": "choice",
+    "severity": "low",
+    "origin": "plan",
+    "blueprint": "FEATURE-NumericStats.md",
+    "story": "numeric-stats",
+    "status": "recommended",
+    "archived": false,
+    "title": "Two-decimal rule for integer mean and median",
+    "description": "Integer sum, min, max are plain integers, but run.sh A1 shows integer mean and median as 1012.50. Options: two places for mean and median of both numeric types, or integers only when exact.",
+    "options": [
+      {
+        "value": "two-places",
+        "label": "Mean and median always two places"
+      },
+      {
+        "value": "minimal",
+        "label": "Integer-valued results printed without decimals"
+      }
+    ],
+    "system_choice": "two-places"
+  },
+  {
+    "id": "Q-004",
+    "type": "choice",
+    "severity": "low",
+    "origin": "plan",
+    "blueprint": "FEATURE-ColumnSelect.md",
+    "story": "column-select",
+    "status": "recommended",
+    "archived": false,
+    "title": "Column name matching",
+    "description": "Options: exact case-sensitive match on trimmed header names, or case-insensitive match.",
+    "options": [
+      {
+        "value": "exact",
+        "label": "Exact, case-sensitive after trimming"
+      },
+      {
+        "value": "fold",
+        "label": "Case-insensitive"
+      }
+    ],
+    "system_choice": "exact"
+  },
+  {
+    "id": "Q-005",
+    "type": "text",
+    "severity": "low",
+    "origin": "plan",
+    "blueprint": "VERIFICATION.md",
+    "story": "verification",
+    "status": "recommended",
+    "archived": false,
+    "title": "Foundation story carries no covers or accepts",
+    "description": "BUILD-001 is infrastructure but must be covered by exactly one story, while a foundational story carries no covers. Planned the foundation as ARCHITECTURE.md and gave BUILD-001 to a separate module-build story that proves the build.",
+    "options": [],
+    "system_choice": "BUILD-001 is covered by module-build; foundation carries neither covers nor accepts."
+  },
+  {
+    "id": "build-architecture.md-valid-single-file-invocation-behavior-in-the-run-skeleton",
+    "type": "text",
+    "severity": "low",
+    "origin": "build",
+    "blueprint": "ARCHITECTURE.md",
+    "story": null,
+    "status": "recommended",
+    "archived": false,
+    "title": "Valid single-file invocation behavior in the Run skeleton",
+    "description": "Options were: return 0 with no output, or return a non-success code with a 'not implemented' diagnostic. I chose 0 with no output because exit 1 means the file cannot be read and the contract has no code for unimplemented work. Profiling stories will replace this path. Is that acceptable, or should the skeleton fail until profiling lands?",
+    "options": [],
+    "system_choice": "Options were: return 0 with no output, or return a non-success code with a 'not implemented' diagnostic. I chose 0 with no output because exit 1 means the file cannot be read and the contract has no code for unimplemented work. Profiling stories will replace this path. Is that acceptable, or should the skeleton fail until profiling lands?"
+  },
+  {
+    "id": "build-feature-csvreading.md-blank-lines",
+    "type": "text",
+    "severity": "low",
+    "origin": "build",
+    "blueprint": "FEATURE-CsvReading.md",
+    "story": null,
+    "status": "recommended",
+    "archived": false,
+    "title": "Blank lines",
+    "description": "encoding/csv skips blank lines. Reader makes them explicit as empty records when the header has one column, so an empty value in a single-column file counts as a row and a null. In multi-column files blank lines are still skipped. Is that acceptable, or should blank lines in multi-column files be rejected as ragged?",
+    "options": [],
+    "system_choice": "encoding/csv skips blank lines. Reader makes them explicit as empty records when the header has one column, so an empty value in a single-column file counts as a row and a null. In multi-column files blank lines are still skipped. Is that acceptable, or should blank lines in multi-column files be rejected as ragged?"
+  },
+  {
+    "id": "build-skip-feature-csvreading.md-csvreading-empty-input",
+    "type": "text",
+    "severity": "low",
+    "origin": "build",
+    "blueprint": "FEATURE-CsvReading.md",
+    "story": "csv-reading",
+    "status": "recommended",
+    "archived": false,
+    "title": "Acceptance skipped: csvreading-empty-input",
+    "description": "excluded check: ERROR environment",
+    "options": [],
+    "system_choice": "Leave csvreading-empty-input untested until its acceptance setup is repaired; do not treat it as passed."
+  },
+  {
+    "id": "build-skip-feature-csvreading.md-csvreading-header-and-rows",
+    "type": "text",
+    "severity": "low",
+    "origin": "build",
+    "blueprint": "FEATURE-CsvReading.md",
+    "story": "csv-reading",
+    "status": "recommended",
+    "archived": false,
+    "title": "Acceptance skipped: csvreading-header-and-rows",
+    "description": "excluded check: ERROR environment",
+    "options": [],
+    "system_choice": "Leave csvreading-header-and-rows untested until its acceptance setup is repaired; do not treat it as passed."
+  },
+  {
+    "id": "build-skip-feature-csvreading.md-csvreading-invalid-utf8-accepted",
+    "type": "text",
+    "severity": "low",
+    "origin": "build",
+    "blueprint": "FEATURE-CsvReading.md",
+    "story": "csv-reading",
+    "status": "recommended",
+    "archived": false,
+    "title": "Acceptance skipped: csvreading-invalid-utf8-accepted",
+    "description": "excluded check: ERROR environment",
+    "options": [],
+    "system_choice": "Leave csvreading-invalid-utf8-accepted untested until its acceptance setup is repaired; do not treat it as passed."
+  },
+  {
+    "id": "build-skip-feature-csvreading.md-csvreading-line-numbers",
+    "type": "text",
+    "severity": "low",
+    "origin": "build",
+    "blueprint": "FEATURE-CsvReading.md",
+    "story": "csv-reading",
+    "status": "recommended",
+    "archived": false,
+    "title": "Acceptance skipped: csvreading-line-numbers",
+    "description": "excluded check: ERROR environment",
+    "options": [],
+    "system_choice": "Leave csvreading-line-numbers untested until its acceptance setup is repaired; do not treat it as passed."
+  },
+  {
+    "id": "build-skip-feature-csvreading.md-csvreading-quoted-comma",
+    "type": "text",
+    "severity": "low",
+    "origin": "build",
+    "blueprint": "FEATURE-CsvReading.md",
+    "story": "csv-reading",
+    "status": "recommended",
+    "archived": false,
+    "title": "Acceptance skipped: csvreading-quoted-comma",
+    "description": "excluded check: ERROR environment",
+    "options": [],
+    "system_choice": "Leave csvreading-quoted-comma untested until its acceptance setup is repaired; do not treat it as passed."
+  },
+  {
+    "id": "build-skip-feature-csvreading.md-csvreading-ragged-returned",
+    "type": "text",
+    "severity": "low",
+    "origin": "build",
+    "blueprint": "FEATURE-CsvReading.md",
+    "story": "csv-reading",
+    "status": "recommended",
+    "archived": false,
+    "title": "Acceptance skipped: csvreading-ragged-returned",
+    "description": "excluded check: ERROR environment",
+    "options": [],
+    "system_choice": "Leave csvreading-ragged-returned untested until its acceptance setup is repaired; do not treat it as passed."
+  },
+  {
+    "id": "build-skip-feature-nulltrim.md-nulltrim-null-spellings",
+    "type": "text",
+    "severity": "low",
+    "origin": "build",
+    "blueprint": "FEATURE-NullTrim.md",
+    "story": "null-trim",
+    "status": "recommended",
+    "archived": false,
+    "title": "Acceptance skipped: nulltrim-null-spellings",
+    "description": "excluded check: ERROR environment",
+    "options": [],
+    "system_choice": "Leave nulltrim-null-spellings untested until its acceptance setup is repaired; do not treat it as passed."
+  },
+  {
+    "id": "build-skip-feature-nulltrim.md-nulltrim-trim-before-null",
+    "type": "text",
+    "severity": "low",
+    "origin": "build",
+    "blueprint": "FEATURE-NullTrim.md",
+    "story": "null-trim",
+    "status": "recommended",
+    "archived": false,
+    "title": "Acceptance skipped: nulltrim-trim-before-null",
+    "description": "excluded check: ERROR environment",
+    "options": [],
+    "system_choice": "Leave nulltrim-trim-before-null untested until its acceptance setup is repaired; do not treat it as passed."
+  },
+  {
+    "id": "build-skip-feature-nulltrim.md-nulltrim-trim-spaces",
+    "type": "text",
+    "severity": "low",
+    "origin": "build",
+    "blueprint": "FEATURE-NullTrim.md",
+    "story": "null-trim",
+    "status": "recommended",
+    "archived": false,
+    "title": "Acceptance skipped: nulltrim-trim-spaces",
+    "description": "excluded check: ERROR environment",
+    "options": [],
+    "system_choice": "Leave nulltrim-trim-spaces untested until its acceptance setup is repaired; do not treat it as passed."
+  },
+  {
+    "id": "build-skip-feature-nulltrim.md-nulltrim-trim-table",
+    "type": "text",
+    "severity": "low",
+    "origin": "build",
+    "blueprint": "FEATURE-NullTrim.md",
+    "story": "null-trim",
+    "status": "recommended",
+    "archived": false,
+    "title": "Acceptance skipped: nulltrim-trim-table",
+    "description": "excluded check: ERROR environment",
+    "options": [],
+    "system_choice": "Leave nulltrim-trim-table untested until its acceptance setup is repaired; do not treat it as passed."
+  },
+  {
+    "id": "build-skip-feature-typeinference.md-type-text-fallback",
+    "type": "text",
+    "severity": "low",
+    "origin": "build",
+    "blueprint": "FEATURE-TypeInference.md",
+    "story": "type-inference",
+    "status": "recommended",
+    "archived": false,
+    "title": "Acceptance skipped: type-text-fallback",
+    "description": "excluded check: ALWAYS_PASSES vacuous",
+    "options": [],
+    "system_choice": "Leave type-text-fallback untested until its acceptance setup is repaired; do not treat it as passed."
+  }
+]

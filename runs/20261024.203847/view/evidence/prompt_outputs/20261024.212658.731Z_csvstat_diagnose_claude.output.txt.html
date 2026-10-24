@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/prompt_outputs/20261024.212658.731Z_csvstat_diagnose_claude.output.txt</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/prompt_outputs/20261024.212658.731Z_csvstat_diagnose_claude.output.txt</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/prompt_outputs/20261024.212658.731Z_csvstat_diagnose_claude.output.txt">Raw file</a></div></header>
+<article class="doc"><pre>CAUSE: Block 3&#x27;s gate passes (22/22, exit 0), so FAILED comes only from Drydock&#x27;s rule 14 zero-write check, not from the code.
+DO: Don&#x27;t re-run `drydock build CsvStat --step block-3`; it will return FAILED again with the same result.
+DO: Get the Drydock build-contract owner to decide whether a passing verification-only block with zero file changes may return RESULT: SUCCESS.
+DO: If that decision is no, record block-3 as verified manually in `/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261024.203847/workspace/targets/CsvStat/evidence/block-3.md`.</pre></article>
+</main>
+</body>
+</html>

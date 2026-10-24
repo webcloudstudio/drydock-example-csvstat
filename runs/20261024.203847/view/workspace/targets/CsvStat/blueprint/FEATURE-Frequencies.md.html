@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-Frequencies.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-Frequencies.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-Frequencies.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Frequencies</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261024 V1</td></tr><tr><td>Description</td><td>List the most frequent non-null values of one column with --freq, ordered by count then byte value.</td></tr><tr><td>Depends On</td><td>FEATURE-NullTrim.md, FEATURE-CliOptions.md</td></tr><tr><td>Provides</td><td>freq.Top</td></tr><tr><td>Consumes</td><td>reader.Trim, reader.IsNull, --freq, --top</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>With <code>--freq &lt;name&gt;</code>, csvstat lists the most frequent values of the named column instead of profiling. The command is <code>csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</code>.</p>
+<h2>Behavior</h2>
+<ol><li>The column is found by exact, case-sensitive comparison against the trimmed header names.</li><li>Each value is trimmed before counting. Null values (empty, <code>NA</code>, <code>N/A</code>, <code>NULL</code> ignoring case)</li></ol>
+<p>are not listed and not counted.</p>
+<ol><li>One row is produced per distinct non-null value, with its count.</li><li>Rows are ordered by count descending, then by value ascending by byte value.</li><li>At most <code>--top</code> rows are returned. <code>--top</code> defaults to 5 and is a positive integer.</li><li>A column with no non-null values produces only the header row.</li><li>A column name absent from the header exits 3 with nothing on standard output and one diagnostic</li></ol>
+<p>on standard error.</p>
+<h2>Output</h2>
+<p>Header <code>value,count</code>, then the ranked rows. Serialization is owned by FEATURE-CsvOutput.md; this feature supplies the ordered list of (value, count) pairs as <code>freq.Top</code>.</p>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC freq-order-and-default-top ===<br>Intent: Frequencies are ordered by count descending then byte value ascending, and default to five rows.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile from collections import Counter</p>
+<p>from drydock_go import cli_runner</p>
+<p>values = [&quot;delta&quot;] * 4 + [&quot;alpha&quot;] * 3 + [&quot;charlie&quot;] * 3 + [&quot;bravo&quot;] * 2 + [&quot;echo&quot;] + [&quot;foxtrot&quot;] + [&quot;golf&quot;] with tempfile.TemporaryDirectory() as tmp: path = os.path.join(tmp, &quot;data.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as f: w = csv.writer(f) w.writerow([&quot;k&quot;]) for v in values: w.writerow([v]) code, out, err = cli_runner(&quot;--freq&quot;, &quot;k&quot;, path) print(out) print(err) assert code == 0 rows = list(csv.reader(io.StringIO(out))) assert rows[0] == [&quot;value&quot;, &quot;count&quot;] counts = Counter(values) ranked = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[:5] assert rows[1:] == [[v, str(c)] for v, c in ranked] === END AC freq-order-and-default-top ===</p>
+<p>=== AC freq-top-limit ===<br>Intent: --top limits the number of rows listed.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile from collections import Counter</p>
+<p>from drydock_go import cli_runner</p>
+<p>values = [&quot;a&quot;] * 5 + [&quot;b&quot;] * 4 + [&quot;c&quot;] * 3 + [&quot;d&quot;] * 2 + [&quot;e&quot;] top = 2 with tempfile.TemporaryDirectory() as tmp: path = os.path.join(tmp, &quot;data.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as f: w = csv.writer(f) w.writerow([&quot;k&quot;]) for v in values: w.writerow([v]) code, out, err = cli_runner(&quot;--freq&quot;, &quot;k&quot;, &quot;--top&quot;, str(top), path) print(out) print(err) assert code == 0 rows = list(csv.reader(io.StringIO(out))) assert len(rows) == top + 1 ranked = sorted(Counter(values).items(), key=lambda kv: (-kv[1], kv[0]))[:top] assert rows[1:] == [[v, str(c)] for v, c in ranked] === END AC freq-top-limit ===</p>
+<p>=== AC freq-trim-and-nulls ===<br>Intent: Values are trimmed before counting and null spellings are not listed.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>core = &quot;Globex&quot; raw = [core, &quot;  &quot; + core + &quot;  &quot;, core + &quot; &quot;, &quot;&quot;, &quot;NA&quot;, &quot;n/a&quot;, &quot;NULL&quot;, &quot;Other&quot;] with tempfile.TemporaryDirectory() as tmp: path = os.path.join(tmp, &quot;data.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as f: w = csv.writer(f) w.writerow([&quot;k&quot;]) for v in raw: w.writerow([v]) code, out, err = cli_runner(&quot;--freq&quot;, &quot;k&quot;, path) print(out) print(err) assert code == 0 rows = list(csv.reader(io.StringIO(out))) listed = {r[0]: int(r[1]) for r in rows[1:]} assert listed == {core: 3, &quot;Other&quot;: 1} === END AC freq-trim-and-nulls ===</p>
+<p>=== AC freq-all-null-column ===<br>Intent: A column with no non-null values writes only the header.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>with tempfile.TemporaryDirectory() as tmp: path = os.path.join(tmp, &quot;data.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as f: w = csv.writer(f) w.writerow([&quot;k&quot;, &quot;other&quot;]) w.writerow([&quot;&quot;, &quot;x&quot;]) w.writerow([&quot;NULL&quot;, &quot;y&quot;]) w.writerow([&quot; &quot;, &quot;z&quot;]) code, out, err = cli_runner(&quot;--freq&quot;, &quot;k&quot;, path) print(out) print(err) assert code == 0 rows = list(csv.reader(io.StringIO(out))) assert rows == [[&quot;value&quot;, &quot;count&quot;]] === END AC freq-all-null-column ===</p>
+<p>=== AC freq-absent-column ===<br>Intent: A column name absent from the header exits 3 and writes nothing to standard output.<br>Requires: executable=go; scope=test</p>
+<p>import csv import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>with tempfile.TemporaryDirectory() as tmp: path = os.path.join(tmp, &quot;data.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as f: w = csv.writer(f) w.writerow([&quot;k&quot;]) w.writerow([&quot;v&quot;]) code, out, err = cli_runner(&quot;--freq&quot;, &quot;nosuch&quot;, path) print(err) assert code == 3 assert len(out) == 0 === END AC freq-absent-column ===</p>
+<p>=== AC freq-case-sensitive-name ===<br>Intent: The --freq column name is matched case-sensitively against the header.<br>Requires: executable=go; scope=test</p>
+<p>import csv import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>name = &quot;Kind&quot; with tempfile.TemporaryDirectory() as tmp: path = os.path.join(tmp, &quot;data.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as f: w = csv.writer(f) w.writerow([name]) w.writerow([&quot;v&quot;]) code, out, err = cli_runner(&quot;--freq&quot;, name.lower(), path) print(err) assert code == 3 assert len(out) == 0 === END AC freq-case-sensitive-name ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Null values are never listed.</li><li>The ordering tie-break is byte value, not locale collation.</li><li>A failing command writes nothing to standard output.</li></ul></article>
+</main>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/commands/11-after-initial-build-build-status.stdout.log</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/commands/11-after-initial-build-build-status.stdout.log</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/commands/11-after-initial-build-build-status.stdout.log">Raw file</a></div></header>
+<article class="doc"><pre>Drydock 0.8.0  Copyright (c) 2026 Web Cloud Studio. All rights reserved.
+Next: drydock build CsvStat
+
+Blueprint: CsvStat
+Target: /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261024.203847/workspace/targets/CsvStat
+Rows: &lt;state&gt; &lt;type&gt;  &lt;Name&gt;  [&lt;id&gt;]   — pass [&lt;id&gt;] to --step
+Block: Build Block 1 · Foundational  [block-1]   — [built] story Stand up the Go module, the cmd/csvstat entry point, and the internal/cli Run skeleton.  [foundation] — complete
+
+Block: Build Block 2 · Service  [block-2]   — 16/16 stories complete
+  [built]   story  Prove the application root builds csvstat with go build using only the standard library.  [module-build]
+  [built]   story  Read a UTF-8 RFC 4180 file with encoding/csv into a header and data records.  [csv-reading]
+  [built]   story  Trim header names and values and classify null values.  [null-trim]
+  [built]   story  Exit 1 when the file cannot be opened or read.  [unreadable-file]
+  [built]   story  Count rows, nulls, and distinct non-null values per column.  [row-counts]
+  [built]   story  Reject empty files, empty or repeated header names, and ragged records with exit 3.  [reject-malformed]
+  [built]   story  Parse --column, --freq, --top, and the single file argument.  [cli-options]
+  [built]   story  Profile only the column named by --column, rejecting an absent name with exit 3.  [column-select]
+  [built]   story  Reject usage errors with exit 2 and both synopses on standard error.  [usage-errors]
+  [built]   story  Infer integer, number, boolean, text, and empty column types.  [type-inference]
+  [built]   story  Recognize date columns with real calendar validation.  [date-type]
+  [built]   story  List the most frequent non-null values of a column with --freq.  [frequencies]
+  [built]   story  Compute min and max per column type.  [min-max]
+  [built]   story  Compute exact sum, mean, and median for integer and number columns.  [numeric-stats]
+  [built]   story  Write profile and frequency output as CSV with newline line endings.  [csv-output]
+  [built]   story  Provide bin/test.sh running go vet and go test from the application root.  [test-script]
+
+Block: Build Block 3 · Feature  [block-3]   — 0/1 stories complete
+  [FAILED]  story  Run the supplied conformance harness as the terminal gate.  [verification]  &lt;- resume (repairs in place)
+
+Steps: 18 total — 0 done, 17 built (await verify), 0 in review, 0 pending, 0 blocked by questions, 1 failed (0% complete)
+Buildable now: block-3
+Failed (resume with drydock build, or --step &lt;id&gt;; --reset discards work instead): verification
+Target - committed project workspace git store
+</pre></article>
+</main>
+</body>
+</html>

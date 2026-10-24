@@ -1,0 +1,17 @@
+<requirement name="profile-header-only-file" stories="csv-reading,row-counts,type-inference,csv-output">
+sku,price,in_stock
+</requirement>
+<unattached story="foundation"/>
+<unattached story="module-build"/>
+<unattached story="null-trim"/>
+<unattached story="unreadable-file"/>
+<unattached story="reject-malformed"/>
+<unattached story="cli-options"/>
+<unattached story="column-select"/>
+<unattached story="usage-errors"/>
+<unattached story="date-type"/>
+<unattached story="frequencies"/>
+<unattached story="min-max"/>
+<unattached story="numeric-stats"/>
+<unattached story="test-script"/>
+<unattached story="verification"/>

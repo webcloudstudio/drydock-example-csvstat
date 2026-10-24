@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/ARCHITECTURE.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/ARCHITECTURE.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/ARCHITECTURE.md">Raw file</a></div></header>
+<article class="doc"><h1>ARCHITECTURE: CsvStat</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261024 V1</td></tr><tr><td>Description</td><td>Module layout, package boundaries, and exit-code contract for the csvstat command-line CSV profiler.</td></tr><tr><td>Depends On</td><td>None</td></tr><tr><td>Provides</td><td>cli.Run, cmd/csvstat</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>csvstat is a single-pass command-line tool. It reads one CSV file, validates it, infers column types, and writes either a column profile or a value-frequency list as CSV on standard output. It has no persistence, network use, or configuration file.</p>
+<h2>Technology Stack</h2>
+<p>Derived from <code>TECHNOLOGY_STACK.md</code>:</p>
+<ul><li>Go 1.22 or newer, standard library only, no third-party modules. The root <code>go.mod</code> declares no requirements.</li><li><code>go test</code> with <code>go vet</code> behind <code>bin/test.sh</code>.</li><li>CSV read and written through <code>encoding/csv</code>.</li><li>POSIX sh for <code>bin/test.sh</code> and the supplied grader <code>sources/run.sh</code>.</li></ul>
+<h2>Module Layout</h2>
+<pre><code>go.mod                    module csvstat, go 1.22 or newer, no require lines
+cmd/csvstat/main.go       package main; calls cli.Run and passes the result to os.Exit
+internal/cli              Run(args []string, stdout, stderr io.Writer) int
+internal/reader           Read, Trim, IsNull, rejection checks
+internal/typing           Infer, IsDate
+internal/profile          Counts, MinMax, NumericStats
+internal/freq             Top
+internal/output           WriteProfile, WriteFreq
+bin/test.sh               go vet ./... then go test ./...</code></pre>
+<p>Only <code>main</code> calls <code>os.Exit</code>. <code>cli.Run</code> uses a local <code>flag.FlagSet</code> with <code>flag.ContinueOnError</code> and is tested with <code>bytes.Buffer</code> writers.</p>
+<h2>Exit Codes</h2>
+<div class="scroll"><table><thead><tr><th>Code</th><th>Meaning</th></tr></thead><tbody><tr><td>0</td><td>Success</td></tr><tr><td>1</td><td>The file cannot be opened or read</td></tr><tr><td>2</td><td>Usage error</td></tr><tr><td>3</td><td>Rejected input: empty file, empty or repeated header name, ragged record, or an absent column name</td></tr></tbody></table></div>
+<p>A failing command writes nothing to standard output and one or more diagnostic lines to standard error. Output is buffered and written only on success.</p>
+<h2>Module Ownership</h2>
+<div class="scroll"><table><thead><tr><th>Boundary</th><th>Owner</th><th>Notes</th></tr></thead><tbody><tr><td>Persistence</td><td>none</td><td>No persistent state exists.</td></tr><tr><td>Configuration</td><td>none</td><td>Behavior is set only by command-line options.</td></tr><tr><td>File access</td><td>internal/cli</td><td>Opens the named file read-only and hands a reader to internal/reader.</td></tr><tr><td>External services</td><td>none</td><td>No network use.</td></tr></tbody></table></div>
+<h2>Constraints</h2>
+<ul><li>Statistics (sum, mean, median) are computed with <code>math/big</code> exact values and rounded once, half away from zero, when written.</li><li>Application code never reads <code>sources/run.sh</code> or any supplied data file and never embeds an expected value.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC architecture-module-layout ===<br>Intent: The application root is a Go 1.22+ module with no requirements and the declared entry point and CLI package directory.<br>Requires: executable=go; scope=test</p>
+<p>from pathlib import Path import re</p>
+<p>mod = Path(&quot;go.mod&quot;).read_text() found = re.search(r&quot;^go (\d+)\.(\d+)&quot;, mod, re.M) assert found is not None, mod assert (int(found.group(1)), int(found.group(2))) &gt;= (1, 22) assert re.search(r&quot;^\s*require\b&quot;, mod, re.M) is None assert Path(&quot;cmd/csvstat/main.go&quot;).is_file() assert Path(&quot;internal/cli&quot;).is_dir() === END AC architecture-module-layout ===</p>
+<p>=== AC architecture-executable-builds ===<br>Intent: The cmd/csvstat main package builds and the built executable runs to a normal process exit.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import cli_runner</p>
+<p>code, out, err = cli_runner() print(out) print(err) assert isinstance(code, int) assert code &gt;= 0 === END AC architecture-executable-builds ===</p>
+<p>=== AC architecture-only-main-exits ===<br>Intent: No non-test Go source outside cmd/ calls os.Exit.</p>
+<p>from pathlib import Path</p>
+<p>offenders = [] for path in Path(&quot;internal&quot;).rglob(&quot;*.go&quot;): if path.name.endswith(&quot;_test.go&quot;): continue if &quot;os.Exit(&quot; in path.read_text(): offenders.append(str(path)) assert offenders == [], offenders === END AC architecture-only-main-exits ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Do not add third-party modules; <code>go.mod</code> carries no <code>require</code> lines.</li><li>Do not modify, rewrite, regenerate, or substitute any file under <code>sources/</code>.</li><li>Do not read <code>sources/run.sh</code> or any supplied data file from application code, and do not hardcode a statistic, a type, or a value list.</li><li>Diagnostics go to standard error and are never part of the compared output.</li></ul></article>
+</main>
+</body>
+</html>

@@ -1,0 +1,11 @@
+========================================================================
+A MAJOR ERROR HAS OCCURRED — drydock build CsvStat --override --repair-attempts 6 has stopped.
+claude/haiku is diagnosing. Standing off; this takes up to a minute.
+========================================================================
+CAUSE: Block 3's gate passes (22/22, exit 0), so FAILED comes only from Drydock's rule 14 zero-write check, not from the code.
+DO: Don't re-run `drydock build CsvStat --step block-3`; it will return FAILED again with the same result.
+DO: Get the Drydock build-contract owner to decide whether a passing verification-only block with zero file changes may return RESULT: SUCCESS.
+DO: If that decision is no, record block-3 as verified manually in `/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261024.203847/workspace/targets/CsvStat/evidence/block-3.md`.
+========================================================================
+error: build failed for CsvStat: 1 step(s)
+  verification — closed/failed: agent-reported failure: No files written; verification-only step with a green gate, so FAILED comes only from the zero-write rule.

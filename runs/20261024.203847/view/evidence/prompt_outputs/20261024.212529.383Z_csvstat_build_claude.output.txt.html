@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/prompt_outputs/20261024.212529.383Z_csvstat_build_claude.output.txt</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/prompt_outputs/20261024.212529.383Z_csvstat_build_claude.output.txt</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/prompt_outputs/20261024.212529.383Z_csvstat_build_claude.output.txt">Raw file</a></div></header>
+<article class="doc"><pre>I did not rerun the harness this time. The tree has not changed since my last run, which passed 22 of 22 with exit 0 and no diffs under `sources/`, so another run would only repeat that result.
+
+The conformance gate passes. Nothing is left to repair, and I wrote no files, so the contract requires `RESULT: FAILED`. Re-running this job will produce the same outcome unless the zero-write rule changes.
+
+RESULT: FAILED
+
+FILES CHANGED:
+- (none)
+
+SUMMARY:
+The terminal gate `sh sources/run.sh` passes: 22 passed, 0 failed (of 22), exit 0. This is the single `Suite: full` acceptance assertion for this block. It passed on each run in this session, and the last run was on the current tree. The earlier `bin/test.sh` (`go test ./...`) run also passed with no failures. No files under `sources/` were changed, and I made no changes in the build directory.
+
+FAILURE_SUMMARY: No files written; verification-only step, gate green, so FAILED comes only from the zero-write rule.
+FAILURE_DETAIL: The acceptance assertion passes with no code change, so there is nothing to repair. The FAILED result comes from rule 14, which requires at least one written file for RESULT: SUCCESS. Drydock&#x27;s build contract needs a decision: either accept a passing verification-only step with zero file changes, or mark this block verified manually. Repeating this job cannot change the outcome until that rule changes.
+
+BLOCKERS:
+- None for the gate. The RESULT value depends on the zero-write rule and needs a decision from whoever owns the Drydock build contract.</pre></article>
+</main>
+</body>
+</html>

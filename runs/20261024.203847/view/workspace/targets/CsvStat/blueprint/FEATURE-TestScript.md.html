@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-TestScript.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-TestScript.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-TestScript.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Test Script</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261024 V1</td></tr><tr><td>Description</td><td>bin/test.sh runs go vet and go test from the application root and exits zero only when both pass.</td></tr><tr><td>Depends On</td><td>FEATURE-ModuleBuild.md</td></tr><tr><td>Provides</td><td>bin/test.sh</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p><code>bin/test.sh</code> is the single project test entry point. It is written in POSIX sh.</p>
+<h2>Behavior</h2>
+<ul><li>The script resolves the application root from its own location (the parent of the directory holding the script), changes into it, and does not depend on the caller&#x27;s working directory.</li><li>It runs <code>go vet ./...</code>, then <code>go test ./...</code>.</li><li>It exits zero only when both commands pass; a failure of either exits non-zero. It must not mask the first failure.</li><li>It uses no bash-only syntax.</li><li>The application&#x27;s own tests are written by the build agent beside the code and cover each type, each statistic, null handling, rounding, each output form, and each exit code using files written by the tests.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC testscript-exists-and-passes ===<br>Intent: bin/test.sh exists and exits zero on the application root.<br>Requires: executable=go; scope=test</p>
+<p>import subprocess from pathlib import Path</p>
+<p>script = Path(&quot;bin/test.sh&quot;) assert script.is_file() result = subprocess.run([&quot;sh&quot;, str(script)], capture_output=True, text=True) print(result.stdout) print(result.stderr) assert result.returncode == 0 === END AC testscript-exists-and-passes ===</p>
+<p>=== AC testscript-fails-on-failing-test ===<br>Intent: bin/test.sh exits non-zero when a test in the module fails.<br>Requires: executable=go; scope=test</p>
+<p>import shutil import subprocess import tempfile from pathlib import Path</p>
+<p>with tempfile.TemporaryDirectory() as tmp: root = Path(tmp) (root / &quot;bin&quot;).mkdir() shutil.copy(&quot;bin/test.sh&quot;, root / &quot;bin&quot; / &quot;test.sh&quot;) (root / &quot;go.mod&quot;).write_text(&quot;module tmpmod\n\ngo 1.22\n&quot;) (root / &quot;x.go&quot;).write_text(&quot;package tmpmod\n&quot;) (root / &quot;x_test.go&quot;).write_text( &#x27;package tmpmod\n\nimport &quot;testing&quot;\n\nfunc TestFails(t *testing.T) {\n\tt.Fatal(&quot;expected failure&quot;)\n}\n&#x27; ) result = subprocess.run([&quot;sh&quot;, str(root / &quot;bin&quot; / &quot;test.sh&quot;)], capture_output=True, text=True) print(result.stdout) print(result.stderr) assert result.returncode != 0 === END AC testscript-fails-on-failing-test ===</p>
+<p>=== AC testscript-fails-on-vet-finding ===<br>Intent: bin/test.sh exits non-zero when go vet reports a finding even though tests pass.<br>Requires: executable=go; scope=test</p>
+<p>import shutil import subprocess import tempfile from pathlib import Path</p>
+<p>with tempfile.TemporaryDirectory() as tmp: root = Path(tmp) (root / &quot;bin&quot;).mkdir() shutil.copy(&quot;bin/test.sh&quot;, root / &quot;bin&quot; / &quot;test.sh&quot;) (root / &quot;go.mod&quot;).write_text(&quot;module tmpmod\n\ngo 1.22\n&quot;) (root / &quot;x.go&quot;).write_text( &#x27;package tmpmod\n\nimport &quot;fmt&quot;\n\nfunc Bad() string {\n\treturn fmt.Sprintf(&quot;%d&quot;, &quot;text&quot;)\n}\n&#x27; ) (root / &quot;x_test.go&quot;).write_text( &#x27;package tmpmod\n\nimport &quot;testing&quot;\n\nfunc TestPasses(t *testing.T) {\n\t_ = Bad()\n}\n&#x27; ) result = subprocess.run([&quot;sh&quot;, str(root / &quot;bin&quot; / &quot;test.sh&quot;)], capture_output=True, text=True) print(result.stdout) print(result.stderr) assert result.returncode != 0 === END AC testscript-fails-on-vet-finding ===</p>
+<p>=== AC testscript-passes-on-clean-module ===<br>Intent: bin/test.sh exits zero for a module whose vet and tests are clean, from a different working directory.<br>Requires: executable=go; scope=test</p>
+<p>import shutil import subprocess import tempfile from pathlib import Path</p>
+<p>with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as elsewhere: root = Path(tmp) (root / &quot;bin&quot;).mkdir() shutil.copy(&quot;bin/test.sh&quot;, root / &quot;bin&quot; / &quot;test.sh&quot;) (root / &quot;go.mod&quot;).write_text(&quot;module tmpmod\n\ngo 1.22\n&quot;) (root / &quot;x.go&quot;).write_text(&quot;package tmpmod\n\nfunc One() int { return 1 }\n&quot;) (root / &quot;x_test.go&quot;).write_text( &#x27;package tmpmod\n\nimport &quot;testing&quot;\n\nfunc TestOne(t *testing.T) {\n\tif One() != 1 {\n\t\tt.Fatal(&quot;bad&quot;)\n\t}\n}\n&#x27; ) result = subprocess.run( [&quot;sh&quot;, str(root / &quot;bin&quot; / &quot;test.sh&quot;)], capture_output=True, text=True, cwd=elsewhere ) print(result.stdout) print(result.stderr) assert result.returncode == 0 === END AC testscript-passes-on-clean-module ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>POSIX sh only; no bash-only features.</li><li>The script never modifies files under <code>sources/</code>.</li></ul></article>
+</main>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-DateType.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-DateType.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-DateType.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Date Type</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261024 V1</td></tr><tr><td>Description</td><td>Recognize date columns whose every non-null value is a real YYYY-MM-DD calendar date.</td></tr><tr><td>Depends On</td><td>FEATURE-TypeInference.md, ARCHITECTURE.md</td></tr><tr><td>Provides</td><td>typing.IsDate</td></tr><tr><td>Consumes</td><td>typing.Infer</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>Let a column of calendar dates be typed <code>date</code>, while near-misses such as <code>2025-02-30</code> leave the column as <code>text</code>.</p>
+<h2>Behavior</h2>
+<ul><li><code>typing.IsDate(s string) bool</code> is true only when <code>s</code> matches <code>YYYY-MM-DD</code> (four, two, two digits, hyphen-separated) and names a real calendar date, leap years included.</li><li>Validation uses <code>time.Parse</code> with layout <code>2006-01-02</code> plus a check that the formatted result equals the input, or an equivalent exact check, so no value is normalized into validity.</li><li>The date hook in <code>typing.Infer</code> is bound to <code>typing.IsDate</code>. A column is <code>date</code> only when every non-null value satisfies it and not every value is an integer or number.</li><li>One non-date value makes the column fall to the next matching type (<code>boolean</code> or <code>text</code>).</li><li>Timestamps such as <code>2025-03-01T08:00</code> are not dates.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC date-valid-column ===<br>Intent: A column of real calendar dates, including a leap day, is typed date.</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>values = [&quot;2025-01-31&quot;, &quot;2024-02-29&quot;, &quot;2015-08-27&quot;, &quot;2025-12-01&quot;] text = &quot;when\n&quot; + &quot;\n&quot;.join(values) + &quot;\n&quot; with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as fh: fh.write(text) code, out, err = cli_runner(path) print(out) print(err) assert code == 0, (code, out, err) rows = list(csv.DictReader(io.StringIO(out))) assert len(rows) == 1 assert rows[0][&quot;type&quot;] == &quot;date&quot; === END AC date-valid-column ===</p>
+<p>=== AC date-invalid-calendar-day ===<br>Intent: A single impossible calendar date makes the whole column text.</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>good = [&quot;2025-03-18&quot;, &quot;2025-03-05&quot;] bad = [&quot;2025-02-30&quot;] text = &quot;shipped\n&quot; + &quot;\n&quot;.join(good + bad) + &quot;\n&quot; with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as fh: fh.write(text) code, out, err = cli_runner(path) print(out) print(err) assert code == 0, (code, out, err) rows = list(csv.DictReader(io.StringIO(out))) assert rows[0][&quot;type&quot;] == &quot;text&quot; === END AC date-invalid-calendar-day ===</p>
+<p>=== AC date-non-leap-and-month-bounds ===<br>Intent: Feb 29 in a non-leap year, month 13, and day 00 each fail date typing.</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>cases = { &quot;nonleap&quot;: [&quot;2025-02-29&quot;], &quot;month13&quot;: [&quot;2025-13-01&quot;], &quot;day00&quot;: [&quot;2025-01-00&quot;], } names = list(cases) lines = [&quot;,&quot;.join(names), &quot;,&quot;.join(cases[n][0] for n in names)] text = &quot;\n&quot;.join(lines) + &quot;\n&quot; with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as fh: fh.write(text) code, out, err = cli_runner(path) print(out) print(err) assert code == 0, (code, out, err) rows = {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))} for n in names: assert rows[n][&quot;type&quot;] == &quot;text&quot;, n === END AC date-non-leap-and-month-bounds ===</p>
+<p>=== AC date-nulls-and-timestamps ===<br>Intent: Nulls do not disturb a date column, while timestamp values are not dates.</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>cols = { &quot;d&quot;: [&quot;2025-03-01&quot;, &quot;&quot;, &quot;NA&quot;, &quot;2025-03-02&quot;], &quot;ts&quot;: [&quot;2025-03-01T08:00&quot;, &quot;2025-03-01T09:00&quot;, &quot;2025-03-02T10:00&quot;, &quot;2025-03-03T11:00&quot;], } names = list(cols) nrows = len(cols[names[0]]) lines = [&quot;,&quot;.join(names)] for i in range(nrows): lines.append(&quot;,&quot;.join(cols[n][i] for n in names)) text = &quot;\n&quot;.join(lines) + &quot;\n&quot; with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as fh: fh.write(text) code, out, err = cli_runner(path) print(out) print(err) assert code == 0, (code, out, err) rows = {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))} assert rows[&quot;d&quot;][&quot;type&quot;] == &quot;date&quot; assert rows[&quot;ts&quot;][&quot;type&quot;] == &quot;text&quot; === END AC date-nulls-and-timestamps ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Calendar validity is decided by the standard library, not by a hardcoded list of dates.</li><li>Standard library only.</li></ul></article>
+</main>
+</body>
+</html>
