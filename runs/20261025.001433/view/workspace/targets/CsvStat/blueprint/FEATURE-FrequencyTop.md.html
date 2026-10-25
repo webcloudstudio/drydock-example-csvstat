@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-FrequencyTop.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-FrequencyTop.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-FrequencyTop.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Frequency Limit</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Limits frequency output with --top, defaulting to 5 and accepting a positive integer only.</td></tr><tr><td>Depends On</td><td>FEATURE-Frequency.md, FEATURE-UsageErrors.md, ARCHITECTURE.md</td></tr><tr><td>Provides</td><td>csvstat --freq &lt;name&gt; --top &lt;n&gt; &lt;file&gt;</td></tr><tr><td>Consumes</td><td>value,count output</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p><code>--top &lt;n&gt;</code> bounds how many rows <code>--freq</code> writes.</p>
+<h2>Behavior</h2>
+<ul><li>Default limit is 5 when <code>--top</code> is absent.</li><li><code>--top</code> accepts a positive integer only. Zero, negative numbers, non-numeric text, and an empty</li></ul>
+<p>value are usage errors (exit 2, nothing on standard output).</p>
+<ul><li>When fewer distinct non-null values exist than the limit, all of them are written.</li><li><code>--top</code> without <code>--freq</code> is a usage error (exit 2, nothing on standard output).</li><li>A very large positive integer that fits no machine int is accepted as unbounded rather than</li></ul>
+<p>rejected.</p>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC top-default-is-five ===<br>Intent: Without --top, a column with many distinct values lists exactly five rows.<br>Suite: scoped<br>Requires: python-package=drydock_go; scope=test</p>
+<p>import csv import io import os from collections import Counter</p>
+<p>from drydock_go import cli_runner</p>
+<p>path = os.path.abspath(&quot;sources/orders.csv&quot;) col = &quot;order_date&quot; with open(path, newline=&quot;&quot;) as fh: rows = list(csv.reader(fh)) header = [h.strip() for h in rows[0]] idx = header.index(col) vals = [r[idx].strip() for r in rows[1:]] vals = [v for v in vals if v != &quot;&quot; and v.upper() not in (&quot;NA&quot;, &quot;N/A&quot;, &quot;NULL&quot;)] ordered = sorted(Counter(vals).items(), key=lambda kv: (-kv[1], kv[0].encode())) default_limit = 5 assert len(ordered) &gt; default_limit want = [[v, str(c)] for v, c in ordered[:default_limit]]</p>
+<p>code, out, err = cli_runner(&quot;--freq&quot;, col, path) print(out) print(err) assert code == 0, (code, out, err) got = list(csv.reader(io.StringIO(out))) assert got[1:] == want, (got[1:], want) === END AC top-default-is-five ===</p>
+<p>=== AC top-limits-rows ===<br>Intent: An explicit --top n writes at most n rows, matching the ordered counts derived from the file.<br>Suite: scoped<br>Requires: python-package=drydock_go; scope=test</p>
+<p>import csv import io import os from collections import Counter</p>
+<p>from drydock_go import cli_runner</p>
+<p>path = os.path.abspath(&quot;sources/employees.csv&quot;) col = &quot;manager_id&quot; top = 3 with open(path, newline=&quot;&quot;) as fh: rows = list(csv.reader(fh)) header = [h.strip() for h in rows[0]] idx = header.index(col) vals = [r[idx].strip() for r in rows[1:]] vals = [v for v in vals if v != &quot;&quot; and v.upper() not in (&quot;NA&quot;, &quot;N/A&quot;, &quot;NULL&quot;)] ordered = sorted(Counter(vals).items(), key=lambda kv: (-kv[1], kv[0].encode())) want = [[v, str(c)] for v, c in ordered[:top]]</p>
+<p>code, out, err = cli_runner(&quot;--freq&quot;, col, &quot;--top&quot;, str(top), path) print(out) print(err) assert code == 0, (code, out, err) got = list(csv.reader(io.StringIO(out))) assert got[1:] == want, (got[1:], want) assert len(got) - 1 &lt;= top === END AC top-limits-rows ===</p>
+<p>=== AC top-larger-than-distinct ===<br>Intent: A limit above the distinct count lists every distinct non-null value.<br>Suite: scoped<br>Requires: python-package=drydock_go; scope=test</p>
+<p>import csv import io import os from collections import Counter</p>
+<p>from drydock_go import cli_runner</p>
+<p>path = os.path.abspath(&quot;sources/employees.csv&quot;) col = &quot;department&quot; top = 100 with open(path, newline=&quot;&quot;) as fh: rows = list(csv.reader(fh)) header = [h.strip() for h in rows[0]] idx = header.index(col) vals = [r[idx].strip() for r in rows[1:]] vals = [v for v in vals if v != &quot;&quot; and v.upper() not in (&quot;NA&quot;, &quot;N/A&quot;, &quot;NULL&quot;)] counts = Counter(vals) ordered = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0].encode())) want = [[v, str(c)] for v, c in ordered]</p>
+<p>code, out, err = cli_runner(&quot;--freq&quot;, col, &quot;--top&quot;, str(top), path) print(out) print(err) assert code == 0, (code, out, err) got = list(csv.reader(io.StringIO(out))) assert got[1:] == want, (got[1:], want) assert len(got) - 1 == len(counts) === END AC top-larger-than-distinct ===</p>
+<p>=== AC top-rejects-non-positive ===<br>Intent: A --top that is not a positive integer exits 2 with nothing on standard output.<br>Suite: scoped<br>Requires: python-package=drydock_go; scope=test</p>
+<p>import os</p>
+<p>from drydock_go import cli_runner</p>
+<p>path = os.path.abspath(&quot;sources/sensors.csv&quot;) for bad in (&quot;0&quot;, &quot;-1&quot;, &quot;abc&quot;, &quot;2.5&quot;, &quot;&quot;): code, out, err = cli_runner(&quot;--freq&quot;, &quot;sensor&quot;, &quot;--top&quot;, bad, path) print(bad, code, err) assert code == 2, (bad, code, out, err) assert out == &quot;&quot;, (bad, out) === END AC top-rejects-non-positive ===</p>
+<p>=== AC top-requires-freq ===<br>Intent: --top without --freq is a usage error with exit 2 and empty standard output.<br>Suite: scoped<br>Requires: python-package=drydock_go; scope=test</p>
+<p>import os</p>
+<p>from drydock_go import cli_runner</p>
+<p>path = os.path.abspath(&quot;sources/sensors.csv&quot;) code, out, err = cli_runner(&quot;--top&quot;, &quot;3&quot;, path) print(err) assert code == 2, (code, out, err) assert out == &quot;&quot;, out</p>
+<p>code, out, err = cli_runner(&quot;--column&quot;, &quot;sensor&quot;, &quot;--top&quot;, &quot;3&quot;, path) print(err) assert code == 2, (code, out, err) assert out == &quot;&quot;, out === END AC top-requires-freq ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li><code>--top</code> never accepts zero or a negative number.</li><li>A rejected <code>--top</code> writes nothing to standard output.</li><li>The default of 5 is applied only when <code>--top</code> is absent.</li></ul></article>
+</main>
+</body>
+</html>

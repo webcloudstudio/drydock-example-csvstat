@@ -1,0 +1,136 @@
+# FEATURE: Release Verification
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Terminal assembly gate that runs the supplied grader end to end against the completed csvstat executable. |
+| Depends On  | ARCHITECTURE.md, FEATURE-CliParsing.md, FEATURE-CsvReading.md, FEATURE-ValueTrimming.md, FEATURE-RejectMalformed.md, FEATURE-ProfileCounts.md, FEATURE-TypesNumeric.md, FEATURE-TypesDate.md, FEATURE-TypesOther.md, FEATURE-MinMax.md, FEATURE-SumMean.md, FEATURE-Median.md, FEATURE-DecimalFormat.md, FEATURE-ColumnSelect.md, FEATURE-ColumnAbsent.md, FEATURE-Frequency.md, FEATURE-FrequencyTop.md, FEATURE-UsageErrors.md, FEATURE-UnreadableFile.md, FEATURE-TestRunner.md |
+| Provides    | None |
+| Consumes    | csvstat profile output, csvstat frequency output, csvstat exit codes |
+
+## Purpose
+
+This is the terminal story of the build. Every other story precedes it. It proves that the
+members compose into one executable that passes the supplied grader `sources/run.sh`, which builds
+`./cmd/csvstat` with `go build` and makes 22 checks of exit code and standard output against the
+five supplied CSV files. It adds no behavior of its own; it integrates the seams between stories.
+
+## Assembly and Intent
+
+- Run `sh sources/run.sh` unfiltered from the application root. Its exit status is the verdict.
+- When a check fails, repair the application code, never anything under `sources/`.
+- The grader is restored before scoring, so an edit to `sources/run.sh` or a data file is
+  tampering and is not honored.
+- Application code never reads `sources/run.sh` or a supplied data file and never embeds an
+  answer; every value is computed from the file it is given.
+- `sh bin/test.sh` must also exit zero once the grader passes.
+
+## Programmatic Acceptance
+
+=== AC grader-full ===
+Intent: The completed csvstat builds and the supplied grader sources/run.sh exits zero with every check passing.
+Suite: full
+Requires: executable=sh; scope=test
+Requires: executable=go; scope=test
+
+import os
+import subprocess
+import sys
+
+result = subprocess.run(
+    ["sh", "sources/run.sh"],
+    capture_output=True,
+    text=True,
+    env={**os.environ},
+)
+print(result.stdout)
+print(result.stderr, file=sys.stderr)
+assert result.returncode == 0, result.returncode
+=== END AC grader-full ===
+
+=== AC profile-rows-follow-header ===
+Intent: The profile of a supplied file has one parsed row per input column, in file order, naming each header column.
+Requires: executable=go; scope=test
+
+import csv
+import io
+from drydock_go import cli_runner
+
+path = "sources/employees.csv"
+with open(path, newline="") as handle:
+    header = next(csv.reader(handle))
+
+code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 0, code
+
+rows = list(csv.reader(io.StringIO(out)))
+profile_header = rows[0]
+body = rows[1:]
+assert len(body) == len(header), (len(body), len(header))
+assert [row[0] for row in body] == header
+assert all(len(row) == len(profile_header) for row in rows)
+assert profile_header[0] == "column"
+=== END AC profile-rows-follow-header ===
+
+=== AC frequency-matches-input ===
+Intent: The frequency listing of a supplied column agrees with counts computed independently from the same input file.
+Requires: executable=go; scope=test
+
+import csv
+import io
+from collections import Counter
+from drydock_go import cli_runner
+
+path = "sources/orders.csv"
+column = "customer"
+with open(path, newline="") as handle:
+    reader = csv.DictReader(handle)
+    values = [row[column].strip() for row in reader]
+counts = Counter(v for v in values if v != "")
+ordered = sorted(counts.items(), key=lambda item: (-item[1], item[0].encode()))
+
+code, out, err = cli_runner("--freq", column, path)
+print(out)
+print(err)
+assert code == 0, code
+
+rows = list(csv.reader(io.StringIO(out)))
+body = rows[1:]
+observed = [(row[0], int(row[1])) for row in body]
+assert observed == ordered[:5], (observed, ordered[:5])
+=== END AC frequency-matches-input ===
+
+=== AC exit-codes-contract ===
+Intent: Rejected input exits 3, an unreadable file exits 1, and a usage error exits 2, each with nothing on standard output.
+Requires: executable=go; scope=test
+
+from drydock_go import cli_runner
+
+code, out, err = cli_runner("sources/ragged.csv")
+print(err)
+assert code == 3, code
+assert out == ""
+
+code, out, err = cli_runner("sources/no-such-file.csv")
+print(err)
+assert code == 1, code
+assert out == ""
+
+code, out, err = cli_runner("--top", "3", "sources/sensors.csv")
+print(err)
+assert code == 2, code
+assert out == ""
+=== END AC exit-codes-contract ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Do not modify, rewrite, regenerate, or substitute any file under `sources/`.
+- Do not read `sources/run.sh` or any supplied data file from application code, and do not hardcode a statistic, a type, or a value list.
+- Only this terminal story runs the supplied grader unfiltered; no other story invokes `sh sources/run.sh`.
+- Use only the Go standard library; add no third-party module and no database.

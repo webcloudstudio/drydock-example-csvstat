@@ -1,0 +1,31 @@
+{
+  "stories": [
+    {
+      "id": "CSV-002",
+      "provenance": "plan",
+      "gate": [
+        "sh",
+        "sources/run.sh"
+      ],
+      "note": "sources/run.sh checks E1 (ragged.csv rejected with exit 3)"
+    },
+    {
+      "id": "CLI-002",
+      "provenance": "plan",
+      "gate": [
+        "sh",
+        "sources/run.sh"
+      ],
+      "note": "sources/run.sh checks U1\u2013U6 (usage errors, exit 2)"
+    },
+    {
+      "id": "FRQ-001",
+      "provenance": "plan",
+      "gate": [
+        "sh",
+        "sources/run.sh"
+      ],
+      "note": "sources/run.sh checks C1\u2013C5 (frequency output)"
+    }
+  ]
+}

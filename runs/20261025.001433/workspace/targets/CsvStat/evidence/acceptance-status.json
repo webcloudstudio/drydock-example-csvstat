@@ -1,0 +1,60 @@
+{
+  "criteria": {
+    "arch-module-builds": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "14a338fb7eae0fda50cbd4612e51861218337ab84d421abccc61156776236f38",
+      "updated_at": "2026-10-25T00:31:05+00:00",
+      "detail": ""
+    },
+    "arch-only-main-exits": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "b8fb28f192927fd19a963d7f470bc0b1731657e8c32aa5dbcd033cab922b9284",
+      "updated_at": "2026-10-25T00:31:05+00:00",
+      "detail": ""
+    },
+    "arch-stdlib-only": {
+      "status": "VALID",
+      "error_code": "product-missing",
+      "code_sha256": "7f3cb1dde8722de15698439ee2a6cf325c4a3a91bd74e37ac361b34462412dcc",
+      "updated_at": "2026-10-25T00:31:05+00:00",
+      "detail": ""
+    },
+    "arch-vet-clean": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "291cbd06ecc5cf09068ed70be5673044d7b68f3e52001030518147a32cf91c19",
+      "updated_at": "2026-10-25T00:31:05+00:00",
+      "detail": ""
+    },
+    "exit-codes-contract": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "c876e4e6bb2a5413b003d795f1862e296f8afe6466b540643458aa94c0715b36",
+      "updated_at": "2026-10-25T00:36:53+00:00",
+      "detail": ""
+    },
+    "frequency-matches-input": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "253b213e65a4c548d0c34f6c259ea4e019f02e5cca29b17d9b4a29f7e0737c71",
+      "updated_at": "2026-10-25T00:36:53+00:00",
+      "detail": ""
+    },
+    "grader-full": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "f5744a1bdc106ccbe7acd818ac088bf02db0492ee74c58069616af2d1c93a103",
+      "updated_at": "2026-10-25T00:36:53+00:00",
+      "detail": ""
+    },
+    "profile-rows-follow-header": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "6aadc235ae0428d0f16064a4b993735b70b9cae835878b6189dc19f2a3ff11c3",
+      "updated_at": "2026-10-25T00:36:53+00:00",
+      "detail": ""
+    }
+  }
+}

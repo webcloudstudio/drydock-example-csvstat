@@ -1,0 +1,3935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/prompts/20261025.003203.441Z_csvstat_build_claude.prompt.md</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/prompts/20261025.003203.441Z_csvstat_build_claude.prompt.md</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/prompts/20261025.003203.441Z_csvstat_build_claude.prompt.md">Raw file</a></div></header>
+<article class="doc"><h1>System Instructions</h1>
+<p>This prompt is divided into three sections:</p>
+<ol><li><strong>System Instructions</strong> (this section) — structural orientation only. Do not treat this</li></ol>
+<p>section as task input.</p>
+<ol><li><strong>Input Context</strong> — begins with the heading <code># Input Context</code>. All blocks are wrapped in</li></ol>
+<p><code>&lt;pblock&gt;</code> tags. Two block types:</p>
+<ul><li>File blocks: <code>&lt;pblock filename=&quot;&lt;name&gt;&quot; role=&quot;&lt;role&gt;&quot; guidance=&quot;...&quot;&gt;</code> — optional</li></ul>
+<p><code>guidance</code> attribute carries context-specific instructions; content is in a fenced block.</p>
+<ul><li>Metadata/section blocks: <code>&lt;pblock label=&quot;&lt;label&gt;&quot; kind=&quot;&lt;kind&gt;&quot;&gt;</code> — job parameters,</li></ul>
+<p>rules, instructions, or group headers.</p>
+<ol><li><strong>Agent Task</strong> — begins with the heading <code># Agent Task</code>. Defines your persona, constraints,</li></ol>
+<p>and required outputs. Read all input context before acting on this section.</p>
+<h1>Input Context</h1>
+<p>&lt;pblock label=&quot;Build block job&quot; kind=&quot;job&quot;&gt;</p>
+<h2>Build block job</h2>
+<ul><li>TARGET: CsvStat</li><li>BUILD_DIRECTORY: /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/build/CsvStat</li><li>WORKING_DIRECTORY: /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/build/CsvStat</li><li>BUILD_BLOCK: Block 2 · Service (block-2)</li><li>STORIES: Accept the two csvstat command forms and the --help text. (cli-args), Map an unreadable file to exit code 1. (cli-unreadable), Read a well-formed CSV and write the profile header and one row per column. (input-profile), Trim leading and trailing spaces from every header name and value. (input-trim), Map usage errors to exit code 2. (cli-usage), Reject empty files, bad headers, ragged records, and CSV syntax errors with exit 3. (input-reject), Report rows, nulls, and distinct counts per column. (counts), Infer date columns and reject invalid calendar dates. (types-date), Infer integer and number column types. (types-numeric), List the most frequent values of a column with --freq. (freq-list), Limit frequency output with --top. (freq-top), Infer boolean, text, and empty column types and compose the final type decision. (types-other), Report min and max for every column type. (stats-minmax), Report the median for integer and number columns. (stats-median), Report sum and mean for integer and number columns with exact arithmetic. (stats-summean), Write numeric statistics with two decimals, rounded half away from zero once. (stats-format), Profile one named column with --column. (select-column), Reject a --column or --freq name absent from the header with exit 3. (select-absent), Provide a POSIX bin/test.sh that runs go vet and go test. (qa-testrunner)</li><li>DATE: 2026-10-24</li><li>BUILD_SCOPE: exactly one MANIFEST.md build block</li></ul>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock label=&quot;Stories in this block&quot; kind=&quot;section&quot;&gt;</p>
+<h2>Stories in this block</h2>
+<ul><li>Accept the two csvstat command forms and the --help text. (cli-args) [story]</li><li>Map an unreadable file to exit code 1. (cli-unreadable) [story]</li><li>Read a well-formed CSV and write the profile header and one row per column. (input-profile) [story]</li><li>Trim leading and trailing spaces from every header name and value. (input-trim) [story]</li><li>Map usage errors to exit code 2. (cli-usage) [story]</li><li>Reject empty files, bad headers, ragged records, and CSV syntax errors with exit 3. (input-reject) [story]</li><li>Report rows, nulls, and distinct counts per column. (counts) [story]</li><li>Infer date columns and reject invalid calendar dates. (types-date) [story]</li><li>Infer integer and number column types. (types-numeric) [story]</li><li>List the most frequent values of a column with --freq. (freq-list) [story]</li><li>Limit frequency output with --top. (freq-top) [story]</li><li>Infer boolean, text, and empty column types and compose the final type decision. (types-other) [story]</li><li>Report min and max for every column type. (stats-minmax) [story]</li><li>Report the median for integer and number columns. (stats-median) [story]</li><li>Report sum and mean for integer and number columns with exact arithmetic. (stats-summean) [story]</li><li>Write numeric statistics with two decimals, rounded half away from zero once. (stats-format) [story]</li><li>Profile one named column with --column. (select-column) [story]</li><li>Reject a --column or --freq name absent from the header with exit 3. (select-absent) [story]</li><li>Provide a POSIX bin/test.sh that runs go vet and go test. (qa-testrunner) [story]</li></ul>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock label=&quot;Files on disk&quot; kind=&quot;section&quot;&gt;</p>
+<h2>Files on disk in the build directory</h2>
+<ul><li>sources/employees.csv</li><li>sources/header_only.csv</li><li>sources/orders.csv</li><li>sources/ragged.csv</li><li>sources/run.sh</li><li>sources/sensors.csv</li></ul>
+<p>These are the only imported files present on disk. Every other file named in this prompt is supplied as prompt context and is not on disk; read it here and do not report it as a missing input.</p>
+<p>&lt;/pblock&gt;</p>
+<h2>COMPASS - Target Orientation</h2>
+<p>&lt;pblock filename=&quot;COMPASS.md&quot; role=&quot;compass&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat/COMPASS.md&quot; guidance=&quot;Important: This is the core project intent, constraints, and guardrails. It should have presecedence in conflicts.&quot;&gt;</p>
+<pre><code># COMPASS: CsvStat
+
+## Compass
+
+Build a command-line CSV column profiler, the Go executable `./cmd/csvstat`, as described in
+`sources/INSTRUCTIONS.md`. It infers each column&#x27;s type, reports counts, extremes, and for numeric
+columns sum, mean, and median, and lists a column&#x27;s most frequent values.
+
+Correctness is measured by `sources/run.sh`: it builds the executable with `go build` and makes
+22 checks of exit code and standard output against five supplied CSV files. The goal is every
+check passing.
+
+## Constraints
+
+- Implement in Go 1.22 or newer with the standard library only. No third-party modules.
+- The application root is a Go module; the executable&#x27;s main package is `./cmd/csvstat`.
+- Compute sums, means, and medians exactly (for example with `math/big`) and round once, half away
+  from zero, when writing.
+- Diagnostics go to standard error and are never compared.
+
+## Guardrails
+
+- Do not modify, rewrite, regenerate, or substitute any file under `sources/`.
+- Do not read `sources/run.sh` or any supplied data file from application code, and do not
+  hardcode a statistic, a type, or a value list. Every value comes from the file examined.
+
+## Verification Protocol
+
+| Story kind | Command | Asserts |
+|---|---|---|
+| Every behavioral story | `sh bin/test.sh` | exit `0` |
+| Terminal story (once, last) | `sh sources/run.sh` | exit `0` |
+
+&lt;!-- drydock:build-write-guardrail:start --&gt;
+## Build Write Guardrail
+
+- Authorized build directory: `/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/build/CsvStat`
+- Authorized Target directory: `/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat`
+- Build agents have permission to create, modify, and remove files required by the active build block inside these authorized directories.
+- No path outside these authorized directories may be modified.
+- Protected Drydock artifacts:
+  - `/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat/blueprint/`
+  - `/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat/MANIFEST.md`
+  - `/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat/COMPASS.md`
+  - `/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat/QuarterDeck/`
+  - `/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat/evidence/`
+&lt;!-- drydock:build-write-guardrail:end --&gt;</code></pre>
+<p>&lt;/pblock&gt;</p>
+<h2>STACK - Technology HOW</h2>
+<p>&lt;pblock filename=&quot;go_compact.md&quot; role=&quot;stack&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/Rigging/languages/go/go_compact.md&quot;&gt;</p>
+<pre><code>&lt;!-- Compacted from Rigging/languages/go/go.md sha256=aa96c7155b26f091e4f2ee9b7a47ff2202fc7c162254f2b8676779198c7147da on 2026-10-18 by Rigging maintenance --&gt;
+
+## Foundation Contract
+
+The published shape of this foundation. It is built before every other foundation: a web server,
+a database, or a CLI is built *into* this tree, this environment, and this test runner. Carried
+verbatim into `go_compact.md`.
+
+- source_root: internal/
+- test_command: go test ./...
+- environment: the module declared in `go.mod`; no vendored toolchain
+- dependencies: `go.mod`
+
+```
+project/
+  go.mod                  # module path; the Go toolchain version
+  cmd/                    # one directory per binary, each package main
+  internal/               # application packages; not importable outside this module
+  bin/                    # launchers; each runs the toolchain, never a vendored copy
+```
+
+Application foundations add packages under `internal/`. The generated persistence library is a
+separate module at `persistence/`, linked by the root `go.mod`.
+
+### Native application layouts and fixtures
+
+Initialize the root `go.mod` in the language foundation before the DATABASE block.
+Use `cmd/app/main.go` for process startup, `internal/cli` for CLI behavior, and
+`internal/appserver` for HTTP behavior. The root application module requires
+`drydock.local/persistence v0.0.0` with `replace drydock.local/persistence =&gt; ./persistence`;
+the generated persistence directory owns its nested module. Run both module test suites.
+
+For a CLI, expose `Run(args []string, stdout, stderr io.Writer) int`, use a local
+`flag.FlagSet` with `flag.ContinueOnError`, and test with `bytes.Buffer`. Only main calls
+`os.Exit`. For HTTP, expose `NewHandler(...) http.Handler` using `net/http.ServeMux`.
+Use `httptest.NewRecorder` and `httptest.NewRequest` for handler tests, or
+`httptest.NewServer` with `t.Cleanup(server.Close)` when testing a real HTTP client.
+Keep business logic in application packages and persistence access in the shipped library.
+
+### How do we execute and measure Acceptance Criteria in this language?
+
+An Acceptance Criterion (AC) is an executable check of Blueprint-required behavior. Native tests
+use `testing` in `*_test.go`; the project gate is `go test ./...`. Within the existing Blueprint
+Python AC container, execute a named test through the shipped helper:
+
+```python
+from drydock_go import run_test
+result = run_test(&quot;./internal/orders&quot;, &quot;TestCreateOrder&quot;)
+assert result.passed, (result.status, result.stdout, result.stderr)
+```
+
+Drydock stages this helper beside the criterion. It runs `go test -json -count=1 -run` with an
+exact test name, retains output and per-test outcomes, and rejects absent/skipped tests as proof.
+The enclosing AC provides identity, timeout, result storage and repair state. Compilation errors
+remain distinct from assertion failures in `result.status`. Coverage and persistence observations
+require explicit instrumentation per criterion; unavailable observations are unknown.
+
+A criterion that exercises the command line runs the built executable through the same helper,
+never `go run`, which reports every non-zero program exit as 1:
+
+```python
+from drydock_go import cli_runner
+code, out, err = cli_runner(&quot;--top&quot;, &quot;0&quot;, &quot;data.csv&quot;)
+assert code == 2, (code, out, err)
+```
+
+`cli_runner` builds the single `./cmd/&lt;name&gt;` main package once with `go build` and returns
+`(exit_code, stdout, stderr)`; pass `package=&quot;./cmd/&lt;name&gt;&quot;` when there are several, and `input=`
+for standard input. A failed build settles the criterion as `execution-error`.
+
+### How does this language provide the shared persistence contract?
+
+Use the shipped module in `Rigging/languages/go/persistence/`. Drydock copies it to the Target&#x27;s
+`persistence/`, generates `schema.go`, `testing.go` and a schema command from `DATABASE.md`, and
+links it into the existing root `go.mod` as `drydock.local/persistence`. Driver versions and sums
+are shipped; SQLite uses `go-sqlite3` (a C compiler and CGO are required), PostgreSQL uses `lib/pq`.
+Run `go mod download` during dependency provisioning; execution requires these modules available.
+
+Call `persistence.OpenDatabase(ctx, dsn)`, then typed methods such as
+`db.Tickets.List(ctx, persistence.TicketsListInput{Status: &quot;open&quot;})`. Methods return a value and
+an error. Optional inputs use pointers; read results are generated structs. Undeclared operations
+and unsupported field types fail explicitly. Use `OpenSession(ctx, dsn)` for native database criteria;
+empty DSN selects the configured, provisioned application store. Defer its cleanup and check the
+returned error: it rolls back on success and failure, never applies schema or deletes the store.
+Pass the same Store to the feature. Other connections and external effects require committed,
+idempotent criteria with owned records and supported cleanup. Both engines retain autocommit
+outside explicit rollback scopes.
+
+The Go library and generator are verified on SQLite and PostgreSQL. Keep application SQL inside
+the library; agents write callers. The language foundation must create `go.mod` before the
+DATABASE step. Python Blueprint AC containers invoke the native Go tests through `run_test`.
+
+---
+
+## Consumer Rules
+
+- Use `gofmt`, explicit errors, small consumer-owned interfaces and owned goroutine lifetimes.
+- Keep business logic in `internal/` and entry points in `cmd/`; commit `go.mod` and `go.sum`.
+- Gate with `go vet ./...`, `go build ./...` and `go test -race ./...`.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;common_compact.md&quot; role=&quot;stack&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/Rigging/stack/common_compact.md&quot;&gt;</p>
+<pre><code>&lt;!-- Compacted from /mnt/c/Users/barlo/projects/drydock/Rigging/stack/common.md sha256=2d665e4a232b3ef5b681149974e74928c8f5abb9adaac02604cc6b5987ac0f85 on 2026-10-24 by drydock rigging compact — regenerate with: drydock rigging compact --include-file {rel_source} --&gt;
+
+# Common Best Practices — Contract Surface
+
+## Project Layout
+
+### Rule: project-directory-layout
+
+Every project must use the standard root layout and may add stack-specific directories.
+
+Constraints: Include `bin/`, `data/` with `logs/` and `backups/`, `docs/`, `tests/`, optional `PROJECT/`, `.env`, `.env.example`, `.gitignore`, `CLAUDE.md`, and `Links.md`; keep runtime data under `data/`.
+
+## Shell Scripts
+
+### Rule: user-facing-operation-scripts
+
+User-facing operations must be implemented as Bash scripts in `bin/`.
+
+Constraints: Scripts must use standardized headers, `set -euo pipefail`, resolve project-relative paths, create `data/logs/`, log execution details, run from the project root, tee output to console and a timestamped log, and record completion.
+
+### Rule: command-center-discovery-header
+
+A discoverable script must begin with a Command Center header.
+
+| Field | Required | Values |
+|---|---:|---|
+| `# CommandCenter Operation` | Yes | Literal |
+| `# Name:` | Yes | Free text |
+| `# Type:` | No | `daemon` or `batch`; defaults to `batch` |
+| `# Port:` | No | Integer; daemon port |
+
+Constraints: Scripts without `# CommandCenter Operation` remain valid but are not discoverable by Command Center.
+
+### Rule: standard-scripts
+
+Projects should provide applicable operation scripts with these names and purposes.
+
+| Script | Type | Purpose |
+|---|---|---|
+| `bin/start.sh` | daemon | Start the development server |
+| `bin/stop.sh` | batch | Stop the development server |
+| `bin/test.sh` | batch | Run tests |
+| `bin/build.sh` | batch | Build or compile |
+| `bin/deploy.sh` | batch | Deploy to production |
+| `bin/backup.sh` | batch | Back up data or databases |
+
+### Rule: script-logging
+
+Operation scripts must capture stdout and stderr in `data/logs/`.
+
+Constraints: Log filenames must follow `&lt;script&gt;_&lt;YYYY-MM-DD_HHMMSS&gt;.log`; initial log lines must record timestamp, arguments, and working directory.
+
+## Links
+
+### Rule: links-file
+
+Every project must provide a root-level `Links.md` containing one two-column Markdown table.
+
+| Column | Requirement |
+|---|---|
+| `Label` | Short and descriptive |
+| `URL` | Relevant project URL |
+
+Constraints: Command Center reads this table and exposes the links through project configuration.
+
+## Agent Instructions
+
+### Rule: claude-file
+
+Every project must provide a root-level `CLAUDE.md` with the following sections.
+
+| Section | Required content |
+|---|---|
+| `## Project Overview` | Purpose and key features |
+| `## Architecture` | Technology stack, key files, and patterns |
+| `## Dev Commands` | Bash project commands in a code block |
+| `## Service Endpoints` | `- Label: https://url` entries |
+| `## Bookmarks` | Grouped links using `### Group` and `- [Title](URL)` |
+
+Constraints: Normalize equivalent headings to the standard names: `Commands`, `Development Commands`, and `Build Commands` become `Dev Commands`; `Overview` and `Project Purpose` become `Project Overview`; `Stack` becomes `Architecture`.
+
+## Version Control
+
+### Rule: gitignore-and-secrets
+
+Repositories must ignore secrets, generated files, and runtime data.
+
+Constraints: Ignore `data/`, `*.db`, `*.log`, `.env`, `venv/`, `node_modules/`, Python caches and bytecode, `*.egg-info/`, `dist/`, `build/`, `.DS_Store`, and `Thumbs.db`; commit `.env.example` with placeholders.
+
+### Rule: commit-message
+
+Commit messages must use imperative, descriptive text without AI or tool mentions.
+
+## Development Workflow
+
+### Rule: task-commit
+
+Completed, error-free tasks must be committed immediately.
+
+### Rule: local-only-commit
+
+Changes must be committed locally and must not be pushed.
+
+### Rule: co-authorship
+
+Commits must not contain `Co-authored-by` lines.
+
+### Rule: restart-notice
+
+Code-change responses for web-server projects must state whether a restart is required.
+
+Constraints: Template, CSS, or static-only changes require the notice `No restart needed — browser refresh is enough.`; Python or JavaScript server changes require `Restart required — run the start script or equivalent.`</code></pre>
+<p>&lt;/pblock&gt;</p>
+<h2>CONTEXT - Read-Only Support</h2>
+<p>&lt;pblock filename=&quot;ARCHITECTURE_compact.md&quot; role=&quot;context&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat/blueprint/ARCHITECTURE_compact.md&quot;&gt;</p>
+<pre><code>&lt;!-- Compacted from ARCHITECTURE.md sha256=57a234b80547446b389d3155cd03f148f68875c3d778548285f38cedcb095b0a on 2026-10-24 by drydock build agent --&gt;
+
+Module: `csvstat`, go 1.22, no require lines (stdlib only).
+Entry: `cmd/csvstat/main.go` — `os.Exit(cli.Run(os.Args[1:], os.Stdout, os.Stderr))`; sole `os.Exit` caller.
+`internal/cli.Run(args []string, stdout, stderr io.Writer) int` — exit codes: 0 success, 1 file open/read failure, 2 usage error, 3 rejected input (empty file, empty/repeated header, ragged record, CSV syntax error, unknown column).
+Failing commands write nothing to stdout; one diagnostic line to stderr; output buffered until validation completes.
+Packages: `internal/csvio` (open, read, trim, validate), `internal/profile` (null rules, type inference, counts, stats, frequencies), `internal/decimal` (math/big exact arithmetic, two-decimal formatting, half-away-from-zero rounding once at output).
+Test entry: `sh bin/test.sh` = `go vet ./...` then `go test ./...`.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<h2>IMPLEMENTS - Authoritative Step Specifications</h2>
+<p>&lt;pblock label=&quot;Implementation recency anchor&quot; kind=&quot;section&quot;&gt; The files in this section are the load-bearing specifications for this build block. Build these files exactly. Treat earlier sections as constraints and context.</p>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-CliParsing.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat/blueprint/FEATURE-CliParsing.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: Command Line Parsing
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Accept the two csvstat command forms and the --help text, producing a typed request for dispatch. |
+| Depends On  | ARCHITECTURE.md |
+| Provides    | csvstat [--column &lt;name&gt;] &lt;file&gt;, csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;, csvstat --help |
+| Consumes    | internal/cli.Run |
+
+## Purpose
+
+`internal/cli` parses arguments with a local `flag.FlagSet` created with `flag.ContinueOnError`,
+whose output is directed to standard error. Options precede exactly one file.
+
+| Option | Meaning |
+|---|---|
+| `--column &lt;name&gt;` | Profile only the named column. |
+| `--freq &lt;name&gt;` | List the most frequent values of the named column. |
+| `--top &lt;n&gt;` | With `--freq`, list at most n values; default 5. |
+| `--help` | Write usage text to standard output and exit 0. |
+
+## Behavior
+
+1. Parsing yields a typed request: mode (profile or frequency), column name, frequency name, top
+   count, and file path.
+2. `--help` writes usage text naming both command forms and every option to standard output and
+   returns 0, writing nothing to standard error.
+3. Profile and frequency modes are dispatched through small interfaces held by `Run`, so later
+   stories plug in without changing parsing.
+4. Names given to `--column` and `--freq` are kept exactly as given; they are matched later,
+   exactly and case-sensitively, against trimmed header names.
+5. Usage-error exit mapping is owned by the usage-errors story; this story only has to produce the
+   request for a well-formed command line.
+
+## Required Go Tests
+
+The build adds these tests in `internal/cli` (names are exact): `TestParseHelp`,
+`TestParseColumnForm`, `TestParseFreqForm`.
+
+## Programmatic Acceptance
+
+=== AC cliparse-help-exits-zero ===
+Intent: csvstat --help exits 0 and writes usage naming the command and every option to standard output.
+
+from drydock_go import cli_runner
+
+code, out, err = cli_runner(&quot;--help&quot;)
+print(out)
+print(err)
+assert code == 0
+for token in [&quot;csvstat&quot;, &quot;--column&quot;, &quot;--freq&quot;, &quot;--top&quot;]:
+    assert token in out, token
+=== END AC cliparse-help-exits-zero ===
+
+=== AC cliparse-help-test ===
+Intent: The package test for the help form passes.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/cli&quot;, &quot;TestParseHelp&quot;)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC cliparse-help-test ===
+
+=== AC cliparse-column-form-test ===
+Intent: Parsing the --column form yields a profile request with the named column and the file path.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/cli&quot;, &quot;TestParseColumnForm&quot;)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC cliparse-column-form-test ===
+
+=== AC cliparse-freq-form-test ===
+Intent: Parsing the --freq form yields a frequency request with the name, default top of 5, and the file path.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/cli&quot;, &quot;TestParseFreqForm&quot;)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC cliparse-freq-form-test ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- `Run` never calls `os.Exit`; only `cmd/csvstat/main.go` does.
+- The flag set writes its own diagnostics to standard error, never standard output.
+- Standard library only.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-UnreadableFile.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat/blueprint/FEATURE-UnreadableFile.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: Unreadable File
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Maps a file that cannot be opened or read to exit code 1 with nothing on standard output. |
+| Depends On  | FEATURE-CliParsing.md, ARCHITECTURE.md |
+| Provides    | exit code 1 |
+| Consumes    | csvstat [--column &lt;name&gt;] &lt;file&gt;, csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt; |
+
+## Purpose
+
+An operational failure to obtain the input is reported as exit 1, distinct from a usage error (2)
+and from rejected content (3).
+
+## Behavior
+
+- A path that does not exist, cannot be opened, is a directory, or fails while being read exits 1.
+- Nothing is written to standard output.
+- One diagnostic line on standard error names the file.
+- The rule applies to the profile form and the `--freq` form alike.
+- Arguments are validated first, so a well-formed command line naming an unreadable file is exit 1
+  and a malformed one is exit 2.
+
+## Programmatic Acceptance
+
+=== AC unreadable-missing-path ===
+Intent: A path that does not exist exits 1 with empty standard output.
+Suite: scoped
+Requires: python-package=drydock_go; scope=test
+
+import os
+
+from drydock_go import cli_runner
+
+missing = os.path.abspath(&quot;no-such-file-for-unreadable-check.csv&quot;)
+assert not os.path.exists(missing)
+code, out, err = cli_runner(missing)
+print(err)
+assert code == 1, (code, out, err)
+assert out == &quot;&quot;, out
+=== END AC unreadable-missing-path ===
+
+=== AC unreadable-directory ===
+Intent: A path that is a directory exits 1 with empty standard output.
+Suite: scoped
+Requires: python-package=drydock_go; scope=test
+
+import os
+
+from drydock_go import cli_runner
+
+directory = os.path.abspath(&quot;sources&quot;)
+assert os.path.isdir(directory)
+code, out, err = cli_runner(directory)
+print(err)
+assert code == 1, (code, out, err)
+assert out == &quot;&quot;, out
+=== END AC unreadable-directory ===
+
+=== AC unreadable-with-options ===
+Intent: The --column and --freq forms also exit 1 for an unreadable file.
+Suite: scoped
+Requires: python-package=drydock_go; scope=test
+
+import os
+
+from drydock_go import cli_runner
+
+missing = os.path.abspath(&quot;no-such-file-for-unreadable-check.csv&quot;)
+assert not os.path.exists(missing)
+
+code, out, err = cli_runner(&quot;--column&quot;, &quot;qty&quot;, missing)
+print(err)
+assert code == 1, (code, out, err)
+assert out == &quot;&quot;, out
+
+code, out, err = cli_runner(&quot;--freq&quot;, &quot;qty&quot;, &quot;--top&quot;, &quot;2&quot;, missing)
+print(err)
+assert code == 1, (code, out, err)
+assert out == &quot;&quot;, out
+=== END AC unreadable-with-options ===
+
+=== AC unreadable-diagnostic-on-stderr ===
+Intent: The failure is reported on standard error and names the file.
+Suite: scoped
+Requires: python-package=drydock_go; scope=test
+
+import os
+
+from drydock_go import cli_runner
+
+missing = os.path.abspath(&quot;no-such-file-for-unreadable-check.csv&quot;)
+code, out, err = cli_runner(missing)
+print(err)
+assert code == 1, (code, out, err)
+assert out == &quot;&quot;, out
+assert os.path.basename(missing) in err
+=== END AC unreadable-diagnostic-on-stderr ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- An unreadable file never produces standard output.
+- An unreadable file is never exit 2 or 3.
+- Application code never reads `sources/run.sh` or any supplied data file.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-CsvReading.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat/blueprint/FEATURE-CsvReading.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: CSV Reading and Profile Output
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Read a well-formed CSV file and write the profile header and one row per column in file order. |
+| Depends On  | FEATURE-CliParsing.md, ARCHITECTURE.md |
+| Provides    | profile output header and rows |
+| Consumes    | csvstat [--column &lt;name&gt;] &lt;file&gt; |
+
+## Purpose
+
+`internal/csvio` opens the file and reads it with `encoding/csv` as RFC 4180 defines it; the first
+record is the header. The profile mode writes CSV to standard output with `\n` line endings.
+
+## Behavior
+
+1. The reader sets `FieldsPerRecord = -1` so field-count validation is done by the application,
+   which is owned by the rejection story.
+2. Standard output starts with the header `column,type,rows,nulls,distinct,min,max,sum,mean,median`,
+   then one row per column in file order. Each row has exactly ten fields; the first is the column
+   name. The remaining fields are produced by the later counts, types, and statistics stories; this
+   story establishes the row structure.
+3. A quoted field containing a comma is read as one value. A field containing a comma, a double
+   quote, or a newline is quoted on output by the `encoding/csv` writer.
+4. A file with a header and no data records succeeds with one row per header column.
+5. Bytes are compared as bytes: a byte-order mark is not stripped and the file is not rejected for
+   invalid UTF-8.
+6. Output is written to a buffer and copied to standard output only after reading succeeds.
+
+## Programmatic Acceptance
+
+=== AC csvread-header-and-columns ===
+Intent: Profiling a well-formed file exits 0 and writes the declared header then one ten-field row per input column in file order.
+
+import csv
+import io
+from drydock_go import cli_runner
+
+path = &quot;sources/employees.csv&quot;
+with open(path, newline=&quot;&quot;) as handle:
+    input_header = next(csv.reader(handle))
+declared = &quot;column,type,rows,nulls,distinct,min,max,sum,mean,median&quot;.split(&quot;,&quot;)
+code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 0
+rows = list(csv.reader(io.StringIO(out)))
+assert rows[0] == declared
+assert [row[0] for row in rows[1:]] == input_header
+for row in rows:
+    assert len(row) == len(declared)
+=== END AC csvread-header-and-columns ===
+
+=== AC csvread-line-endings ===
+Intent: Profile output uses newline line endings only.
+
+from drydock_go import cli_runner
+
+code, out, err = cli_runner(&quot;sources/orders.csv&quot;)
+assert code == 0
+assert &quot;\r&quot; not in out
+assert out.endswith(&quot;\n&quot;)
+=== END AC csvread-line-endings ===
+
+=== AC csvread-quoted-comma ===
+Intent: A quoted field containing a comma is one value, so the file keeps its declared column count.
+
+import csv
+import io
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+names = [&quot;a&quot;, &quot;b&quot;]
+with tempfile.TemporaryDirectory() as tmp:
+    target = Path(tmp) / &quot;quoted.csv&quot;
+    target.write_text(names[0] + &quot;,&quot; + names[1] + &quot;\n&quot; + &#x27;&quot;x, y&quot;,2\n&#x27;)
+    code, out, err = cli_runner(str(target))
+    print(out)
+    print(err)
+    assert code == 0
+    rows = list(csv.reader(io.StringIO(out)))
+    assert [row[0] for row in rows[1:]] == names
+=== END AC csvread-quoted-comma ===
+
+=== AC csvread-header-only ===
+Intent: A file with a header and no data records succeeds with one row per header column.
+
+import csv
+import io
+from drydock_go import cli_runner
+
+path = &quot;sources/header_only.csv&quot;
+with open(path, newline=&quot;&quot;) as handle:
+    input_header = next(csv.reader(handle))
+code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 0
+rows = list(csv.reader(io.StringIO(out)))
+assert [row[0] for row in rows[1:]] == input_header
+=== END AC csvread-header-only ===
+
+=== AC csvread-bom-kept ===
+Intent: A byte-order mark is not stripped from the first header name.
+
+import csv
+import io
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+bom = &quot;\ufeff&quot;
+first = &quot;a&quot;
+second = &quot;b&quot;
+payload = (bom + first + &quot;,&quot; + second + &quot;\n1,2\n&quot;).encode(&quot;utf-8&quot;)
+with tempfile.TemporaryDirectory() as tmp:
+    target = Path(tmp) / &quot;bom.csv&quot;
+    target.write_bytes(payload)
+    code, out, err = cli_runner(str(target))
+    assert code == 0
+    rows = list(csv.reader(io.StringIO(out)))
+    assert rows[1][0] == bom + first
+    assert rows[2][0] == second
+=== END AC csvread-bom-kept ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Application code never reads `sources/run.sh` or any supplied data file by name.
+- A byte-order mark is not stripped and invalid UTF-8 is not a rejection reason.
+- Standard output receives nothing until the whole file has been read and validated.
+- Standard library only.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-ValueTrimming.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat/blueprint/FEATURE-ValueTrimming.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: Value Trimming
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Trim leading and trailing spaces from every header name and every value before any other rule applies. |
+| Depends On  | FEATURE-CsvReading.md, ARCHITECTURE.md |
+| Provides    | trimmed header names and values |
+| Consumes    | profile output header and rows |
+
+## Purpose
+
+Leading and trailing spaces are removed from every header name and every value before null, type,
+distinct, and output rules apply. Trimming is done once, in `internal/csvio`, so every later rule
+sees trimmed text.
+
+## Behavior
+
+1. Only the space character is trimmed (`strings.Trim(s, &quot; &quot;)`); tabs and other whitespace remain.
+2. Header names are trimmed before the empty-name and repeated-name checks.
+3. Values are trimmed before the null test, so a value of spaces only is empty and therefore null.
+4. Column names written in the profile output are the trimmed names.
+
+## Required Go Tests
+
+The build adds these tests in `internal/csvio` (names are exact): `TestTrimHeaderNames`,
+`TestTrimValues`.
+
+## Programmatic Acceptance
+
+=== AC trim-header-names ===
+Intent: Padded header names are written trimmed in the profile output.
+
+import csv
+import io
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+names = [&quot;alpha&quot;, &quot;beta&quot;]
+with tempfile.TemporaryDirectory() as tmp:
+    target = Path(tmp) / &quot;padded.csv&quot;
+    target.write_text(&quot;  &quot; + names[0] + &quot; , &quot; + names[1] + &quot;  \n1,2\n&quot;)
+    code, out, err = cli_runner(str(target))
+    print(out)
+    print(err)
+    assert code == 0
+    rows = list(csv.reader(io.StringIO(out)))
+    assert [row[0] for row in rows[1:]] == names
+=== END AC trim-header-names ===
+
+=== AC trim-only-spaces ===
+Intent: Only spaces are trimmed; a trailing tab stays part of the header name.
+
+import csv
+import io
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+name = &quot;alpha\t&quot;
+other = &quot;beta&quot;
+with tempfile.TemporaryDirectory() as tmp:
+    target = Path(tmp) / &quot;tab.csv&quot;
+    target.write_text(&quot; &quot; + name + &quot; ,&quot; + other + &quot;\n1,2\n&quot;)
+    code, out, err = cli_runner(str(target))
+    assert code == 0
+    rows = list(csv.reader(io.StringIO(out)))
+    assert rows[1][0] == name
+    assert rows[2][0] == other
+=== END AC trim-only-spaces ===
+
+=== AC trim-header-test ===
+Intent: The package test for header trimming passes.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/csvio&quot;, &quot;TestTrimHeaderNames&quot;)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC trim-header-test ===
+
+=== AC trim-values-test ===
+Intent: The package test for value trimming passes.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/csvio&quot;, &quot;TestTrimValues&quot;)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC trim-values-test ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Tabs, non-breaking spaces, and other whitespace are not trimmed.
+- Trimming happens before every other rule; no later package re-trims or sees untrimmed text.
+- Standard library only.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-UsageErrors.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat/blueprint/FEATURE-UsageErrors.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: Usage Errors
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Maps every malformed command line to exit code 2 with nothing on standard output. |
+| Depends On  | FEATURE-CliParsing.md, ARCHITECTURE.md |
+| Provides    | exit code 2 |
+| Consumes    | csvstat [--column &lt;name&gt;] &lt;file&gt;, csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt; |
+
+## Purpose
+
+Any command line that does not match one of the two command forms is a usage error.
+
+## Behavior
+
+Exit code 2, nothing on standard output, and a diagnostic on standard error, for each of:
+
+- no file argument;
+- more than one file argument;
+- an unknown option;
+- an option missing its value (`--column`, `--freq`, or `--top` as the last argument);
+- `--top` not a positive integer;
+- `--top` without `--freq`;
+- `--column` together with `--freq`.
+
+The flag set uses `flag.ContinueOnError` with its output directed to standard error, so the parser
+never writes to standard output on failure. Usage errors are decided before the file is opened, so
+a usage error for a missing file path never becomes exit 1. `--help` is not a usage error and is
+owned by FEATURE-CliParsing.md.
+
+## Programmatic Acceptance
+
+=== AC usage-missing-or-extra-file ===
+Intent: No file, or more than one file, exits 2 with empty standard output.
+Suite: scoped
+Requires: python-package=drydock_go; scope=test
+
+import os
+
+from drydock_go import cli_runner
+
+orders = os.path.abspath(&quot;sources/orders.csv&quot;)
+sensors = os.path.abspath(&quot;sources/sensors.csv&quot;)
+
+code, out, err = cli_runner()
+print(err)
+assert code == 2, (code, out, err)
+assert out == &quot;&quot;, out
+
+code, out, err = cli_runner(orders, sensors)
+print(err)
+assert code == 2, (code, out, err)
+assert out == &quot;&quot;, out
+
+code, out, err = cli_runner(&quot;--column&quot;, &quot;qty&quot;, orders, sensors)
+print(err)
+assert code == 2, (code, out, err)
+assert out == &quot;&quot;, out
+=== END AC usage-missing-or-extra-file ===
+
+=== AC usage-unknown-option ===
+Intent: An unknown option exits 2 with empty standard output.
+Suite: scoped
+Requires: python-package=drydock_go; scope=test
+
+import os
+
+from drydock_go import cli_runner
+
+orders = os.path.abspath(&quot;sources/orders.csv&quot;)
+code, out, err = cli_runner(&quot;--frobnicate&quot;, orders)
+print(err)
+assert code == 2, (code, out, err)
+assert out == &quot;&quot;, out
+=== END AC usage-unknown-option ===
+
+=== AC usage-missing-option-value ===
+Intent: Each value-taking option given as the last argument exits 2 with empty standard output.
+Suite: scoped
+Requires: python-package=drydock_go; scope=test
+
+import os
+
+from drydock_go import cli_runner
+
+orders = os.path.abspath(&quot;sources/orders.csv&quot;)
+for opt in (&quot;--column&quot;, &quot;--freq&quot;):
+    code, out, err = cli_runner(orders, opt)
+    print(opt, code, err)
+    assert code == 2, (opt, code, out, err)
+    assert out == &quot;&quot;, (opt, out)
+
+code, out, err = cli_runner(&quot;--freq&quot;, &quot;qty&quot;, orders, &quot;--top&quot;)
+print(err)
+assert code == 2, (code, out, err)
+assert out == &quot;&quot;, out
+=== END AC usage-missing-option-value ===
+
+=== AC usage-bad-top ===
+Intent: A --top of zero or non-numeric text exits 2 with empty standard output.
+Suite: scoped
+Requires: python-package=drydock_go; scope=test
+
+import os
+
+from drydock_go import cli_runner
+
+sensors = os.path.abspath(&quot;sources/sensors.csv&quot;)
+for bad in (&quot;0&quot;, &quot;-4&quot;, &quot;many&quot;):
+    code, out, err = cli_runner(&quot;--freq&quot;, &quot;sensor&quot;, &quot;--top&quot;, bad, sensors)
+    print(bad, code, err)
+    assert code == 2, (bad, code, out, err)
+    assert out == &quot;&quot;, (bad, out)
+=== END AC usage-bad-top ===
+
+=== AC usage-top-without-freq ===
+Intent: --top without --freq exits 2 with empty standard output.
+Suite: scoped
+Requires: python-package=drydock_go; scope=test
+
+import os
+
+from drydock_go import cli_runner
+
+sensors = os.path.abspath(&quot;sources/sensors.csv&quot;)
+code, out, err = cli_runner(&quot;--top&quot;, &quot;3&quot;, sensors)
+print(err)
+assert code == 2, (code, out, err)
+assert out == &quot;&quot;, out
+=== END AC usage-top-without-freq ===
+
+=== AC usage-column-with-freq ===
+Intent: --column combined with --freq exits 2 with empty standard output.
+Suite: scoped
+Requires: python-package=drydock_go; scope=test
+
+import os
+
+from drydock_go import cli_runner
+
+orders = os.path.abspath(&quot;sources/orders.csv&quot;)
+code, out, err = cli_runner(&quot;--column&quot;, &quot;qty&quot;, &quot;--freq&quot;, &quot;qty&quot;, orders)
+print(err)
+assert code == 2, (code, out, err)
+assert out == &quot;&quot;, out
+=== END AC usage-column-with-freq ===
+
+=== AC usage-before-file-access ===
+Intent: A usage error on a nonexistent path is exit 2, not exit 1, because arguments are validated before the file is opened.
+Suite: scoped
+Requires: python-package=drydock_go; scope=test
+
+import os
+
+from drydock_go import cli_runner
+
+missing = os.path.abspath(&quot;no-such-file-for-usage-check.csv&quot;)
+assert not os.path.exists(missing)
+code, out, err = cli_runner(&quot;--top&quot;, &quot;3&quot;, missing)
+print(err)
+assert code == 2, (code, out, err)
+assert out == &quot;&quot;, out
+=== END AC usage-before-file-access ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- A usage error never writes to standard output.
+- A usage error never exits 1 or 3.
+- Diagnostics go to standard error and are never compared.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-RejectMalformed.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat/blueprint/FEATURE-RejectMalformed.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: Reject Malformed Input
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Reject empty files, bad header names, ragged records, and CSV syntax errors with exit code 3 and nothing on standard output. |
+| Depends On  | FEATURE-CsvReading.md, ARCHITECTURE.md |
+| Provides    | exit code 3 for rejected input |
+| Consumes    | internal/csvio |
+
+## Purpose
+
+Malformed input is rejected before any output is produced. Rejection exits 3, writes nothing to
+standard output, and writes one line to standard error naming the file and, for a record problem,
+its line number.
+
+## Behavior
+
+1. An empty file, or a file with no records at all, is rejected.
+2. A header name that is empty after trimming, or repeated after trimming, is rejected.
+3. A record whose field count differs from the header is rejected, naming its line number.
+4. A syntax error reported by `encoding/csv`, such as a bare quote in an unquoted field, is
+   rejected with exit 3 and names the file and line number.
+5. All output is buffered; nothing reaches standard output unless validation of the whole file
+   succeeded.
+6. A header-only file is valid and is not rejected.
+
+## Required Go Tests
+
+The build adds these tests in `internal/csvio` (names are exact): `TestRejectEmptyFile`,
+`TestRejectBadHeader`, `TestRejectRaggedRecord`.
+
+## Programmatic Acceptance
+
+=== AC reject-ragged-supplied ===
+Intent: A record with a different field count than the header exits 3 with nothing on standard output and the file named on standard error.
+
+from drydock_go import cli_runner
+
+path = &quot;sources/ragged.csv&quot;
+code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 3
+assert out == &quot;&quot;
+assert path in err
+=== END AC reject-ragged-supplied ===
+
+=== AC reject-empty-file ===
+Intent: A zero-byte file and a file holding only a blank line both exit 3 with nothing on standard output.
+
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as tmp:
+    for index, payload in enumerate([b&quot;&quot;, b&quot;\n&quot;]):
+        target = Path(tmp) / (&quot;empty&quot; + str(index) + &quot;.csv&quot;)
+        target.write_bytes(payload)
+        code, out, err = cli_runner(str(target))
+        print(out)
+        print(err)
+        assert code == 3
+        assert out == &quot;&quot;
+=== END AC reject-empty-file ===
+
+=== AC reject-bad-header-names ===
+Intent: An empty header name, a repeated header name, and a name repeated only after trimming each exit 3 with nothing on standard output.
+
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+cases = [&quot;,b\n1,2\n&quot;, &quot;a,a\n1,2\n&quot;, &quot;a, a\n1,2\n&quot;, &quot;a, \n1,2\n&quot;]
+with tempfile.TemporaryDirectory() as tmp:
+    for index, text in enumerate(cases):
+        target = Path(tmp) / (&quot;header&quot; + str(index) + &quot;.csv&quot;)
+        target.write_text(text)
+        code, out, err = cli_runner(str(target))
+        print(out)
+        print(err)
+        assert code == 3, text
+        assert out == &quot;&quot;
+=== END AC reject-bad-header-names ===
+
+=== AC reject-short-record ===
+Intent: A record with fewer fields than the header exits 3 with nothing on standard output.
+
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as tmp:
+    target = Path(tmp) / &quot;short.csv&quot;
+    target.write_text(&quot;a,b\n1\n&quot;)
+    code, out, err = cli_runner(str(target))
+    print(out)
+    print(err)
+    assert code == 3
+    assert out == &quot;&quot;
+    assert str(target) in err
+=== END AC reject-short-record ===
+
+=== AC reject-csv-syntax-error ===
+Intent: A bare quote inside an unquoted field is a CSV syntax error that exits 3 with nothing on standard output.
+
+import tempfile
+from pathlib import Path
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as tmp:
+    target = Path(tmp) / &quot;bare_quote.csv&quot;
+    target.write_text(&quot;a,b\n1,x&quot; + &#x27;&quot;&#x27; + &quot;y\n&quot;)
+    code, out, err = cli_runner(str(target))
+    print(out)
+    print(err)
+    assert code == 3
+    assert out == &quot;&quot;
+    assert str(target) in err
+=== END AC reject-csv-syntax-error ===
+
+=== AC reject-valid-files-pass ===
+Intent: Well-formed files, including a header-only file, are not rejected.
+
+from drydock_go import cli_runner
+
+for path in [&quot;sources/employees.csv&quot;, &quot;sources/header_only.csv&quot;]:
+    code, out, err = cli_runner(path)
+    print(err)
+    assert code == 0, path
+=== END AC reject-valid-files-pass ===
+
+=== AC reject-empty-file-test ===
+Intent: The package test for empty-file rejection passes.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/csvio&quot;, &quot;TestRejectEmptyFile&quot;)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC reject-empty-file-test ===
+
+=== AC reject-bad-header-test ===
+Intent: The package test for header-name rejection passes.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/csvio&quot;, &quot;TestRejectBadHeader&quot;)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC reject-bad-header-test ===
+
+=== AC reject-ragged-test ===
+Intent: The package test for ragged-record rejection passes.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/csvio&quot;, &quot;TestRejectRaggedRecord&quot;)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC reject-ragged-test ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- A rejected input never produces partial standard output.
+- Only the diagnostic on standard error names the file and line; its wording is not a contract.
+- A header-only file is valid input and must not be rejected.
+- Standard library only.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-ProfileCounts.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat/blueprint/FEATURE-ProfileCounts.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: Profile Counts
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Report the rows, nulls, and distinct counts for every column of a CSV file. |
+| Depends On  | FEATURE-ValueTrimming.md |
+| Provides    | profile fields rows, nulls, distinct |
+| Consumes    | trimmed header names and values from FEATURE-ValueTrimming.md |
+
+## Purpose
+
+For each column, the profile row carries three counts computed from the trimmed values of that column: `rows`, `nulls`, and `distinct`. Later stories (types, statistics, frequency) reuse the null rule defined here.
+
+## Behavior
+
+- `rows` is the number of data records in the file (the header is not counted). Every column of a file reports the same `rows`.
+- A value is **null** when, after trimming, it is empty or equals `NA`, `N/A`, or `NULL` ignoring case. Every other value is non-null.
+- `nulls` is the number of null values in the column.
+- `distinct` is the number of different non-null values in the column, compared as exact strings after trimming. Comparison is case-sensitive, so `Apple` and `apple` are two values. Null values are never counted.
+- A file with a header and no data records reports `rows` 0, `nulls` 0, and `distinct` 0 for every column.
+- The null rule is exposed as a single reusable function in `internal/profile` so that types, statistics, and frequency use one definition.
+- All counts are computed from the file given. No count is hardcoded.
+
+## Programmatic Acceptance
+
+=== AC counts-rows-nulls-distinct ===
+Intent: rows, nulls, and distinct are computed from the file, with padded values trimmed before comparison.
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def profile(lines):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(&quot;&quot;.join(line + &quot;\n&quot; for line in lines))
+        code, out, err = cli_runner(path)
+    print(out)
+    print(err)
+    assert code == 0, (code, out, err)
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+
+values = [&quot;apple&quot;, &quot; apple &quot;, &quot;pear&quot;, &quot;Apple&quot;, &quot;pear&quot;, &quot;fig&quot;, &quot;fig&quot;, &quot;fig&quot;]
+lines = [&quot;id,v&quot;] + [f&quot;{i},{v}&quot; for i, v in enumerate(values)]
+rows = profile(lines)
+trimmed = [v.strip() for v in values]
+assert rows[&quot;v&quot;][&quot;rows&quot;] == str(len(values))
+assert rows[&quot;v&quot;][&quot;nulls&quot;] == str(0)
+assert rows[&quot;v&quot;][&quot;distinct&quot;] == str(len(set(trimmed)))
+assert rows[&quot;id&quot;][&quot;rows&quot;] == str(len(values))
+assert rows[&quot;id&quot;][&quot;distinct&quot;] == str(len(values))
+=== END AC counts-rows-nulls-distinct ===
+
+=== AC counts-null-spellings ===
+Intent: Empty, NA, N/A, and NULL in any letter case are null and are excluded from distinct.
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def profile(lines):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(&quot;&quot;.join(line + &quot;\n&quot; for line in lines))
+        code, out, err = cli_runner(path)
+    print(out)
+    print(err)
+    assert code == 0, (code, out, err)
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+
+null_spellings = [&quot;&quot;, &quot;NA&quot;, &quot;na&quot;, &quot;N/A&quot;, &quot;n/a&quot;, &quot;NULL&quot;, &quot;null&quot;, &quot;Null&quot;, &quot;   &quot;, &quot; NA &quot;]
+real_values = [&quot;x&quot;, &quot;y&quot;, &quot;x&quot;]
+values = null_spellings + real_values
+lines = [&quot;id,v&quot;] + [f&quot;{i},{v}&quot; for i, v in enumerate(values)]
+rows = profile(lines)
+assert rows[&quot;v&quot;][&quot;rows&quot;] == str(len(values))
+assert rows[&quot;v&quot;][&quot;nulls&quot;] == str(len(null_spellings))
+assert rows[&quot;v&quot;][&quot;distinct&quot;] == str(len(set(real_values)))
+=== END AC counts-null-spellings ===
+
+=== AC counts-non-null-lookalikes ===
+Intent: Values that merely resemble a null spelling are not null and count as distinct values.
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def profile(lines):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(&quot;&quot;.join(line + &quot;\n&quot; for line in lines))
+        code, out, err = cli_runner(path)
+    print(out)
+    print(err)
+    assert code == 0, (code, out, err)
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+
+values = [&quot;NAN&quot;, &quot;N A&quot;, &quot;NULLS&quot;, &quot;none&quot;, &quot;0&quot;, &quot;NA&quot;]
+lines = [&quot;id,v&quot;] + [f&quot;{i},{v}&quot; for i, v in enumerate(values)]
+rows = profile(lines)
+non_null = [v for v in values if v != &quot;NA&quot;]
+assert rows[&quot;v&quot;][&quot;nulls&quot;] == str(len(values) - len(non_null))
+assert rows[&quot;v&quot;][&quot;distinct&quot;] == str(len(set(non_null)))
+=== END AC counts-non-null-lookalikes ===
+
+=== AC counts-all-null-column ===
+Intent: A column whose values are all null reports distinct 0 and nulls equal to rows.
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def profile(lines):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(&quot;&quot;.join(line + &quot;\n&quot; for line in lines))
+        code, out, err = cli_runner(path)
+    print(out)
+    print(err)
+    assert code == 0, (code, out, err)
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+
+values = [&quot;&quot;, &quot;NA&quot;, &quot;NULL&quot;, &quot; &quot;]
+lines = [&quot;id,v&quot;] + [f&quot;{i},{v}&quot; for i, v in enumerate(values)]
+rows = profile(lines)
+assert rows[&quot;v&quot;][&quot;rows&quot;] == str(len(values))
+assert rows[&quot;v&quot;][&quot;nulls&quot;] == rows[&quot;v&quot;][&quot;rows&quot;]
+assert rows[&quot;v&quot;][&quot;distinct&quot;] == str(0)
+=== END AC counts-all-null-column ===
+
+=== AC counts-header-only ===
+Intent: A file with a header and no data records reports zero counts for every column and exits 0.
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+names = [&quot;sku&quot;, &quot;price&quot;, &quot;in_stock&quot;]
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;in.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+        f.write(&quot;,&quot;.join(names) + &quot;\n&quot;)
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 0, (code, out, err)
+parsed = list(csv.DictReader(io.StringIO(out)))
+assert [r[&quot;column&quot;] for r in parsed] == names
+for r in parsed:
+    assert r[&quot;rows&quot;] == str(0)
+    assert r[&quot;nulls&quot;] == str(0)
+    assert r[&quot;distinct&quot;] == str(0)
+=== END AC counts-header-only ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Counts are computed from the file examined; no count, type, or value list is hardcoded.
+- Application code never reads `sources/run.sh` or any supplied data file.
+- Null values are never counted by `distinct`.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-TypesDate.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat/blueprint/FEATURE-TypesDate.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: Types Date
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Infer the date column type and reject values that are not real calendar dates. |
+| Depends On  | FEATURE-ProfileCounts.md |
+| Provides    | profile field type value date |
+| Consumes    | null rule from FEATURE-ProfileCounts.md |
+
+## Purpose
+
+A column is a `date` column when every non-null value is a real calendar date written `YYYY-MM-DD`. This specification owns the date test; the final type decision is composed in FEATURE-TypesOther.md.
+
+## Behavior
+
+- A value qualifies when, after trimming, it is exactly ten characters, matches `YYYY-MM-DD` (four digits, `-`, two digits, `-`, two digits), and names a real calendar date.
+- A value such as `2025-02-30`, `2025-13-01`, or `2025-00-10` does not qualify. `2024-02-29` qualifies (leap year); `2025-02-29` does not.
+- One non-qualifying non-null value makes the column not `date`; the column then falls through to the next type in order.
+- Null values never disqualify the type.
+- A column of integers or numbers is typed by FEATURE-TypesNumeric.md before the date test applies; a date value never matches the integer or number patterns.
+- Implementation uses `time.Parse` with layout `2006-01-02` plus a length check so that non-padded forms such as `2025-2-3` are rejected.
+
+## Programmatic Acceptance
+
+=== AC types-date-valid ===
+Intent: A column of real YYYY-MM-DD dates, including a leap day and nulls, is typed date.
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def profile(lines):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(&quot;&quot;.join(line + &quot;\n&quot; for line in lines))
+        code, out, err = cli_runner(path)
+    print(out)
+    print(err)
+    assert code == 0, (code, out, err)
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+
+values = [&quot;2025-02-01&quot;, &quot;2024-02-29&quot;, &quot; 2023-12-31 &quot;, &quot;NA&quot;, &quot;&quot;, &quot;1999-01-01&quot;]
+lines = [&quot;id,v&quot;] + [f&quot;{i},{v}&quot; for i, v in enumerate(values)]
+rows = profile(lines)
+assert rows[&quot;v&quot;][&quot;type&quot;] == &quot;date&quot;
+=== END AC types-date-valid ===
+
+=== AC types-date-invalid-calendar ===
+Intent: Values that look like dates but are not real calendar dates keep the column from being date.
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def profile(lines):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(&quot;&quot;.join(line + &quot;\n&quot; for line in lines))
+        code, out, err = cli_runner(path)
+    print(out)
+    print(err)
+    assert code == 0, (code, out, err)
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+
+bad_values = [&quot;2025-02-30&quot;, &quot;2025-02-29&quot;, &quot;2025-13-01&quot;, &quot;2025-00-10&quot;, &quot;2025-04-31&quot;, &quot;2025-01-32&quot;]
+for bad in bad_values:
+    values = [&quot;2025-02-01&quot;, &quot;2025-03-18&quot;, bad]
+    lines = [&quot;id,v&quot;] + [f&quot;{i},{v}&quot; for i, v in enumerate(values)]
+    rows = profile(lines)
+    assert rows[&quot;v&quot;][&quot;type&quot;] != &quot;date&quot;, (bad, rows[&quot;v&quot;][&quot;type&quot;])
+=== END AC types-date-invalid-calendar ===
+
+=== AC types-date-wrong-shape ===
+Intent: Dates not written exactly as zero-padded YYYY-MM-DD do not qualify.
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def profile(lines):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(&quot;&quot;.join(line + &quot;\n&quot; for line in lines))
+        code, out, err = cli_runner(path)
+    print(out)
+    print(err)
+    assert code == 0, (code, out, err)
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+
+bad_values = [&quot;2025-2-3&quot;, &quot;2025/02/03&quot;, &quot;03-02-2025&quot;, &quot;2025-02-03T08:00&quot;, &quot;20250203&quot;]
+for bad in bad_values:
+    values = [&quot;2025-02-01&quot;, bad]
+    lines = [&quot;id,v&quot;] + [f&quot;{i},{v}&quot; for i, v in enumerate(values)]
+    rows = profile(lines)
+    assert rows[&quot;v&quot;][&quot;type&quot;] != &quot;date&quot;, (bad, rows[&quot;v&quot;][&quot;type&quot;])
+=== END AC types-date-wrong-shape ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Date decisions are computed from the values of the file examined; no column name or file is special-cased.
+- Only the `YYYY-MM-DD` form is a date; no other layout is accepted.
+- Standard library only.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-TypesNumeric.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat/blueprint/FEATURE-TypesNumeric.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: Types Numeric
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Infer the integer and number column types from the non-null values of a column. |
+| Depends On  | FEATURE-ProfileCounts.md |
+| Provides    | profile field type values integer and number |
+| Consumes    | null rule from FEATURE-ProfileCounts.md |
+
+## Purpose
+
+A column&#x27;s type is the first type in the order integer, number, date, boolean, text that every non-null value satisfies. This specification owns the first two members of that order.
+
+## Behavior
+
+- `integer`: every non-null value matches `-?[0-9]+` (the whole value, after trimming).
+- `number`: every non-null value matches `-?[0-9]+(\.[0-9]+)?` (the whole value, after trimming) and the column is not `integer`.
+- Matching is anchored at both ends. `+5`, `.5`, `5.`, `1e3`, `1,000`, and `0x10` match neither pattern.
+- A single non-matching non-null value disqualifies the type for the column.
+- Null values (see FEATURE-ProfileCounts.md) never disqualify a type.
+- Leading zeros are permitted (`007` is an integer). Arbitrarily long digit strings are integers; no length limit applies.
+- Matchers live in `internal/profile` and are hand-coded or use `regexp` anchored with `^` and `$`.
+
+## Programmatic Acceptance
+
+=== AC types-numeric-integer ===
+Intent: A column whose non-null values all match the integer pattern is typed integer, including negatives, leading zeros, and nulls.
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def profile(lines):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(&quot;&quot;.join(line + &quot;\n&quot; for line in lines))
+        code, out, err = cli_runner(path)
+    print(out)
+    print(err)
+    assert code == 0, (code, out, err)
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+
+values = [&quot;1&quot;, &quot;-2&quot;, &quot;007&quot;, &quot; 40 &quot;, &quot;NA&quot;, &quot;&quot;, &quot;123456789012345678901234567890&quot;]
+lines = [&quot;id,v&quot;] + [f&quot;{i},{v}&quot; for i, v in enumerate(values)]
+rows = profile(lines)
+assert rows[&quot;v&quot;][&quot;type&quot;] == &quot;integer&quot;
+assert rows[&quot;id&quot;][&quot;type&quot;] == &quot;integer&quot;
+=== END AC types-numeric-integer ===
+
+=== AC types-numeric-number ===
+Intent: A column with at least one decimal value and otherwise integer or decimal values is typed number.
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def profile(lines):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(&quot;&quot;.join(line + &quot;\n&quot; for line in lines))
+        code, out, err = cli_runner(path)
+    print(out)
+    print(err)
+    assert code == 0, (code, out, err)
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+
+values = [&quot;1&quot;, &quot;-2.50&quot;, &quot;3.14159&quot;, &quot;0.0&quot;, &quot;N/A&quot;, &quot;10&quot;]
+lines = [&quot;id,v&quot;] + [f&quot;{i},{v}&quot; for i, v in enumerate(values)]
+rows = profile(lines)
+assert rows[&quot;v&quot;][&quot;type&quot;] == &quot;number&quot;
+=== END AC types-numeric-number ===
+
+=== AC types-numeric-rejects-lookalikes ===
+Intent: Each value that fails the anchored numeric patterns keeps its column from being integer or number.
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def profile(lines):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(&quot;&quot;.join(line + &quot;\n&quot; for line in lines))
+        code, out, err = cli_runner(path)
+    print(out)
+    print(err)
+    assert code == 0, (code, out, err)
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+
+bad_values = [&quot;+5&quot;, &quot;.5&quot;, &quot;5.&quot;, &quot;1e3&quot;, &quot;1.2.3&quot;, &quot;0x10&quot;, &quot;--1&quot;, &quot;1-&quot;, &quot;12abc&quot;]
+for bad in bad_values:
+    values = [&quot;1&quot;, &quot;2.5&quot;, bad]
+    lines = [&quot;id,v&quot;] + [f&quot;{i},{v}&quot; for i, v in enumerate(values)]
+    rows = profile(lines)
+    assert rows[&quot;v&quot;][&quot;type&quot;] not in (&quot;integer&quot;, &quot;number&quot;), (bad, rows[&quot;v&quot;][&quot;type&quot;])
+=== END AC types-numeric-rejects-lookalikes ===
+
+=== AC types-numeric-integer-preferred ===
+Intent: An all-integer column is integer, not number, and adding one decimal changes only that column to number.
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def profile(lines):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(&quot;&quot;.join(line + &quot;\n&quot; for line in lines))
+        code, out, err = cli_runner(path)
+    print(out)
+    print(err)
+    assert code == 0, (code, out, err)
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+
+ints = [&quot;1&quot;, &quot;2&quot;, &quot;3&quot;]
+mixed = [&quot;1&quot;, &quot;2&quot;, &quot;3.5&quot;]
+lines = [&quot;a,b&quot;] + [f&quot;{x},{y}&quot; for x, y in zip(ints, mixed)]
+rows = profile(lines)
+assert rows[&quot;a&quot;][&quot;type&quot;] == &quot;integer&quot;
+assert rows[&quot;b&quot;][&quot;type&quot;] == &quot;number&quot;
+=== END AC types-numeric-integer-preferred ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Type decisions are computed from the values of the file examined; no type is hardcoded for a column name or file.
+- Null values never disqualify a type.
+- No third-party modules; standard library only.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-Frequency.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat/blueprint/FEATURE-Frequency.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: Frequency Listing
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Lists the most frequent non-null values of one named column with --freq. |
+| Depends On  | ARCHITECTURE.md, FEATURE-ProfileCounts.md, FEATURE-CliParsing.md |
+| Provides    | value,count output |
+| Consumes    | csvstat --freq &lt;name&gt; &lt;file&gt; |
+
+## Purpose
+
+`csvstat --freq &lt;name&gt; &lt;file&gt;` writes a two-column CSV of the distinct non-null values of the named
+column and how often each occurs, instead of the profile.
+
+## Behavior
+
+- Header line is `value,count`.
+- One row per distinct non-null value, ordered by count descending, then by value ascending by byte
+  value.
+- Values are trimmed before counting and compared as exact strings. Null values (empty, or `NA`,
+  `N/A`, `NULL` ignoring case) are not listed.
+- A column with no non-null values writes only the header.
+- At most the `--top` limit of rows is written; the default limit is 5 (the limit itself is owned by
+  FEATURE-FrequencyTop.md).
+- Output is CSV with `\n` line endings, written with `encoding/csv`, and only after the whole file
+  has been read and validated.
+- Success exits 0.
+
+## Programmatic Acceptance
+
+=== AC freq-department ===
+Intent: Frequencies for a text column are counted, ordered by count then byte value, and parsed back as CSV.
+Suite: scoped
+Requires: python-package=drydock_go; scope=test
+
+import csv
+import io
+import os
+from collections import Counter
+
+from drydock_go import cli_runner
+
+path = os.path.abspath(&quot;sources/employees.csv&quot;)
+col = &quot;department&quot;
+top = 5
+with open(path, newline=&quot;&quot;) as fh:
+    rows = list(csv.reader(fh))
+header = [h.strip() for h in rows[0]]
+idx = header.index(col)
+vals = [r[idx].strip() for r in rows[1:]]
+vals = [v for v in vals if v != &quot;&quot; and v.upper() not in (&quot;NA&quot;, &quot;N/A&quot;, &quot;NULL&quot;)]
+ordered = sorted(Counter(vals).items(), key=lambda kv: (-kv[1], kv[0].encode()))
+want = [[v, str(c)] for v, c in ordered[:top]]
+
+code, out, err = cli_runner(&quot;--freq&quot;, col, path)
+print(out)
+print(err)
+assert code == 0, (code, out, err)
+got = list(csv.reader(io.StringIO(out)))
+assert got[0] == [&quot;value&quot;, &quot;count&quot;], got
+assert got[1:] == want, (got[1:], want)
+=== END AC freq-department ===
+
+=== AC freq-tie-order ===
+Intent: Values with equal counts are ordered ascending by byte value and the limit is honored.
+Suite: scoped
+Requires: python-package=drydock_go; scope=test
+
+import csv
+import io
+import os
+from collections import Counter
+
+from drydock_go import cli_runner
+
+path = os.path.abspath(&quot;sources/sensors.csv&quot;)
+col = &quot;sensor&quot;
+top = 2
+with open(path, newline=&quot;&quot;) as fh:
+    rows = list(csv.reader(fh))
+header = [h.strip() for h in rows[0]]
+idx = header.index(col)
+vals = [r[idx].strip() for r in rows[1:]]
+vals = [v for v in vals if v != &quot;&quot; and v.upper() not in (&quot;NA&quot;, &quot;N/A&quot;, &quot;NULL&quot;)]
+ordered = sorted(Counter(vals).items(), key=lambda kv: (-kv[1], kv[0].encode()))
+want = [[v, str(c)] for v, c in ordered[:top]]
+
+code, out, err = cli_runner(&quot;--freq&quot;, col, &quot;--top&quot;, str(top), path)
+print(out)
+print(err)
+assert code == 0, (code, out, err)
+got = list(csv.reader(io.StringIO(out)))
+assert got[1:] == want, (got[1:], want)
+assert len(got) == top + 1
+=== END AC freq-tie-order ===
+
+=== AC freq-trims-and-skips-nulls ===
+Intent: Padded values are trimmed before counting and null spellings (blank, NA) are not listed.
+Suite: scoped
+Requires: python-package=drydock_go; scope=test
+
+import csv
+import io
+import os
+from collections import Counter
+
+from drydock_go import cli_runner
+
+for fname, col, top in ((&quot;orders.csv&quot;, &quot;customer&quot;, 5), (&quot;employees.csv&quot;, &quot;manager_id&quot;, 10)):
+    path = os.path.abspath(os.path.join(&quot;sources&quot;, fname))
+    with open(path, newline=&quot;&quot;) as fh:
+        rows = list(csv.reader(fh))
+    header = [h.strip() for h in rows[0]]
+    idx = header.index(col)
+    vals = [r[idx].strip() for r in rows[1:]]
+    vals = [v for v in vals if v != &quot;&quot; and v.upper() not in (&quot;NA&quot;, &quot;N/A&quot;, &quot;NULL&quot;)]
+    ordered = sorted(Counter(vals).items(), key=lambda kv: (-kv[1], kv[0].encode()))
+    want = [[v, str(c)] for v, c in ordered[:top]]
+
+    code, out, err = cli_runner(&quot;--freq&quot;, col, &quot;--top&quot;, str(top), path)
+    print(out)
+    print(err)
+    assert code == 0, (code, out, err)
+    got = list(csv.reader(io.StringIO(out)))
+    assert got[1:] == want, (fname, got[1:], want)
+    listed = {r[0] for r in got[1:]}
+    assert &quot;&quot; not in listed and &quot;NA&quot; not in listed
+=== END AC freq-trims-and-skips-nulls ===
+
+=== AC freq-all-null-column ===
+Intent: A column with no non-null values writes only the header and exits 0.
+Suite: scoped
+Requires: python-package=drydock_go; scope=test
+
+import csv
+import io
+import os
+
+from drydock_go import cli_runner
+
+path = os.path.abspath(&quot;sources/sensors.csv&quot;)
+code, out, err = cli_runner(&quot;--freq&quot;, &quot;battery&quot;, path)
+print(out)
+print(err)
+assert code == 0, (code, out, err)
+got = list(csv.reader(io.StringIO(out)))
+assert got == [[&quot;value&quot;, &quot;count&quot;]], got
+=== END AC freq-all-null-column ===
+
+=== AC freq-output-line-endings ===
+Intent: Frequency output uses \n line endings only and ends with a newline.
+Suite: scoped
+Requires: python-package=drydock_go; scope=test
+
+import os
+
+from drydock_go import cli_runner
+
+path = os.path.abspath(&quot;sources/employees.csv&quot;)
+code, out, err = cli_runner(&quot;--freq&quot;, &quot;department&quot;, path)
+print(err)
+assert code == 0, (code, out, err)
+assert &quot;\r&quot; not in out
+assert out.endswith(&quot;\n&quot;)
+=== END AC freq-output-line-endings ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Null values are never listed.
+- Nothing is written to standard output unless the whole file has been read and validated.
+- No frequency or value list is hardcoded; every value comes from the file examined.
+- Application code never reads `sources/run.sh` or any supplied data file.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-FrequencyTop.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat/blueprint/FEATURE-FrequencyTop.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: Frequency Limit
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Limits frequency output with --top, defaulting to 5 and accepting a positive integer only. |
+| Depends On  | FEATURE-Frequency.md, FEATURE-UsageErrors.md, ARCHITECTURE.md |
+| Provides    | csvstat --freq &lt;name&gt; --top &lt;n&gt; &lt;file&gt; |
+| Consumes    | value,count output |
+
+## Purpose
+
+`--top &lt;n&gt;` bounds how many rows `--freq` writes.
+
+## Behavior
+
+- Default limit is 5 when `--top` is absent.
+- `--top` accepts a positive integer only. Zero, negative numbers, non-numeric text, and an empty
+  value are usage errors (exit 2, nothing on standard output).
+- When fewer distinct non-null values exist than the limit, all of them are written.
+- `--top` without `--freq` is a usage error (exit 2, nothing on standard output).
+- A very large positive integer that fits no machine int is accepted as unbounded rather than
+  rejected.
+
+## Programmatic Acceptance
+
+=== AC top-default-is-five ===
+Intent: Without --top, a column with many distinct values lists exactly five rows.
+Suite: scoped
+Requires: python-package=drydock_go; scope=test
+
+import csv
+import io
+import os
+from collections import Counter
+
+from drydock_go import cli_runner
+
+path = os.path.abspath(&quot;sources/orders.csv&quot;)
+col = &quot;order_date&quot;
+with open(path, newline=&quot;&quot;) as fh:
+    rows = list(csv.reader(fh))
+header = [h.strip() for h in rows[0]]
+idx = header.index(col)
+vals = [r[idx].strip() for r in rows[1:]]
+vals = [v for v in vals if v != &quot;&quot; and v.upper() not in (&quot;NA&quot;, &quot;N/A&quot;, &quot;NULL&quot;)]
+ordered = sorted(Counter(vals).items(), key=lambda kv: (-kv[1], kv[0].encode()))
+default_limit = 5
+assert len(ordered) &gt; default_limit
+want = [[v, str(c)] for v, c in ordered[:default_limit]]
+
+code, out, err = cli_runner(&quot;--freq&quot;, col, path)
+print(out)
+print(err)
+assert code == 0, (code, out, err)
+got = list(csv.reader(io.StringIO(out)))
+assert got[1:] == want, (got[1:], want)
+=== END AC top-default-is-five ===
+
+=== AC top-limits-rows ===
+Intent: An explicit --top n writes at most n rows, matching the ordered counts derived from the file.
+Suite: scoped
+Requires: python-package=drydock_go; scope=test
+
+import csv
+import io
+import os
+from collections import Counter
+
+from drydock_go import cli_runner
+
+path = os.path.abspath(&quot;sources/employees.csv&quot;)
+col = &quot;manager_id&quot;
+top = 3
+with open(path, newline=&quot;&quot;) as fh:
+    rows = list(csv.reader(fh))
+header = [h.strip() for h in rows[0]]
+idx = header.index(col)
+vals = [r[idx].strip() for r in rows[1:]]
+vals = [v for v in vals if v != &quot;&quot; and v.upper() not in (&quot;NA&quot;, &quot;N/A&quot;, &quot;NULL&quot;)]
+ordered = sorted(Counter(vals).items(), key=lambda kv: (-kv[1], kv[0].encode()))
+want = [[v, str(c)] for v, c in ordered[:top]]
+
+code, out, err = cli_runner(&quot;--freq&quot;, col, &quot;--top&quot;, str(top), path)
+print(out)
+print(err)
+assert code == 0, (code, out, err)
+got = list(csv.reader(io.StringIO(out)))
+assert got[1:] == want, (got[1:], want)
+assert len(got) - 1 &lt;= top
+=== END AC top-limits-rows ===
+
+=== AC top-larger-than-distinct ===
+Intent: A limit above the distinct count lists every distinct non-null value.
+Suite: scoped
+Requires: python-package=drydock_go; scope=test
+
+import csv
+import io
+import os
+from collections import Counter
+
+from drydock_go import cli_runner
+
+path = os.path.abspath(&quot;sources/employees.csv&quot;)
+col = &quot;department&quot;
+top = 100
+with open(path, newline=&quot;&quot;) as fh:
+    rows = list(csv.reader(fh))
+header = [h.strip() for h in rows[0]]
+idx = header.index(col)
+vals = [r[idx].strip() for r in rows[1:]]
+vals = [v for v in vals if v != &quot;&quot; and v.upper() not in (&quot;NA&quot;, &quot;N/A&quot;, &quot;NULL&quot;)]
+counts = Counter(vals)
+ordered = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0].encode()))
+want = [[v, str(c)] for v, c in ordered]
+
+code, out, err = cli_runner(&quot;--freq&quot;, col, &quot;--top&quot;, str(top), path)
+print(out)
+print(err)
+assert code == 0, (code, out, err)
+got = list(csv.reader(io.StringIO(out)))
+assert got[1:] == want, (got[1:], want)
+assert len(got) - 1 == len(counts)
+=== END AC top-larger-than-distinct ===
+
+=== AC top-rejects-non-positive ===
+Intent: A --top that is not a positive integer exits 2 with nothing on standard output.
+Suite: scoped
+Requires: python-package=drydock_go; scope=test
+
+import os
+
+from drydock_go import cli_runner
+
+path = os.path.abspath(&quot;sources/sensors.csv&quot;)
+for bad in (&quot;0&quot;, &quot;-1&quot;, &quot;abc&quot;, &quot;2.5&quot;, &quot;&quot;):
+    code, out, err = cli_runner(&quot;--freq&quot;, &quot;sensor&quot;, &quot;--top&quot;, bad, path)
+    print(bad, code, err)
+    assert code == 2, (bad, code, out, err)
+    assert out == &quot;&quot;, (bad, out)
+=== END AC top-rejects-non-positive ===
+
+=== AC top-requires-freq ===
+Intent: --top without --freq is a usage error with exit 2 and empty standard output.
+Suite: scoped
+Requires: python-package=drydock_go; scope=test
+
+import os
+
+from drydock_go import cli_runner
+
+path = os.path.abspath(&quot;sources/sensors.csv&quot;)
+code, out, err = cli_runner(&quot;--top&quot;, &quot;3&quot;, path)
+print(err)
+assert code == 2, (code, out, err)
+assert out == &quot;&quot;, out
+
+code, out, err = cli_runner(&quot;--column&quot;, &quot;sensor&quot;, &quot;--top&quot;, &quot;3&quot;, path)
+print(err)
+assert code == 2, (code, out, err)
+assert out == &quot;&quot;, out
+=== END AC top-requires-freq ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- `--top` never accepts zero or a negative number.
+- A rejected `--top` writes nothing to standard output.
+- The default of 5 is applied only when `--top` is absent.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-TypesOther.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat/blueprint/FEATURE-TypesOther.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: Types Other
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Infer the boolean, text, and empty column types and compose the final type decision. |
+| Depends On  | FEATURE-TypesNumeric.md, FEATURE-TypesDate.md |
+| Provides    | profile field type values boolean, text, empty |
+| Consumes    | integer and number tests from FEATURE-TypesNumeric.md, date test from FEATURE-TypesDate.md |
+
+## Purpose
+
+Complete the type vocabulary and compose the single type decision reported in the `type` field of each profile row.
+
+## Behavior
+
+- `boolean`: every non-null value equals `true` or `false`, ignoring case (`True`, `FALSE`, `tRuE` qualify). Values such as `yes`, `1`, `t` do not.
+- `text`: no earlier type fits.
+- `empty`: the column has no non-null value (including a column of zero data records).
+- The final type is the first of `integer`, `number`, `date`, `boolean`, `text` that every non-null value satisfies; `empty` replaces that decision when no non-null value exists.
+- A column mixing types, such as integers and dates, or numbers and booleans, is `text`.
+- The decision is a single function in `internal/profile` that the statistics stories branch on.
+
+## Programmatic Acceptance
+
+=== AC types-other-boolean ===
+Intent: Columns of true and false in any letter case, with nulls, are typed boolean.
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def profile(lines):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(&quot;&quot;.join(line + &quot;\n&quot; for line in lines))
+        code, out, err = cli_runner(path)
+    print(out)
+    print(err)
+    assert code == 0, (code, out, err)
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+
+values = [&quot;true&quot;, &quot;False&quot;, &quot;TRUE&quot;, &quot;false&quot;, &quot;tRuE&quot;, &quot;NA&quot;, &quot;&quot;]
+lines = [&quot;id,v&quot;] + [f&quot;{i},{v}&quot; for i, v in enumerate(values)]
+rows = profile(lines)
+assert rows[&quot;v&quot;][&quot;type&quot;] == &quot;boolean&quot;
+=== END AC types-other-boolean ===
+
+=== AC types-other-not-boolean ===
+Intent: Boolean-like words that are not true or false make the column text.
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def profile(lines):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(&quot;&quot;.join(line + &quot;\n&quot; for line in lines))
+        code, out, err = cli_runner(path)
+    print(out)
+    print(err)
+    assert code == 0, (code, out, err)
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+
+for bad in [&quot;yes&quot;, &quot;no&quot;, &quot;t&quot;, &quot;f&quot;, &quot;0&quot;, &quot;1&quot;, &quot;truthy&quot;]:
+    values = [&quot;true&quot;, &quot;false&quot;, bad]
+    lines = [&quot;id,v&quot;] + [f&quot;{i},{v}&quot; for i, v in enumerate(values)]
+    rows = profile(lines)
+    assert rows[&quot;v&quot;][&quot;type&quot;] == &quot;text&quot;, (bad, rows[&quot;v&quot;][&quot;type&quot;])
+=== END AC types-other-not-boolean ===
+
+=== AC types-other-text-fallback ===
+Intent: A column that mixes types, or holds free text, is typed text.
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def profile(lines):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(&quot;&quot;.join(line + &quot;\n&quot; for line in lines))
+        code, out, err = cli_runner(path)
+    print(out)
+    print(err)
+    assert code == 0, (code, out, err)
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+
+columns = {
+    &quot;words&quot;: [&quot;alpha&quot;, &quot;beta&quot;, &quot;gamma&quot;],
+    &quot;intdate&quot;: [&quot;1&quot;, &quot;2025-02-01&quot;],
+    &quot;numbool&quot;: [&quot;1.5&quot;, &quot;true&quot;],
+    &quot;intword&quot;: [&quot;1&quot;, &quot;2&quot;, &quot;x&quot;],
+}
+names = list(columns)
+height = max(len(v) for v in columns.values())
+lines = [&quot;,&quot;.join(names)]
+for i in range(height):
+    lines.append(&quot;,&quot;.join(columns[n][i] if i &lt; len(columns[n]) else &quot;NA&quot; for n in names))
+rows = profile(lines)
+for n in names:
+    assert rows[n][&quot;type&quot;] == &quot;text&quot;, (n, rows[n][&quot;type&quot;])
+=== END AC types-other-text-fallback ===
+
+=== AC types-other-empty ===
+Intent: A column with no non-null value is typed empty, whatever spellings of null it holds.
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def profile(lines):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(&quot;&quot;.join(line + &quot;\n&quot; for line in lines))
+        code, out, err = cli_runner(path)
+    print(out)
+    print(err)
+    assert code == 0, (code, out, err)
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+
+values = [&quot;&quot;, &quot;NA&quot;, &quot;N/A&quot;, &quot;NULL&quot;, &quot; &quot;, &quot;null&quot;]
+lines = [&quot;id,v&quot;] + [f&quot;{i},{v}&quot; for i, v in enumerate(values)]
+rows = profile(lines)
+assert rows[&quot;v&quot;][&quot;type&quot;] == &quot;empty&quot;
+assert rows[&quot;id&quot;][&quot;type&quot;] == &quot;integer&quot;
+=== END AC types-other-empty ===
+
+=== AC types-other-header-only-empty ===
+Intent: Every column of a header-only file is typed empty.
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+names = [&quot;sku&quot;, &quot;price&quot;, &quot;in_stock&quot;]
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;in.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+        f.write(&quot;,&quot;.join(names) + &quot;\n&quot;)
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 0, (code, out, err)
+parsed = list(csv.DictReader(io.StringIO(out)))
+assert [r[&quot;column&quot;] for r in parsed] == names
+for r in parsed:
+    assert r[&quot;type&quot;] == &quot;empty&quot;
+=== END AC types-other-header-only-empty ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Only `true` and `false` (any letter case) are boolean values; no other spelling is accepted.
+- A column with no non-null value is `empty`, never `text`.
+- Types are computed from the file examined; no type is hardcoded.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-MinMax.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat/blueprint/FEATURE-MinMax.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: Min Max
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Report the min and max profile fields for every column type. |
+| Depends On  | FEATURE-TypesOther.md |
+| Provides    | profile fields min, max |
+| Consumes    | column type decision from FEATURE-TypesOther.md |
+
+## Purpose
+
+Each profile row reports the smallest and largest non-null value of its column, interpreted according to the column&#x27;s type.
+
+## Behavior
+
+- `integer`: the smallest and largest value as numbers, written as plain integers (`-3` before `12`). Comparison is numeric, not lexical, and is exact (`math/big`), so digit strings of any length are safe.
+- `number`: the smallest and largest value by exact decimal comparison. Output formatting to exactly two decimals is owned by FEATURE-DecimalFormat.md; this story supplies the exact values.
+- `date`: the earliest and latest value (`YYYY-MM-DD` strings order chronologically).
+- `boolean`: `min` is `false` if any value is false, else `true`; `max` is `true` if any value is true, else `false`. Output is lower-case regardless of input case.
+- `text`: the smallest and largest value by byte value (not locale, not case-folded), after trimming.
+- `empty`: both fields are blank.
+- Null values are ignored. Blank is the empty string.
+- Min and max are computed from the file examined; nothing is hardcoded.
+
+## Programmatic Acceptance
+
+=== AC minmax-integer ===
+Intent: Integer min and max are compared numerically and written as plain integers.
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def profile(lines):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(&quot;&quot;.join(line + &quot;\n&quot; for line in lines))
+        code, out, err = cli_runner(path)
+    print(out)
+    print(err)
+    assert code == 0, (code, out, err)
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+
+values = [9, 100, -3, 42, 7]
+lines = [&quot;id,v&quot;] + [f&quot;{i},{v}&quot; for i, v in enumerate(values)]
+lines.append(&quot;99,NA&quot;)
+rows = profile(lines)
+assert rows[&quot;v&quot;][&quot;type&quot;] == &quot;integer&quot;
+assert rows[&quot;v&quot;][&quot;min&quot;] == str(min(values))
+assert rows[&quot;v&quot;][&quot;max&quot;] == str(max(values))
+=== END AC minmax-integer ===
+
+=== AC minmax-integer-huge ===
+Intent: Integer min and max stay exact for digit strings beyond 64-bit range.
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def profile(lines):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(&quot;&quot;.join(line + &quot;\n&quot; for line in lines))
+        code, out, err = cli_runner(path)
+    print(out)
+    print(err)
+    assert code == 0, (code, out, err)
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+
+values = [10**30 + 1, 10**30, -(10**25), 5]
+lines = [&quot;id,v&quot;] + [f&quot;{i},{v}&quot; for i, v in enumerate(values)]
+rows = profile(lines)
+assert rows[&quot;v&quot;][&quot;min&quot;] == str(min(values))
+assert rows[&quot;v&quot;][&quot;max&quot;] == str(max(values))
+=== END AC minmax-integer-huge ===
+
+=== AC minmax-number ===
+Intent: Number min and max are chosen by exact decimal comparison and equal the supplied values.
+
+import csv
+import io
+import os
+import tempfile
+from decimal import Decimal
+
+from drydock_go import cli_runner
+
+
+def profile(lines):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(&quot;&quot;.join(line + &quot;\n&quot; for line in lines))
+        code, out, err = cli_runner(path)
+    print(out)
+    print(err)
+    assert code == 0, (code, out, err)
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+
+values = [&quot;15.27&quot;, &quot;231.18&quot;, &quot;-12.21&quot;, &quot;0.50&quot;, &quot;29.81&quot;, &quot;100.00&quot;]
+lines = [&quot;id,v&quot;] + [f&quot;{i},{v}&quot; for i, v in enumerate(values)]
+rows = profile(lines)
+assert rows[&quot;v&quot;][&quot;type&quot;] == &quot;number&quot;
+assert rows[&quot;v&quot;][&quot;min&quot;] == min(values, key=Decimal)
+assert rows[&quot;v&quot;][&quot;max&quot;] == max(values, key=Decimal)
+=== END AC minmax-number ===
+
+=== AC minmax-date ===
+Intent: Date min and max are the earliest and latest dates.
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def profile(lines):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(&quot;&quot;.join(line + &quot;\n&quot; for line in lines))
+        code, out, err = cli_runner(path)
+    print(out)
+    print(err)
+    assert code == 0, (code, out, err)
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+
+values = [&quot;2022-05-14&quot;, &quot;2018-11-08&quot;, &quot;2025-06-02&quot;, &quot;2015-08-27&quot;, &quot;2024-02-29&quot;]
+lines = [&quot;id,v&quot;] + [f&quot;{i},{v}&quot; for i, v in enumerate(values)]
+rows = profile(lines)
+assert rows[&quot;v&quot;][&quot;type&quot;] == &quot;date&quot;
+assert rows[&quot;v&quot;][&quot;min&quot;] == min(values)
+assert rows[&quot;v&quot;][&quot;max&quot;] == max(values)
+=== END AC minmax-date ===
+
+=== AC minmax-boolean ===
+Intent: Boolean min is false when any value is false and max is true when any value is true; a single-valued column reports that value for both.
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def profile(lines):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(&quot;&quot;.join(line + &quot;\n&quot; for line in lines))
+        code, out, err = cli_runner(path)
+    print(out)
+    print(err)
+    assert code == 0, (code, out, err)
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+
+mixed = [&quot;True&quot;, &quot;FALSE&quot;, &quot;true&quot;]
+only_true = [&quot;True&quot;, &quot;TRUE&quot;, &quot;true&quot;]
+only_false = [&quot;False&quot;, &quot;FALSE&quot;, &quot;false&quot;]
+lines = [&quot;m,t,f&quot;] + [f&quot;{a},{b},{c}&quot; for a, b, c in zip(mixed, only_true, only_false)]
+rows = profile(lines)
+assert rows[&quot;m&quot;][&quot;min&quot;] == &quot;false&quot; and rows[&quot;m&quot;][&quot;max&quot;] == &quot;true&quot;
+assert rows[&quot;t&quot;][&quot;min&quot;] == &quot;true&quot; and rows[&quot;t&quot;][&quot;max&quot;] == &quot;true&quot;
+assert rows[&quot;f&quot;][&quot;min&quot;] == &quot;false&quot; and rows[&quot;f&quot;][&quot;max&quot;] == &quot;false&quot;
+=== END AC minmax-boolean ===
+
+=== AC minmax-text-bytes ===
+Intent: Text min and max compare by byte value, so upper-case sorts before lower-case, and padding is trimmed.
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def profile(lines):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(&quot;&quot;.join(line + &quot;\n&quot; for line in lines))
+        code, out, err = cli_runner(path)
+    print(out)
+    print(err)
+    assert code == 0, (code, out, err)
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+
+values = [&quot;banana&quot;, &quot;Zebra&quot;, &quot;apple&quot;, &quot;  Acme Corp &quot;, &quot;mentor&quot;]
+lines = [&quot;id,v&quot;] + [f&quot;{i},{v}&quot; for i, v in enumerate(values)]
+rows = profile(lines)
+assert rows[&quot;v&quot;][&quot;type&quot;] == &quot;text&quot;
+trimmed = [v.strip() for v in values]
+assert rows[&quot;v&quot;][&quot;min&quot;] == min(trimmed, key=lambda s: s.encode())
+assert rows[&quot;v&quot;][&quot;max&quot;] == max(trimmed, key=lambda s: s.encode())
+=== END AC minmax-text-bytes ===
+
+=== AC minmax-empty-and-nulls ===
+Intent: An empty column reports blank min and max, and nulls are ignored when choosing extremes.
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def profile(lines):
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(&quot;&quot;.join(line + &quot;\n&quot; for line in lines))
+        code, out, err = cli_runner(path)
+    print(out)
+    print(err)
+    assert code == 0, (code, out, err)
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+
+values = [5, 2, 9]
+lines = [&quot;id,v,gap&quot;] + [f&quot;{i},{v},NULL&quot; for i, v in enumerate(values)]
+lines.append(&quot;77,NA,&quot;)
+rows = profile(lines)
+assert rows[&quot;gap&quot;][&quot;type&quot;] == &quot;empty&quot;
+assert rows[&quot;gap&quot;][&quot;min&quot;] == &quot;&quot;
+assert rows[&quot;gap&quot;][&quot;max&quot;] == &quot;&quot;
+assert rows[&quot;v&quot;][&quot;min&quot;] == str(min(values))
+assert rows[&quot;v&quot;][&quot;max&quot;] == str(max(values))
+=== END AC minmax-empty-and-nulls ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Min and max are computed from the file examined; no extreme is hardcoded.
+- Integer and number comparison is exact; no binary floating point is used.
+- Text comparison is by byte value, never locale or case folding.
+- Standard library only.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-Median.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat/blueprint/FEATURE-Median.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: Median
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Report the exact median of the non-null values of integer and number columns. |
+| Depends On  | FEATURE-TypesNumeric.md, FEATURE-MinMax.md |
+| Provides    | profile field median |
+| Consumes    | column type decision, null rule, trimmed values |
+
+## Purpose
+
+The `median` field of a profile row gives the middle of a numeric column&#x27;s distribution. It is
+computed from exact values so ordering and the even-count average are never subject to floating
+point error.
+
+## Trigger
+
+Every profile run computes `median` for every column whose inferred type is `integer` or `number`.
+
+## Behavior
+
+- Only non-null values participate (null: empty, `NA`, `N/A`, `NULL` ignoring case, after trimming).
+- Values are parsed into `big.Rat` and sorted ascending by exact value (`Rat.Cmp`).
+- With an odd count the median is the middle element.
+- With an even count the median is the mean of the two middle elements, as an exact `big.Rat`.
+- Both integer and number columns write the median through the decimal formatter, with exactly two
+  decimals (see `FEATURE-DecimalFormat.md`).
+- A column of type `text`, `date`, `boolean`, or `empty` leaves `median` blank.
+- Input order does not matter; the column is sorted on a copy so no other statistic is disturbed.
+
+## Reads
+
+- The trimmed, null-classified values of the column and its inferred type.
+
+## Writes
+
+- The `median` cell of the profile row on standard output. No files, no persistence.
+
+## Programmatic Acceptance
+
+=== AC median-odd-and-even-integers ===
+Intent: The median is the middle value of an odd count and the mean of the two middle values of an even count, regardless of input order.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from decimal import Decimal, ROUND_HALF_UP, getcontext
+from fractions import Fraction
+
+from drydock_go import cli_runner
+
+
+def fmt(fr):
+    getcontext().prec = 200
+    d = Decimal(fr.numerator) / Decimal(fr.denominator)
+    return str(d.quantize(Decimal(&quot;0.01&quot;), rounding=ROUND_HALF_UP))
+
+
+def median(vals):
+    s = sorted(vals)
+    n = len(s)
+    if n % 2:
+        return Fraction(s[n // 2])
+    return Fraction(s[n // 2 - 1] + s[n // 2], 2)
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+for vals in ([9, 1, 5, 7, 3], [8, 2, 6, 4], [42], [3, -10, 7, 7, 0, -4]):
+    text = &quot;v\n&quot; + &quot;\n&quot;.join(str(v) for v in vals) + &quot;\n&quot;
+    code, out, err = run(text)
+    print(out)
+    print(err)
+    assert code == 0
+    row = list(csv.reader(io.StringIO(out)))[1]
+    assert row[1] == &quot;integer&quot;
+    assert row[9] == fmt(median(vals))
+=== END AC median-odd-and-even-integers ===
+
+=== AC median-number-exact-rounding ===
+Intent: A number median that falls on a tie is rounded half away from zero from the exact value, for positive and negative values.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from decimal import Decimal, ROUND_HALF_UP, getcontext
+from fractions import Fraction
+
+from drydock_go import cli_runner
+
+
+def fmt(fr):
+    getcontext().prec = 200
+    d = Decimal(fr.numerator) / Decimal(fr.denominator)
+    return str(d.quantize(Decimal(&quot;0.01&quot;), rounding=ROUND_HALF_UP))
+
+
+def median(vals):
+    s = sorted(vals)
+    n = len(s)
+    if n % 2:
+        return s[n // 2]
+    return (s[n // 2 - 1] + s[n // 2]) / 2
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+cases = [[&quot;0.01&quot;, &quot;0.02&quot;], [&quot;-0.01&quot;, &quot;-0.02&quot;], [&quot;1.5&quot;, &quot;2.25&quot;, &quot;9.125&quot;], [&quot;2.675&quot;, &quot;2.675&quot;], [&quot;100&quot;, &quot;0.5&quot;]]
+for vals in cases:
+    text = &quot;v\n&quot; + &quot;\n&quot;.join(vals) + &quot;\n&quot;
+    code, out, err = run(text)
+    print(out)
+    print(err)
+    assert code == 0
+    row = list(csv.reader(io.StringIO(out)))[1]
+    assert row[1] == &quot;number&quot;
+    assert row[9] == fmt(median([Fraction(v) for v in vals]))
+=== END AC median-number-exact-rounding ===
+
+=== AC median-nulls-skipped ===
+Intent: Null values are excluded when counting and ordering values for the median.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from decimal import Decimal, ROUND_HALF_UP, getcontext
+from fractions import Fraction
+
+from drydock_go import cli_runner
+
+
+def fmt(fr):
+    getcontext().prec = 200
+    d = Decimal(fr.numerator) / Decimal(fr.denominator)
+    return str(d.quantize(Decimal(&quot;0.01&quot;), rounding=ROUND_HALF_UP))
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+cells = [&quot;50&quot;, &quot;NA&quot;, &quot;&quot;, &quot;10&quot;, &quot;N/A&quot;, &quot;30&quot;, &quot;NULL&quot;, &quot;20&quot;]
+text = &quot;k,v\n&quot; + &quot;\n&quot;.join(&quot;a,&quot; + c for c in cells) + &quot;\n&quot;
+code, out, err = run(text)
+print(out)
+print(err)
+assert code == 0
+row = list(csv.reader(io.StringIO(out)))[2]
+nonnull = sorted([50, 10, 30, 20])
+expected = Fraction(nonnull[1] + nonnull[2], 2)
+assert row[0] == &quot;v&quot;
+assert row[9] == fmt(expected)
+=== END AC median-nulls-skipped ===
+
+=== AC median-blank-for-other-types ===
+Intent: Text, date, boolean, and empty columns leave median blank.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+text = &quot;t,d,b,e,n\nabc,2025-01-31,true,NA,1\nxyz,2024-12-01,False,,2\n&quot;
+code, out, err = run(text)
+print(out)
+print(err)
+assert code == 0
+rows = list(csv.reader(io.StringIO(out)))
+by_name = {r[0]: r for r in rows[1:]}
+for name in (&quot;t&quot;, &quot;d&quot;, &quot;b&quot;, &quot;e&quot;):
+    assert by_name[name][9] == &quot;&quot;
+assert by_name[&quot;n&quot;][9] != &quot;&quot;
+=== END AC median-blank-for-other-types ===
+
+=== AC median-fixture-sensors-orders ===
+Intent: The supplied sensors and orders files report medians computed independently from their own values.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+from decimal import Decimal, ROUND_HALF_UP, getcontext
+from fractions import Fraction
+
+from drydock_go import cli_runner
+
+
+def fmt(fr):
+    getcontext().prec = 200
+    d = Decimal(fr.numerator) / Decimal(fr.denominator)
+    return str(d.quantize(Decimal(&quot;0.01&quot;), rounding=ROUND_HALF_UP))
+
+
+def median(vals):
+    s = sorted(vals)
+    n = len(s)
+    if n % 2:
+        return s[n // 2]
+    return (s[n // 2 - 1] + s[n // 2]) / 2
+
+
+null = (&quot;&quot;, &quot;na&quot;, &quot;n/a&quot;, &quot;null&quot;)
+
+
+def values(path, name):
+    with open(path, newline=&quot;&quot;) as fh:
+        recs = list(csv.reader(fh))
+    i = [h.strip() for h in recs[0]].index(name)
+    cells = [r[i].strip() for r in recs[1:]]
+    return [Fraction(c) for c in cells if c.lower() not in null]
+
+
+checks = [
+    (&quot;sources/sensors.csv&quot;, &quot;temp_c&quot;),
+    (&quot;sources/sensors.csv&quot;, &quot;humidity&quot;),
+    (&quot;sources/sensors.csv&quot;, &quot;reading_id&quot;),
+    (&quot;sources/orders.csv&quot;, &quot;qty&quot;),
+    (&quot;sources/orders.csv&quot;, &quot;unit_price&quot;),
+    (&quot;sources/employees.csv&quot;, &quot;salary&quot;),
+]
+for path, name in checks:
+    code, out, err = cli_runner(path)
+    print(out)
+    print(err)
+    assert code == 0
+    rows = {r[0]: r for r in csv.reader(io.StringIO(out))}
+    assert rows[name][9] == fmt(median(values(path, name)))
+=== END AC median-fixture-sensors-orders ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- No `float32` or `float64` on the data path of the median.
+- The median of a column never mutates the order of values used by other statistics.
+- Median is blank for every type other than `integer` and `number`.
+- Application code never reads `sources/run.sh` or any supplied data file and never embeds an answer.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-SumMean.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat/blueprint/FEATURE-SumMean.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: Sum And Mean
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Report the exact sum and mean of the non-null values of integer and number columns. |
+| Depends On  | FEATURE-TypesNumeric.md, FEATURE-MinMax.md |
+| Provides    | profile field sum, profile field mean |
+| Consumes    | column type decision, null rule, trimmed values |
+
+## Purpose
+
+The `sum` and `mean` fields of each profile row summarize numeric columns. They are computed with
+exact arithmetic so that no digit string overflows and no binary floating point error enters the
+result. Rounding happens once, when the value is written (see `FEATURE-DecimalFormat.md`).
+
+## Trigger
+
+Every profile run (`csvstat &lt;file&gt;` and `csvstat --column &lt;name&gt; &lt;file&gt;`) computes `sum` and `mean`
+for every column whose inferred type is `integer` or `number`.
+
+## Behavior
+
+- Package: `internal/profile` accumulates, `internal/decimal` holds exact values.
+- Only non-null values participate. Null values (empty, `NA`, `N/A`, `NULL` ignoring case, after
+  trimming) are skipped.
+- Each value is parsed exactly: an integer into `big.Int`, a number into `big.Rat` through
+  `Rat.SetString`. `float32` and `float64` are never used on the data path.
+- `sum` is the exact total of the non-null values.
+- `mean` is the exact total divided by the count of non-null values, held as a `big.Rat`.
+- An `integer` column writes `sum` as a plain integer (an arbitrary-precision digit string). Its
+  `mean` is written by the decimal formatter.
+- A `number` column writes `sum` and `mean` through the decimal formatter.
+- A column of type `text`, `date`, `boolean`, or `empty` leaves `sum` and `mean` blank.
+- Columns are independent: a numeric column&#x27;s sum never depends on another column.
+
+## Reads
+
+- The trimmed, null-classified values of the column and its inferred type.
+
+## Writes
+
+- The `sum` and `mean` cells of the profile row on standard output. No files, no persistence.
+
+## Programmatic Acceptance
+
+=== AC summean-integer-exact ===
+Intent: An integer column reports the exact integer sum and the two-decimal mean of its values.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from decimal import Decimal, ROUND_HALF_UP, getcontext
+from fractions import Fraction
+
+from drydock_go import cli_runner
+
+
+def fmt(fr):
+    getcontext().prec = 200
+    d = Decimal(fr.numerator) / Decimal(fr.denominator)
+    return str(d.quantize(Decimal(&quot;0.01&quot;), rounding=ROUND_HALF_UP))
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+vals = [4, -7, 12, 100, 3]
+text = &quot;v\n&quot; + &quot;\n&quot;.join(str(v) for v in vals) + &quot;\n&quot;
+code, out, err = run(text)
+print(out)
+print(err)
+assert code == 0
+rows = list(csv.reader(io.StringIO(out)))
+row = rows[1]
+total = sum(vals)
+assert row[1] == &quot;integer&quot;
+assert row[7] == str(total)
+assert row[8] == fmt(Fraction(total, len(vals)))
+=== END AC summean-integer-exact ===
+
+=== AC summean-integer-bigint ===
+Intent: Integer sums beyond 64 bits are computed with arbitrary precision and never overflow.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from decimal import Decimal, ROUND_HALF_UP, getcontext
+from fractions import Fraction
+
+from drydock_go import cli_runner
+
+
+def fmt(fr):
+    getcontext().prec = 200
+    d = Decimal(fr.numerator) / Decimal(fr.denominator)
+    return str(d.quantize(Decimal(&quot;0.01&quot;), rounding=ROUND_HALF_UP))
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+vals = [10**30 + 7, 10**30 + 9, -(10**29), 99999999999999999999]
+text = &quot;v\n&quot; + &quot;\n&quot;.join(str(v) for v in vals) + &quot;\n&quot;
+code, out, err = run(text)
+print(out)
+print(err)
+assert code == 0
+row = list(csv.reader(io.StringIO(out)))[1]
+total = sum(vals)
+assert row[7] == str(total)
+assert row[8] == fmt(Fraction(total, len(vals)))
+=== END AC summean-integer-bigint ===
+
+=== AC summean-number-exact-decimal ===
+Intent: Number sums and means come from exact decimal values and are rounded half away from zero once.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from decimal import Decimal, ROUND_HALF_UP, getcontext
+from fractions import Fraction
+
+from drydock_go import cli_runner
+
+
+def fmt(fr):
+    getcontext().prec = 200
+    d = Decimal(fr.numerator) / Decimal(fr.denominator)
+    return str(d.quantize(Decimal(&quot;0.01&quot;), rounding=ROUND_HALF_UP))
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+cases = [[&quot;2.675&quot;], [&quot;0.1&quot;, &quot;0.2&quot;, &quot;0.7&quot;], [&quot;-2.675&quot;, &quot;1.005&quot;, &quot;3&quot;], [&quot;1.0049&quot;, &quot;1.0049&quot;]]
+for vals in cases:
+    text = &quot;v\n&quot; + &quot;\n&quot;.join(vals) + &quot;\n&quot;
+    code, out, err = run(text)
+    print(out)
+    print(err)
+    assert code == 0
+    row = list(csv.reader(io.StringIO(out)))[1]
+    frs = [Fraction(v) for v in vals]
+    total = sum(frs)
+    assert row[1] == &quot;number&quot;
+    assert row[7] == fmt(total)
+    assert row[8] == fmt(total / len(frs))
+=== END AC summean-number-exact-decimal ===
+
+=== AC summean-nulls-skipped ===
+Intent: Null values are excluded from both the sum and the divisor of the mean.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from decimal import Decimal, ROUND_HALF_UP, getcontext
+from fractions import Fraction
+
+from drydock_go import cli_runner
+
+
+def fmt(fr):
+    getcontext().prec = 200
+    d = Decimal(fr.numerator) / Decimal(fr.denominator)
+    return str(d.quantize(Decimal(&quot;0.01&quot;), rounding=ROUND_HALF_UP))
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+cells = [&quot;10&quot;, &quot;&quot;, &quot;NA&quot;, &quot; n/a &quot;, &quot;20&quot;, &quot;Null&quot;, &quot;35&quot;]
+text = &quot;k,v\n&quot; + &quot;\n&quot;.join(&quot;a,&quot; + c for c in cells) + &quot;\n&quot;
+code, out, err = run(text)
+print(out)
+print(err)
+assert code == 0
+row = list(csv.reader(io.StringIO(out)))[2]
+nonnull = [10, 20, 35]
+assert row[0] == &quot;v&quot;
+assert row[1] == &quot;integer&quot;
+assert row[7] == str(sum(nonnull))
+assert row[8] == fmt(Fraction(sum(nonnull), len(nonnull)))
+=== END AC summean-nulls-skipped ===
+
+=== AC summean-blank-for-other-types ===
+Intent: Text, date, boolean, and empty columns leave sum and mean blank.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+text = &quot;t,d,b,e,n\nabc,2025-01-31,true,NA,1\nxyz,2024-12-01,False,,2\n&quot;
+code, out, err = run(text)
+print(out)
+print(err)
+assert code == 0
+rows = list(csv.reader(io.StringIO(out)))
+by_name = {r[0]: r for r in rows[1:]}
+for name in (&quot;t&quot;, &quot;d&quot;, &quot;b&quot;, &quot;e&quot;):
+    assert by_name[name][7] == &quot;&quot;
+    assert by_name[name][8] == &quot;&quot;
+assert by_name[&quot;n&quot;][7] != &quot;&quot;
+assert by_name[&quot;n&quot;][8] != &quot;&quot;
+=== END AC summean-blank-for-other-types ===
+
+=== AC summean-fixture-employees ===
+Intent: The supplied employees file reports the exact sum and mean computed independently from its own values.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+from decimal import Decimal, ROUND_HALF_UP, getcontext
+from fractions import Fraction
+
+from drydock_go import cli_runner
+
+
+def fmt(fr):
+    getcontext().prec = 200
+    d = Decimal(fr.numerator) / Decimal(fr.denominator)
+    return str(d.quantize(Decimal(&quot;0.01&quot;), rounding=ROUND_HALF_UP))
+
+
+path = &quot;sources/employees.csv&quot;
+with open(path, newline=&quot;&quot;) as fh:
+    recs = list(csv.reader(fh))
+heads = [h.strip() for h in recs[0]]
+null = (&quot;&quot;, &quot;na&quot;, &quot;n/a&quot;, &quot;null&quot;)
+
+
+def values(name):
+    i = heads.index(name)
+    cells = [r[i].strip() for r in recs[1:]]
+    return [c for c in cells if c.lower() not in null]
+
+
+code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 0
+rows = {r[0]: r for r in csv.reader(io.StringIO(out))}
+
+ints = [int(v) for v in values(&quot;id&quot;)]
+assert rows[&quot;id&quot;][7] == str(sum(ints))
+assert rows[&quot;id&quot;][8] == fmt(Fraction(sum(ints), len(ints)))
+
+mgr = [int(v) for v in values(&quot;manager_id&quot;)]
+assert rows[&quot;manager_id&quot;][7] == str(sum(mgr))
+assert rows[&quot;manager_id&quot;][8] == fmt(Fraction(sum(mgr), len(mgr)))
+
+sal = [Fraction(v) for v in values(&quot;salary&quot;)]
+assert rows[&quot;salary&quot;][7] == fmt(sum(sal))
+assert rows[&quot;salary&quot;][8] == fmt(sum(sal) / len(sal))
+=== END AC summean-fixture-employees ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- No `float32` or `float64` on the data path of sum or mean.
+- Rounding is not applied before output; the exact `big.Rat` value is carried until the formatter.
+- Sum and mean are blank for every type other than `integer` and `number`.
+- Application code never reads `sources/run.sh` or any supplied data file and never embeds an answer.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-DecimalFormat.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat/blueprint/FEATURE-DecimalFormat.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: Decimal Format
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Write numeric statistics with exactly two decimals, rounded half away from zero once from the exact value. |
+| Depends On  | FEATURE-SumMean.md, FEATURE-Median.md |
+| Provides    | decimal formatter for min, max, sum, mean, and median |
+| Consumes    | exact big.Rat values from sum, mean, median, min, max |
+
+## Purpose
+
+Numeric statistics are written in one canonical shape. Rounding is performed exactly once, at
+output, from the exact rational value, so that results are reproducible and independent of
+binary floating point.
+
+## Trigger
+
+Every profile row of an `integer` or `number` column writes its numeric cells through this
+formatter.
+
+## Behavior
+
+- Package: `internal/decimal` exposes a function taking a `*big.Rat` and returning a string.
+- For a `number` column: `min`, `max`, `sum`, `mean`, and `median` are two-decimal strings.
+- For an `integer` column: `mean` and `median` are two-decimal strings; `min`, `max`, and `sum`
+  are plain integers with no decimal point.
+- Two-decimal form: scale the absolute value by 100, round half up on the absolute value
+  (ties move away from zero) using `big.Int` arithmetic, then insert the decimal point. There is
+  always at least one digit before the point and exactly two after it.
+- A leading `-` appears only when the rounded result is non-zero and the value is negative. A
+  negative value that rounds to zero is written without a sign.
+- No thousands separator, no exponent, no leading `+`.
+- Rounding is applied once to the exact value; an already rounded value is never rounded again.
+- Non-numeric column types are unaffected and keep their own rules.
+
+## Reads
+
+- Exact `big.Rat` values produced by the sum, mean, median, and min/max computations.
+
+## Writes
+
+- The numeric cells of the profile row on standard output.
+
+## Programmatic Acceptance
+
+=== AC decimalformat-number-columns ===
+Intent: Every number min, max, sum, mean, and median is written with exactly two decimals rounded half away from zero from the exact value.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from decimal import Decimal, ROUND_HALF_UP, getcontext
+from fractions import Fraction
+
+from drydock_go import cli_runner
+
+
+def fmt(fr):
+    getcontext().prec = 200
+    d = Decimal(fr.numerator) / Decimal(fr.denominator)
+    return str(d.quantize(Decimal(&quot;0.01&quot;), rounding=ROUND_HALF_UP))
+
+
+def median(vals):
+    s = sorted(vals)
+    n = len(s)
+    if n % 2:
+        return s[n // 2]
+    return (s[n // 2 - 1] + s[n // 2]) / 2
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+cases = [[&quot;1.255&quot;, &quot;3&quot;, &quot;4.5&quot;], [&quot;2.675&quot;], [&quot;-2.675&quot;, &quot;-1.004&quot;, &quot;10.125&quot;], [&quot;1234567.891&quot;, &quot;0.5&quot;]]
+for vals in cases:
+    text = &quot;v\n&quot; + &quot;\n&quot;.join(vals) + &quot;\n&quot;
+    code, out, err = run(text)
+    print(out)
+    print(err)
+    assert code == 0
+    row = list(csv.reader(io.StringIO(out)))[1]
+    frs = [Fraction(v) for v in vals]
+    assert row[1] == &quot;number&quot;
+    assert row[5] == fmt(min(frs))
+    assert row[6] == fmt(max(frs))
+    assert row[7] == fmt(sum(frs))
+    assert row[8] == fmt(sum(frs) / len(frs))
+    assert row[9] == fmt(median(frs))
+=== END AC decimalformat-number-columns ===
+
+=== AC decimalformat-integer-columns ===
+Intent: Integer min, max, and sum are plain integers while integer mean and median carry exactly two decimals.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from decimal import Decimal, ROUND_HALF_UP, getcontext
+from fractions import Fraction
+
+from drydock_go import cli_runner
+
+
+def fmt(fr):
+    getcontext().prec = 200
+    d = Decimal(fr.numerator) / Decimal(fr.denominator)
+    return str(d.quantize(Decimal(&quot;0.01&quot;), rounding=ROUND_HALF_UP))
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+vals = [-5, 12, 7, 1000, 2]
+text = &quot;v\n&quot; + &quot;\n&quot;.join(str(v) for v in vals) + &quot;\n&quot;
+code, out, err = run(text)
+print(out)
+print(err)
+assert code == 0
+row = list(csv.reader(io.StringIO(out)))[1]
+s = sorted(vals)
+assert row[1] == &quot;integer&quot;
+assert row[5] == str(min(vals))
+assert row[6] == str(max(vals))
+assert row[7] == str(sum(vals))
+assert row[8] == fmt(Fraction(sum(vals), len(vals)))
+assert row[9] == fmt(Fraction(s[len(s) // 2]))
+for cell in (row[5], row[6], row[7]):
+    assert &quot;.&quot; not in cell
+for cell in (row[8], row[9]):
+    assert len(cell.split(&quot;.&quot;)[1]) == 2
+=== END AC decimalformat-integer-columns ===
+
+=== AC decimalformat-single-rounding ===
+Intent: Rounding happens once from the exact value, so a value that double rounding would push up stays down.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from decimal import Decimal, ROUND_HALF_UP, getcontext
+from fractions import Fraction
+
+from drydock_go import cli_runner
+
+
+def fmt(fr):
+    getcontext().prec = 200
+    d = Decimal(fr.numerator) / Decimal(fr.denominator)
+    return str(d.quantize(Decimal(&quot;0.01&quot;), rounding=ROUND_HALF_UP))
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+vals = [&quot;1.0049&quot;, &quot;1.0049&quot;]
+text = &quot;v\n&quot; + &quot;\n&quot;.join(vals) + &quot;\n&quot;
+code, out, err = run(text)
+print(out)
+print(err)
+assert code == 0
+row = list(csv.reader(io.StringIO(out)))[1]
+exact = Fraction(vals[0])
+assert row[5] == fmt(exact)
+assert row[8] == fmt(exact)
+assert row[9] == fmt(exact)
+assert Decimal(row[8]) &lt; Decimal(vals[0]) + Decimal(&quot;0.005&quot;)
+=== END AC decimalformat-single-rounding ===
+
+=== AC decimalformat-no-negative-zero ===
+Intent: A negative value that rounds to zero is written as an unsigned zero with two decimals.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+vals = [&quot;-0.001&quot;, &quot;-0.002&quot;]
+text = &quot;v\n&quot; + &quot;\n&quot;.join(vals) + &quot;\n&quot;
+code, out, err = run(text)
+print(out)
+print(err)
+assert code == 0
+row = list(csv.reader(io.StringIO(out)))[1]
+assert row[1] == &quot;number&quot;
+for cell in row[5:10]:
+    assert not cell.startswith(&quot;-&quot;)
+    assert len(cell.split(&quot;.&quot;)[1]) == 2
+    assert int(cell.split(&quot;.&quot;)[0]) == 0
+    assert int(cell.split(&quot;.&quot;)[1]) == 0
+=== END AC decimalformat-no-negative-zero ===
+
+=== AC decimalformat-fixture-files ===
+Intent: Number and integer columns of the supplied files are written in the canonical shape from values computed independently of the application.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+from decimal import Decimal, ROUND_HALF_UP, getcontext
+from fractions import Fraction
+
+from drydock_go import cli_runner
+
+
+def fmt(fr):
+    getcontext().prec = 200
+    d = Decimal(fr.numerator) / Decimal(fr.denominator)
+    return str(d.quantize(Decimal(&quot;0.01&quot;), rounding=ROUND_HALF_UP))
+
+
+def median(vals):
+    s = sorted(vals)
+    n = len(s)
+    if n % 2:
+        return s[n // 2]
+    return (s[n // 2 - 1] + s[n // 2]) / 2
+
+
+null = (&quot;&quot;, &quot;na&quot;, &quot;n/a&quot;, &quot;null&quot;)
+
+
+def values(path, name):
+    with open(path, newline=&quot;&quot;) as fh:
+        recs = list(csv.reader(fh))
+    i = [h.strip() for h in recs[0]].index(name)
+    cells = [r[i].strip() for r in recs[1:]]
+    return [Fraction(c) for c in cells if c.lower() not in null]
+
+
+for path, name in (
+    (&quot;sources/employees.csv&quot;, &quot;salary&quot;),
+    (&quot;sources/sensors.csv&quot;, &quot;temp_c&quot;),
+    (&quot;sources/orders.csv&quot;, &quot;unit_price&quot;),
+):
+    code, out, err = cli_runner(path)
+    print(out)
+    print(err)
+    assert code == 0
+    rows = {r[0]: r for r in csv.reader(io.StringIO(out))}
+    frs = values(path, name)
+    row = rows[name]
+    assert row[5] == fmt(min(frs))
+    assert row[6] == fmt(max(frs))
+    assert row[7] == fmt(sum(frs))
+    assert row[8] == fmt(sum(frs) / len(frs))
+    assert row[9] == fmt(median(frs))
+
+code, out, err = cli_runner(&quot;sources/sensors.csv&quot;)
+assert code == 0
+rows = {r[0]: r for r in csv.reader(io.StringIO(out))}
+hum = values(&quot;sources/sensors.csv&quot;, &quot;humidity&quot;)
+row = rows[&quot;humidity&quot;]
+assert row[5] == str(int(min(hum)))
+assert row[6] == str(int(max(hum)))
+assert row[7] == str(int(sum(hum)))
+assert row[8] == fmt(sum(hum) / len(hum))
+assert row[9] == fmt(median(hum))
+=== END AC decimalformat-fixture-files ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Rounding is performed exactly once, from the exact `big.Rat`, never from a rounded intermediate.
+- No `float32` or `float64`, and no `fmt` verb that formats a float, produces a statistic.
+- Output carries no thousands separator, exponent, or `+` sign.
+- Application code never reads `sources/run.sh` or any supplied data file and never embeds an answer.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-ColumnSelect.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat/blueprint/FEATURE-ColumnSelect.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: Column Select
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Profile only the column named by --column, writing the profile header and one row. |
+| Depends On  | FEATURE-CliParsing.md, FEATURE-CsvReading.md, FEATURE-DecimalFormat.md |
+| Provides    | csvstat --column &lt;name&gt; &lt;file&gt; |
+| Consumes    | csvstat &lt;file&gt; profile rows, trimmed header names |
+
+## Purpose
+
+Lets a user profile a single column of a wide file without reading every row of the full profile.
+
+## Trigger
+
+`csvstat --column &lt;name&gt; &lt;file&gt;`. `--column` cannot be combined with `--freq` (a usage error owned
+by `FEATURE-UsageErrors.md`).
+
+## Behavior
+
+- The output is the profile header `column,type,rows,nulls,distinct,min,max,sum,mean,median`
+  followed by exactly one row, the row of the named column, identical in every field to the row the
+  full profile writes for that column.
+- The `&lt;name&gt;` argument matches a trimmed header name exactly and case-sensitively. Header names
+  are trimmed of leading and trailing spaces before matching, so a file header ` Name ` is
+  selected by `Name`.
+- The statistics of the other columns are not written; the named column&#x27;s values are still
+  validated like any other (a ragged record still rejects the file).
+- A name that is not in the header is rejected with exit 3 (owned by `FEATURE-ColumnAbsent.md`).
+- Output is CSV with `\n` line endings produced by `encoding/csv`&#x27;s writer, so a field containing a
+  comma, quote, or newline is quoted.
+- Success exits 0.
+
+## Reads
+
+- The CSV file given on the command line.
+
+## Writes
+
+- Standard output only.
+
+## Programmatic Acceptance
+
+=== AC colselect-matches-full-profile-row ===
+Intent: For every column of the supplied files, --column writes the profile header and exactly the row the full profile writes for that column.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+
+from drydock_go import cli_runner
+
+for path in (&quot;sources/employees.csv&quot;, &quot;sources/sensors.csv&quot;, &quot;sources/orders.csv&quot;, &quot;sources/header_only.csv&quot;):
+    code, out, err = cli_runner(path)
+    print(out)
+    print(err)
+    assert code == 0
+    full = list(csv.reader(io.StringIO(out)))
+    header = full[0]
+    assert len(full) &gt; 1
+    for row in full[1:]:
+        name = row[0]
+        code, out, err = cli_runner(&quot;--column&quot;, name, path)
+        print(out)
+        print(err)
+        assert code == 0
+        picked = list(csv.reader(io.StringIO(out)))
+        assert len(picked) == 2
+        assert picked[0] == header
+        assert picked[1] == row
+=== END AC colselect-matches-full-profile-row ===
+
+=== AC colselect-only-named-column ===
+Intent: The output of --column contains one data row whose first cell is the name supplied, even for the last column of the file.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+names = [&quot;alpha&quot;, &quot;beta&quot;, &quot;gamma&quot;, &quot;delta&quot;]
+text = &quot;,&quot;.join(names) + &quot;\n1,x,true,2025-01-02\n2,y,false,2025-02-03\n&quot;
+for name in names:
+    code, out, err = run(text, &quot;--column&quot;, name)
+    print(out)
+    print(err)
+    assert code == 0
+    rows = list(csv.reader(io.StringIO(out)))
+    assert len(rows) == 2
+    assert rows[1][0] == name
+=== END AC colselect-only-named-column ===
+
+=== AC colselect-trimmed-header-and-values ===
+Intent: A padded header is selected by its trimmed name and the padded values are trimmed before they are profiled.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+name = &quot;Name&quot;
+text = &quot;id,  &quot; + name + &quot;  \n1,  Acme  \n2,Acme\n3,Globex\n&quot;
+code, out, err = run(text, &quot;--column&quot;, name)
+print(out)
+print(err)
+assert code == 0
+rows = list(csv.reader(io.StringIO(out)))
+assert len(rows) == 2
+assert rows[1][0] == name
+assert rows[1][2] == &quot;3&quot;
+assert rows[1][4] == &quot;2&quot;
+=== END AC colselect-trimmed-header-and-values ===
+
+=== AC colselect-output-format ===
+Intent: Selected-column output uses newline line endings only and quotes a field containing a comma as one value.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+
+from drydock_go import cli_runner
+
+path = &quot;sources/employees.csv&quot;
+name = &quot;notes&quot;
+code, out, err = cli_runner(&quot;--column&quot;, name, path)
+print(out)
+print(err)
+assert code == 0
+assert out.endswith(&quot;\n&quot;)
+assert &quot;\r&quot; not in out
+rows = list(csv.reader(io.StringIO(out)))
+assert len(rows) == 2
+assert len(rows[0]) == len(rows[1])
+with open(path, newline=&quot;&quot;) as fh:
+    recs = list(csv.reader(fh))
+i = recs[0].index(name)
+cells = [r[i].strip() for r in recs[1:]]
+comma_cells = [c for c in cells if &quot;,&quot; in c]
+assert comma_cells
+assert max(c for c in cells if c.lower() not in (&quot;&quot;, &quot;na&quot;, &quot;n/a&quot;, &quot;null&quot;)) == rows[1][6]
+=== END AC colselect-output-format ===
+
+=== AC colselect-header-only-file ===
+Intent: Selecting a column of a file with a header and no rows succeeds and reports zero rows.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+
+from drydock_go import cli_runner
+
+path = &quot;sources/header_only.csv&quot;
+with open(path, newline=&quot;&quot;) as fh:
+    name = next(csv.reader(fh))[1].strip()
+code, out, err = cli_runner(&quot;--column&quot;, name, path)
+print(out)
+print(err)
+assert code == 0
+rows = list(csv.reader(io.StringIO(out)))
+assert len(rows) == 2
+assert rows[1][0] == name
+assert rows[1][1] == &quot;empty&quot;
+assert rows[1][2] == str(0)
+=== END AC colselect-header-only-file ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- `--column` never writes more than one data row.
+- Column names are not matched case-insensitively and are not fuzzy matched.
+- Application code never reads `sources/run.sh` or any supplied data file and never embeds an answer.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-ColumnAbsent.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat/blueprint/FEATURE-ColumnAbsent.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: Column Absent
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Reject a --column or --freq name that is not in the header with exit code 3 and nothing on standard output. |
+| Depends On  | FEATURE-ColumnSelect.md, FEATURE-RejectMalformed.md |
+| Provides    | exit 3 for an absent column name |
+| Consumes    | csvstat --column &lt;name&gt; &lt;file&gt;, csvstat --freq &lt;name&gt; &lt;file&gt;, rejection exit mapping |
+
+## Purpose
+
+A misspelled or absent column name is a rejected request, not an empty result. The caller must be
+able to tell it apart from a usage error (exit 2) and from an unreadable file (exit 1).
+
+## Trigger
+
+`csvstat --column &lt;name&gt; &lt;file&gt;` or `csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;` where `&lt;name&gt;`
+matches no trimmed header name of the file.
+
+## Behavior
+
+- Matching is exact and case-sensitive against trimmed header names (`salary` does not select
+  `Salary`).
+- The check happens after the file is read and validated and before any output is written, so
+  standard output stays empty.
+- The process exits 3 and writes one diagnostic line to standard error naming the file.
+- A name that is present is unaffected and continues to succeed.
+- A file that cannot be read still exits 1 first, and a usage error still exits 2 first; this
+  story only owns the absent-name rejection.
+- A file that is itself rejected (empty, ragged, bad header) exits 3 for that reason, with the same
+  empty standard output.
+
+## Reads
+
+- The CSV file header after trimming.
+
+## Writes
+
+- One diagnostic line on standard error. Nothing on standard output.
+
+## Programmatic Acceptance
+
+=== AC colabsent-column-exit-3 ===
+Intent: --column with a name absent from the header exits 3 and writes nothing to standard output.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import cli_runner
+
+for path in (&quot;sources/orders.csv&quot;, &quot;sources/employees.csv&quot;, &quot;sources/sensors.csv&quot;, &quot;sources/header_only.csv&quot;):
+    code, out, err = cli_runner(&quot;--column&quot;, &quot;no_such_column&quot;, path)
+    print(out)
+    print(err)
+    assert code == 3
+    assert out == &quot;&quot;
+=== END AC colabsent-column-exit-3 ===
+
+=== AC colabsent-freq-exit-3 ===
+Intent: --freq with a name absent from the header exits 3 and writes nothing to standard output, with and without --top.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import cli_runner
+
+for path in (&quot;sources/orders.csv&quot;, &quot;sources/employees.csv&quot;, &quot;sources/sensors.csv&quot;):
+    for extra in ([], [&quot;--top&quot;, &quot;2&quot;]):
+        code, out, err = cli_runner(&quot;--freq&quot;, &quot;no_such_column&quot;, *extra, path)
+        print(out)
+        print(err)
+        assert code == 3
+        assert out == &quot;&quot;
+=== END AC colabsent-freq-exit-3 ===
+
+=== AC colabsent-case-sensitive ===
+Intent: A name that differs from a real header name only by letter case is absent and is rejected.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+
+from drydock_go import cli_runner
+
+path = &quot;sources/employees.csv&quot;
+with open(path, newline=&quot;&quot;) as fh:
+    heads = [h.strip() for h in next(csv.reader(fh))]
+for name in heads:
+    wrong = name.upper()
+    assert wrong != name
+    for mode in (&quot;--column&quot;, &quot;--freq&quot;):
+        code, out, err = cli_runner(mode, wrong, path)
+        print(out)
+        print(err)
+        assert code == 3
+        assert out == &quot;&quot;
+=== END AC colabsent-case-sensitive ===
+
+=== AC colabsent-present-name-still-succeeds ===
+Intent: Every real header name is accepted by --column and --freq, so rejection is specific to absent names.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+
+from drydock_go import cli_runner
+
+path = &quot;sources/orders.csv&quot;
+with open(path, newline=&quot;&quot;) as fh:
+    heads = [h.strip() for h in next(csv.reader(fh))]
+for name in heads:
+    for mode in (&quot;--column&quot;, &quot;--freq&quot;):
+        code, out, err = cli_runner(mode, name, path)
+        print(out)
+        print(err)
+        assert code == 0
+        assert out != &quot;&quot;
+=== END AC colabsent-present-name-still-succeeds ===
+
+=== AC colabsent-header-only-and-ragged ===
+Intent: An absent name is rejected for a header-only file, and a ragged file is rejected with exit 3 whatever name is given.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import cli_runner
+
+code, out, err = cli_runner(&quot;--column&quot;, &quot;no_such_column&quot;, &quot;sources/header_only.csv&quot;)
+print(out)
+print(err)
+assert code == 3
+assert out == &quot;&quot;
+
+for args in ([&quot;--column&quot;, &quot;no_such_column&quot;], [&quot;--freq&quot;, &quot;no_such_column&quot;], [&quot;--column&quot;, &quot;sku&quot;]):
+    code, out, err = cli_runner(*args, &quot;sources/ragged.csv&quot;)
+    print(out)
+    print(err)
+    assert code == 3
+    assert out == &quot;&quot;
+=== END AC colabsent-header-only-and-ragged ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Nothing is written to standard output when the name is absent, not even a header.
+- An absent name is exit 3, never exit 1 or exit 2.
+- Application code never reads `sources/run.sh` or any supplied data file and never embeds an answer.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock filename=&quot;FEATURE-TestRunner.md&quot; role=&quot;implements&quot; path=&quot;/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat/blueprint/FEATURE-TestRunner.md&quot; guidance=&quot;Feature Specification&quot;&gt;</p>
+<pre><code># FEATURE: Test Runner
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Provides a POSIX sh bin/test.sh that runs go vet and go test and exits zero only when both pass. |
+| Depends On  | FEATURE-CsvReading.md, ARCHITECTURE.md |
+| Provides    | bin/test.sh |
+| Consumes    | go vet ./..., go test ./... |
+
+## Purpose
+
+`bin/test.sh` is the single entry point for the project&#x27;s automated checks.
+
+## Behavior
+
+- POSIX sh only: no bash-isms, and it passes `sh -n bin/test.sh`.
+- It changes to the application root (the parent of `bin/`) so it works from any directory.
+- It runs `go vet ./...` and then `go test ./...`, and exits zero only when both exit zero. A
+  failure of either exits non-zero; a vet failure does not let the test run mask it.
+- It uses whatever `go` is on `PATH` and never a vendored toolchain.
+- The Go test suite it runs covers each type, each statistic, null handling, rounding, each output
+  form, and each exit code, using files the tests write themselves (not the files under `sources/`).
+
+## Programmatic Acceptance
+
+=== AC testrunner-syntax ===
+Intent: bin/test.sh exists and passes a POSIX syntax check.
+Suite: scoped
+Requires: executable=sh; scope=test
+
+import os
+import subprocess
+
+assert os.path.isfile(&quot;bin/test.sh&quot;)
+result = subprocess.run([&quot;sh&quot;, &quot;-n&quot;, &quot;bin/test.sh&quot;], capture_output=True, text=True)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0
+=== END AC testrunner-syntax ===
+
+=== AC testrunner-runs-vet-and-test ===
+Intent: With a passing toolchain stub, bin/test.sh exits zero and invokes both go vet and go test.
+Suite: scoped
+Requires: executable=sh; scope=test
+
+import os
+import subprocess
+import tempfile
+
+with tempfile.TemporaryDirectory() as tmp:
+    log = os.path.join(tmp, &quot;calls.log&quot;)
+    stub = os.path.join(tmp, &quot;go&quot;)
+    with open(stub, &quot;w&quot;) as fh:
+        fh.write(&#x27;#!/bin/sh\necho &quot;$1&quot; &gt;&gt; &quot;$GO_LOG&quot;\n[ &quot;$1&quot; = &quot;$FAIL_ON&quot; ] &amp;&amp; exit 1\nexit 0\n&#x27;)
+    os.chmod(stub, 0o755)
+    env = {**os.environ, &quot;PATH&quot;: tmp + os.pathsep + os.environ[&quot;PATH&quot;], &quot;GO_LOG&quot;: log, &quot;FAIL_ON&quot;: &quot;none&quot;}
+    result = subprocess.run([&quot;sh&quot;, &quot;bin/test.sh&quot;], capture_output=True, text=True, env=env)
+    print(result.stdout)
+    print(result.stderr)
+    assert result.returncode == 0
+    with open(log) as fh:
+        calls = fh.read().split()
+    assert &quot;vet&quot; in calls, calls
+    assert &quot;test&quot; in calls, calls
+=== END AC testrunner-runs-vet-and-test ===
+
+=== AC testrunner-vet-failure ===
+Intent: When go vet fails, bin/test.sh exits non-zero.
+Suite: scoped
+Requires: executable=sh; scope=test
+
+import os
+import subprocess
+import tempfile
+
+with tempfile.TemporaryDirectory() as tmp:
+    log = os.path.join(tmp, &quot;calls.log&quot;)
+    stub = os.path.join(tmp, &quot;go&quot;)
+    with open(stub, &quot;w&quot;) as fh:
+        fh.write(&#x27;#!/bin/sh\necho &quot;$1&quot; &gt;&gt; &quot;$GO_LOG&quot;\n[ &quot;$1&quot; = &quot;$FAIL_ON&quot; ] &amp;&amp; exit 1\nexit 0\n&#x27;)
+    os.chmod(stub, 0o755)
+    env = {**os.environ, &quot;PATH&quot;: tmp + os.pathsep + os.environ[&quot;PATH&quot;], &quot;GO_LOG&quot;: log, &quot;FAIL_ON&quot;: &quot;vet&quot;}
+    result = subprocess.run([&quot;sh&quot;, &quot;bin/test.sh&quot;], capture_output=True, text=True, env=env)
+    print(result.stdout)
+    print(result.stderr)
+    assert result.returncode != 0
+=== END AC testrunner-vet-failure ===
+
+=== AC testrunner-test-failure ===
+Intent: When go test fails after a passing go vet, bin/test.sh exits non-zero.
+Suite: scoped
+Requires: executable=sh; scope=test
+
+import os
+import subprocess
+import tempfile
+
+with tempfile.TemporaryDirectory() as tmp:
+    log = os.path.join(tmp, &quot;calls.log&quot;)
+    stub = os.path.join(tmp, &quot;go&quot;)
+    with open(stub, &quot;w&quot;) as fh:
+        fh.write(&#x27;#!/bin/sh\necho &quot;$1&quot; &gt;&gt; &quot;$GO_LOG&quot;\n[ &quot;$1&quot; = &quot;$FAIL_ON&quot; ] &amp;&amp; exit 1\nexit 0\n&#x27;)
+    os.chmod(stub, 0o755)
+    env = {**os.environ, &quot;PATH&quot;: tmp + os.pathsep + os.environ[&quot;PATH&quot;], &quot;GO_LOG&quot;: log, &quot;FAIL_ON&quot;: &quot;test&quot;}
+    result = subprocess.run([&quot;sh&quot;, &quot;bin/test.sh&quot;], capture_output=True, text=True, env=env)
+    print(result.stdout)
+    print(result.stderr)
+    assert result.returncode != 0
+=== END AC testrunner-test-failure ===
+
+=== AC testrunner-works-from-other-directory ===
+Intent: bin/test.sh locates the application root itself, so a stubbed run from another directory still invokes go vet and go test.
+Suite: scoped
+Requires: executable=sh; scope=test
+
+import os
+import subprocess
+import tempfile
+
+script = os.path.abspath(&quot;bin/test.sh&quot;)
+with tempfile.TemporaryDirectory() as tmp:
+    log = os.path.join(tmp, &quot;calls.log&quot;)
+    stub = os.path.join(tmp, &quot;go&quot;)
+    with open(stub, &quot;w&quot;) as fh:
+        fh.write(&#x27;#!/bin/sh\necho &quot;$1&quot; &gt;&gt; &quot;$GO_LOG&quot;\n[ &quot;$1&quot; = &quot;$FAIL_ON&quot; ] &amp;&amp; exit 1\nexit 0\n&#x27;)
+    os.chmod(stub, 0o755)
+    env = {**os.environ, &quot;PATH&quot;: tmp + os.pathsep + os.environ[&quot;PATH&quot;], &quot;GO_LOG&quot;: log, &quot;FAIL_ON&quot;: &quot;none&quot;}
+    result = subprocess.run([&quot;sh&quot;, script], capture_output=True, text=True, env=env, cwd=tmp)
+    print(result.stdout)
+    print(result.stderr)
+    assert result.returncode == 0
+    with open(log) as fh:
+        calls = fh.read().split()
+    assert &quot;vet&quot; in calls and &quot;test&quot; in calls, calls
+=== END AC testrunner-works-from-other-directory ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- `bin/test.sh` is POSIX sh and never relies on bash.
+- It does not run `sources/run.sh`; the supplied grader is run only by the terminal verification story.
+- Tests written for the project never modify, rewrite, or substitute any file under `sources/`.</code></pre>
+<p>&lt;/pblock&gt;</p>
+<p>&lt;pblock label=&quot;Build instructions&quot; kind=&quot;instructions&quot;&gt;</p>
+<h3>Build instructions for this block</h3>
+<h4>Accept the two csvstat command forms and the --help text. (cli-args)</h4>
+<p>Parse arguments with a local flag.FlagSet using flag.ContinueOnError. Options precede exactly one file. --help writes usage naming both command forms and every option to standard output and exits 0. Parsing yields a typed request (mode, column, freq name, top, path). Dispatch to the profile and frequency modes through small interfaces so later stories plug in.</p>
+<h4>Map an unreadable file to exit code 1. (cli-unreadable)</h4>
+<p>A file that cannot be opened or read, including a directory, exits 1 with nothing on standard output and one diagnostic on standard error naming the file.</p>
+<h4>Read a well-formed CSV and write the profile header and one row per column. (input-profile)</h4>
+<p>Read the file with encoding/csv; the first record is the header. Write the header column,type,rows,nulls,distinct,min,max,sum,mean,median then one row per column in file order with the csv writer and \n line endings. Compare bytes as bytes: do not strip a byte-order mark and do not reject invalid UTF-8. Set Reader.FieldsPerRecord = -1 so that raggedness is checked by the application and not by the reader.</p>
+<h4>Trim leading and trailing spaces from every header name and value. (input-trim)</h4>
+<p>Trim spaces from every header name and every value before null, type, distinct, and output rules apply. Trimming removes spaces only as the sources describe, using strings.Trim with &quot; &quot;.</p>
+<h4>Map usage errors to exit code 2. (cli-usage)</h4>
+<p>A missing or extra file, an unknown option, a missing option value, an invalid --top (not a positive integer), --top without --freq, or --column with --freq exits 2 with nothing on standard output and a diagnostic on standard error. Flag parse output must go to stderr.</p>
+<h4>Reject empty files, bad headers, ragged records, and CSV syntax errors with exit 3. (input-reject)</h4>
+<p>An empty file, an empty or repeated header name (after trimming), a record whose field count differs from the header, or an encoding/csv syntax error exits 3 with nothing on standard output and one standard error line naming the file and the line number. Buffer all output so that nothing reaches standard output before validation completes.</p>
+<h4>Report rows, nulls, and distinct counts per column. (counts)</h4>
+<p>rows is the count of data records. A value is null when empty or equal to NA, N/A, or NULL ignoring case. distinct counts distinct non-null trimmed values compared as exact strings.</p>
+<h4>Infer date columns and reject invalid calendar dates. (types-date)</h4>
+<p>date when every non-null value matches YYYY-MM-DD exactly and is a real calendar date (2025-02-30 is not). Use time.Parse with the 2006-01-02 layout plus a length check.</p>
+<h4>Infer integer and number column types. (types-numeric)</h4>
+<p>integer when every non-null value matches -?[0-9]+. number when every non-null value matches -?[0-9]+(\.[0-9]+)? and the column is not integer. Hand-code the matchers or use regexp anchored at both ends.</p>
+<h4>List the most frequent values of a column with --freq. (freq-list)</h4>
+<p>Header value,count, then distinct non-null values ordered by count descending then value ascending by byte value. Null values are not listed. An all-null column writes only the header. The default limit is 5.</p>
+<h4>Limit frequency output with --top. (freq-top)</h4>
+<p>--top defaults to 5 and accepts a positive integer only. At most that many rows are written. --top without --freq is a usage error (exit 2).</p>
+<h4>Infer boolean, text, and empty column types and compose the final type decision. (types-other)</h4>
+<p>boolean when every non-null value equals true or false ignoring case. text when no earlier type fits. empty when the column has no non-null value. The final type is the first of integer, number, date, boolean, text that every non-null value satisfies.</p>
+<h4>Report min and max for every column type. (stats-minmax)</h4>
+<p>integer and number: numeric min and max. date: earliest and latest. boolean: min is false if any value is false else true; max is true if any value is true else false (lower-case). text: smallest and largest by byte value. empty: blank. Numbers compared by exact value.</p>
+<h4>Report the median for integer and number columns. (stats-median)</h4>
+<p>Sort non-null values exactly (big.Rat). The median is the middle value, or the mean of the two middle values when the count is even. Other types leave it blank.</p>
+<h4>Report sum and mean for integer and number columns with exact arithmetic. (stats-summean)</h4>
+<p>Sum non-null values exactly with math/big (big.Int or big.Rat) and divide by the non-null count for the mean. No float64 anywhere. Other types leave both fields blank.</p>
+<h4>Write numeric statistics with two decimals, rounded half away from zero once. (stats-format)</h4>
+<p>Every number min, max, sum, mean, and median, and every integer mean and median, is written with exactly two decimals, rounded half away from zero from the exact big.Rat value, rounding once at output, with a leading - when negative and no thousands separator. Avoid writing -0.00 for a value that rounds to zero from a negative. Integer min, max, and sum are plain integers.</p>
+<h4>Profile one named column with --column. (select-column)</h4>
+<p>Output the profile header and the one row of the named column. The name matches a trimmed header name exactly and case-sensitively.</p>
+<h4>Reject a --column or --freq name absent from the header with exit 3. (select-absent)</h4>
+<p>A --column or --freq name not in the header exits 3 with nothing on standard output and one standard error line naming the file. The check precedes any output.</p>
+<h4>Provide a POSIX bin/test.sh that runs go vet and go test. (qa-testrunner)</h4>
+<p>Write bin/test.sh in POSIX sh. From the application root it runs go vet ./... and go test ./... and exits zero only when both pass. It passes sh -n. The Go test suite covers each type, each statistic, null handling, rounding, each output form, and each exit code with files the tests write themselves.</p>
+<p>&lt;/pblock&gt;</p>
+<h1>Agent Task</h1>
+<p>You are a Drydock build agent implementing exactly one build step of a larger plan. The build job block below names the target, the build working directory, and the step. Everything you need is stacked into this prompt under role headings:</p>
+<ul><li><code>compass</code> — the Target&#x27;s COMPASS.md orientation.</li><li><code>implements</code> — the Typed Specification files this step builds. These are</li></ul>
+<p>authoritative; implement them exactly.</p>
+<ul><li><code>context</code> — read-only support specifications. Do not reimplement them.</li><li><code>stack</code> — enterprise stack and technology rules. Honor them.</li><li><code>rules</code> — governance and branding rules. Honor them.</li></ul>
+<p>Operating contract:</p>
+<ol><li>Follow the write authorization and protected paths in the stacked <code>COMPASS.md</code> exactly.</li></ol>
+<p>That persisted guardrail is the sole authority for paths this build may modify.</p>
+<ol><li>Start by inspecting the build working directory. Preserve existing application</li></ol>
+<p>files unless this step&#x27;s specifications require a change. Its <code>sources/</code> subdirectory holds staged build assets — imported test corpora, conformance harnesses, and fixtures — placed there for you. They are read-only inputs: run them, import them, and write code against them, but never create, rewrite, trim, regenerate, or substitute one, even to make a check pass. A step that modifies a staged asset fails and the asset is restored. If an asset you expect is absent, report that; do not author a replacement.</p>
+<ol><li>Implement only this step. Use <code>context</code>, <code>stack</code>, and <code>rules</code> as constraints,</li></ol>
+<p>not as additional work to perform.</p>
+<ol><li>Follow the stack and rules for languages, structure, naming, and branding.</li><li>The programmatic acceptance assertions in the <code>implements</code> specifications are</li></ol>
+<p>this step&#x27;s <strong>Definition of Done</strong> — human-owned, declared before the build, and fixed. Build the story and, in this same step, write the deterministic tests that prove each declared assertion, as a TDD master would; add finer tests for coverage. Every test you write follows the same rule the acceptance assertions do: <strong>act on the system, read the state back, compare to expected.</strong> The oracle is a return value, parsed JSON, a status code, a stored row, file contents read back, or an exit status — never a substring of captured stdout or stderr, a test-runner tally, or a log line. Write tests in the project&#x27;s own language using that language&#x27;s libraries; an in-language HTTP client yields a status code and a parsed body, where <code>curl</code> yields text to scrape. Round-trip anything that stores state: act, then read back through the public interface. Assert declared failure signals on negative paths, never message wording. You may add tests but must never remove, soften, or weaken a declared acceptance assertion. A <code>Suite: full</code> conformance check gates on the entire imported test suite: the step is done only when it passes in full, never on a representative subset — reproduce the standard exactly rather than wrapping a third-party library that approximates it. For a suite, the runner&#x27;s exit status is the verdict and the whole verdict: print its captured output for diagnosis, never assert on the text of its summary. When an assertion is a static or filesystem scan (import boundary, &quot;X never appears outside Y,&quot; grep/AST gate), honor the scope the specification states and never widen it: scan production source only, exclude <code>.venv/</code>, <code>site-packages</code>, and vendored or generated code, and do not flag test doubles or fixtures that use the guarded dependency. Run every declared acceptance assertion before returning. For a conformance suite, use its section or example filters to diagnose coherent root-cause clusters, but rerun the full declared scope before reporting the result. Treat failing examples as a work queue for fixing general behavior; never add example-specific exceptions.</p>
+<ol><li>Grow the project&#x27;s own test suite as you write the code, and treat it as the project&#x27;s</li></ol>
+<p>real coverage. The acceptance assertions in <code>implements</code> are gates: few, fixed, and written before any code existed, so every expectation in them is a prediction. The tests you write are written <em>beside</em> the finished code, so their expected values are observed rather than predicted — which is why exhaustive coverage belongs here and not there. Extend the suite in the project&#x27;s established location and runner, keep it runnable by the project&#x27;s declared test command, and leave it green when you return. Cover, at minimum: every public entry point and every verb it declares, including declared error paths; the boundaries — empty, exactly one, many, absent optional fields, declared maxima; declared idempotence, applied twice; one behavior per test, named for the behavior; and isolation — database criteria use the provisioned application store and the shipped rollback fixture, passing its connection into the feature. Other connections and durability tests use criterion-owned records, idempotent setup and checked cleanup through supported interfaces. Never replace the configured store, reapply schema, or delete unrelated business records. Where a staged authoritative suite already covers a surface, that suite is the coverage: run it, and do not restate its cases. Run it <strong>only through the invocation this step&#x27;s acceptance criteria declare</strong>. A criterion marked <code>Suite: scoped</code> names the whole of this step&#x27;s obligation to that suite; running the suite&#x27;s unscoped entry point instead is not extra rigor, it is a different step&#x27;s gate executed early. A partial capability fails most of an authoritative corpus by construction and its unimplemented cases exhaust the runner&#x27;s per-case timeout rather than returning, so the unscoped run costs the most where it teaches the least, and interrupting it forfeits the step. If no criterion in this step invokes the staged suite, do not invoke it. Report the pass/fail counts of the invocations you did run in your <code>SUMMARY</code> so a reader can see coverage moving across steps.</p>
+<ol><li>Treat <code>User Acceptance</code> entries as review evidence requirements. Implement</li></ol>
+<p>the supporting behavior, but do not claim to have performed human judgment.</p>
+<ol><li>The <code>implements</code> section is authoritative and intentionally stacked late in</li></ol>
+<p>the prompt as the recency anchor. Build that WHAT exactly; do not substitute generic framework defaults.</p>
+<ol><li>Before adding or installing Python dependencies, verify each package name</li></ol>
+<p>against the declared registry. Do not invent package names. If a needed package cannot be verified or appears newly published, fail explicitly instead of installing it.</p>
+<ol><li>Use the stack&#x27;s required package manager workflow for dependency changes.</li></ol>
+<p>When the stack requires <code>uv</code>, update manifests through <code>uv</code> conventions rather than bare <code>pip install</code>.</p>
+<ol><li>Do not claim success unless you actually created or modified project files in</li></ol>
+<p>the build working directory. If you cannot write files or cannot complete the step, report failure explicitly.</p>
+<ol><li>Do not run <code>git add</code>, <code>git commit</code>, create branches, create tags, rewrite</li></ol>
+<p>history, or otherwise mutate Git history. Drydock checkpoints application changes and Target evidence after each execution and completed step. File lineage comes from Git and the Manifest&#x27;s <code>implements:</code> entries; no additional attribution response is required.</p>
+<ol><li>End your response with this exact closing structure:</li></ol>
+<pre><code>RESULT: SUCCESS | FAILED
+
+FILES CHANGED:
+- relative/path
+
+SUMMARY:
+&lt;brief reviewable summary&gt;
+
+BLOCKERS:
+- &lt;only if any&gt;</code></pre>
+<p>Before <code>RESULT</code>, you may emit one optional JSON payload when implementation required a bounded choice not already settled by the owning specification. This records what you did; it does not ask permission, create a questionnaire, or excuse incomplete work:</p>
+<pre><code>&lt;blueprint-decisions&gt;
+[{&quot;spec&quot;:&quot;FEATURE-Example.md&quot;,&quot;severity&quot;:&quot;Material&quot;,&quot;subject&quot;:&quot;Chosen behavior&quot;,&quot;decision&quot;:&quot;Options A and B were available. I implemented B because ... Is that acceptable, or should this change on replan?&quot;}]
+&lt;/blueprint-decisions&gt;</code></pre>
+<p>Name only a specification implemented by this build block. Use <code>Low</code> or <code>Material</code>; Build never emits a Blocking decision. Omit the payload when no implementation decision was necessary.</p>
+<ol><li><code>FILES CHANGED</code> must list only files actually written in the build working</li></ol>
+<p>directory. If no files were written, use <code>RESULT: FAILED</code>.</p>
+<ol><li>On <code>RESULT: FAILED</code>, append two additional lines so the failure is actionable</li></ol>
+<p>without opening logs. <code>FAILURE_SUMMARY</code> is one line naming the cause; <code>FAILURE_DETAIL</code> states what happened, why, and what to change before a rerun. Name concrete conditions when they apply: token or context limit exceeded, could not execute commands in this environment, a required input was missing, or a specific tool or command failed.</p>
+<pre><code>FAILURE_SUMMARY: &lt;one line naming the cause&gt;
+FAILURE_DETAIL: &lt;what happened, why, and what to change before rerunning&gt;</code></pre>
+<ol><li>When a declared acceptance criterion cannot pass no matter how the code is written,</li></ol>
+<p>say so with this exact token. You may not edit the criterion — it is staged and restored before grading:</p>
+<pre><code>AC_BROKEN: &lt;check-id&gt;[, &lt;check-id&gt;]</code></pre>
+<p>This is a report, not a verdict, and it stops nothing. A criterion reaches you only when its expected value is one its author could not have invented — a status code, a staged suite&#x27;s exit status, a value the criterion itself supplied as input — so your claim that the criterion rather than the code is at fault is the less likely explanation, and the budget is spent as it would be for any other failure. A criterion whose expectation <em>was</em> hand-typed already settles <code>DISPUTED</code> on its own, without you naming it. Emit the token only after running the criterion and confirming the underlying command succeeded while the assertion still failed. Name the affected check ids, emit it alongside your normal <code>RESULT</code> line, state the reasoning in <code>FAILURE_DETAIL</code>, and emit it even when <code>RESULT: SUCCESS</code>. Do not use it for a criterion you merely failed to satisfy.</p></article>
+</main>
+</body>
+</html>

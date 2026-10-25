@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/prompt_outputs/20261025.003655.156Z_csvstat_build_claude.output.txt</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/prompt_outputs/20261025.003655.156Z_csvstat_build_claude.output.txt</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/prompt_outputs/20261025.003655.156Z_csvstat_build_claude.output.txt">Raw file</a></div></header>
+<article class="doc"><pre>Prior blocks left a substantial implementation in place. I&#x27;ll run the grader and the existing test suite to see where things stand.The grader passes 22/22 and the existing tests are green. Before I call this done, I&#x27;ll check that nothing under `sources/` changed, that application code doesn&#x27;t read the grader or data files, and that the three programmatic acceptance criteria hold.The grader already passes end to end, so this block needed no code changes. I didn&#x27;t write any files.
+
+Summary of checks:
+
+- `sh sources/run.sh` exits 0: 22 passed, 0 failed.
+- `sh bin/test.sh` exits 0: `go vet` is clean and all four test packages pass.
+- `go test -race ./...` passes.
+- `sources/` has no changes in git, and no application code reads `run.sh` or the data files.
+- The three programmatic acceptance criteria hold when checked by hand. I couldn&#x27;t run them through `drydock_go`, which isn&#x27;t available here, so I checked their logic with Python&#x27;s `csv` module:
+  - `profile-rows-follow-header`: the profile header starts with `column`, and it has 8 rows for `employees.csv`, which has 8 columns.
+  - `frequency-matches-input`: the top 5 customer counts match an independent count.
+  - `exit-codes-contract`: ragged input exits 3, a missing file exits 1, and `--top` without `--freq` exits 2, each with empty stdout.
+
+The stack&#x27;s rules say a build that writes no files must report `RESULT: FAILED`, even though the application is correct. Following that rule, here is the verdict. Please treat this as a pass for the grader story. The failure is only the no-files-written condition.
+
+RESULT: FAILED
+
+FILES CHANGED:
+- (none)
+
+SUMMARY:
+Verified the existing csvstat implementation from earlier blocks. `sh sources/run.sh` passes 22/22 (exit 0), `sh bin/test.sh` passes (vet and all Go tests green), and `go test -race` passes. The grader&#x27;s sources are unmodified and the code does not read them. The three programmatic acceptance criteria were checked by hand as described above. No changes were needed.
+
+FAILURE_SUMMARY: No files written because the grader already passes; the step had nothing to change.
+FAILURE_DETAIL: `sh sources/run.sh` exits 0 with 22 of 22 checks passing, and the project&#x27;s test command exits 0. The Build rules require `RESULT: FAILED` when no files are written, so I&#x27;m reporting that literally. The application is not defective. If the grader story should count as passed when the gate is already green, accept this result as a pass. Nothing needs to be rerun.</pre></article>
+</main>
+</body>
+</html>

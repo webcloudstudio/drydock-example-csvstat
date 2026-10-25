@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/commands/08-after-plan-build-status.stdout.log</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/commands/08-after-plan-build-status.stdout.log</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/commands/08-after-plan-build-status.stdout.log">Raw file</a></div></header>
+<article class="doc"><pre>Drydock 0.8.0  Copyright (c) 2026 Web Cloud Studio. All rights reserved.
+Next: drydock build CsvStat
+
+Blueprint: CsvStat
+Target: /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat
+Rows: &lt;state&gt; &lt;type&gt;  &lt;Name&gt;  [&lt;id&gt;]   — pass [&lt;id&gt;] to --step
+
+Block: Build Block 1 · Foundational  [block-1]   — 0/1 stories complete
+  [pending] story  Stand up the Go module, package layout, and architecture for the csvstat CLI.  [foundation]  &lt;- next
+
+Block: Build Block 2 · Service  [block-2]   — 0/19 stories complete
+  [pending] story  Accept the two csvstat command forms and the --help text.  [cli-args]
+  [pending] story  Map an unreadable file to exit code 1.  [cli-unreadable]
+  [pending] story  Read a well-formed CSV and write the profile header and one row per column.  [input-profile]
+  [pending] story  Trim leading and trailing spaces from every header name and value.  [input-trim]
+  [pending] story  Map usage errors to exit code 2.  [cli-usage]
+  [pending] story  Reject empty files, bad headers, ragged records, and CSV syntax errors with exit 3.  [input-reject]
+  [pending] story  Report rows, nulls, and distinct counts per column.  [counts]
+  [pending] story  Infer date columns and reject invalid calendar dates.  [types-date]
+  [pending] story  Infer integer and number column types.  [types-numeric]
+  [pending] story  List the most frequent values of a column with --freq.  [freq-list]
+  [pending] story  Limit frequency output with --top.  [freq-top]
+  [pending] story  Infer boolean, text, and empty column types and compose the final type decision.  [types-other]
+  [pending] story  Report min and max for every column type.  [stats-minmax]
+  [pending] story  Report the median for integer and number columns.  [stats-median]
+  [pending] story  Report sum and mean for integer and number columns with exact arithmetic.  [stats-summean]
+  [pending] story  Write numeric statistics with two decimals, rounded half away from zero once.  [stats-format]
+  [pending] story  Profile one named column with --column.  [select-column]
+  [pending] story  Reject a --column or --freq name absent from the header with exit 3.  [select-absent]
+  [pending] story  Provide a POSIX bin/test.sh that runs go vet and go test.  [qa-testrunner]
+
+Block: Build Block 3 · Feature  [block-3]   — 0/1 stories complete
+  [pending] story  Pass the supplied grader end to end.  [qa-verification]
+
+Steps: 21 total — 0 done, 0 built (await verify), 0 in review, 21 pending, 0 blocked by questions, 0 failed (0% complete)
+Buildable now: block-1
+</pre></article>
+</main>
+</body>
+</html>

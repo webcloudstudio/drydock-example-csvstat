@@ -1,0 +1,650 @@
+=== BEGIN ARTIFACT FEATURE-CLI-Unknown-Column.md ===
+# FEATURE: CLI Unknown Column
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Look up a named column by exact trimmed header name and reject a name absent from the header with exit 3. |
+| Depends On  | FEATURE-Profile-Rows.md |
+| Provides    | column lookup, exit 3 for unknown column |
+| Consumes    | csvdata.Read |
+
+## Questions
+
+- None.
+
+## Purpose
+
+`--column <name>` and `--freq <name>` each name a column. This feature provides the single lookup
+both options share and the rejection when the name is not a header column.
+
+## Behavior
+
+- The lookup compares the requested name with the trimmed header names by exact string equality.
+  It is case-sensitive.
+- When the name is absent, the command exits 3, writes nothing to standard output, and writes one
+  diagnostic line to standard error naming the file and the column.
+- The lookup runs after the file has been read and validated, so a file rejected for another
+  reason (empty, bad header, ragged record) reports that rejection first.
+- A name that is present proceeds to the normal profile or frequency path with exit 0.
+- Usage validation (exit 2) completes before the file is opened and therefore before this lookup.
+
+## Interfaces
+
+- Package `internal/csvdata` (or `internal/cli`) exposes a lookup returning the column index and a
+  found flag; `internal/cli.Run` maps "not found" to exit 3.
+
+## Programmatic Acceptance
+
+=== AC cli003-column-unknown ===
+Intent: A --column name absent from the header exits 3 with nothing on standard output.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+names = ["id", "qty"]
+body = io.StringIO()
+writer = csv.writer(body, lineterminator="\n")
+writer.writerow(names)
+writer.writerow(["1", "10"])
+writer.writerow(["2", "20"])
+
+missing = "nosuch"
+assert missing not in names
+
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, "t.csv")
+    with open(path, "w", newline="") as f:
+        f.write(body.getvalue())
+    code, out, err = cli_runner("--column", missing, path)
+print(out)
+print(err)
+assert code == 3
+assert out == ""
+=== END AC cli003-column-unknown ===
+
+=== AC cli003-freq-unknown ===
+Intent: A --freq name absent from the header exits 3 with nothing on standard output.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+names = ["id", "qty"]
+body = io.StringIO()
+writer = csv.writer(body, lineterminator="\n")
+writer.writerow(names)
+writer.writerow(["1", "10"])
+
+missing = "nosuch"
+assert missing not in names
+
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, "t.csv")
+    with open(path, "w", newline="") as f:
+        f.write(body.getvalue())
+    code, out, err = cli_runner("--freq", missing, path)
+print(out)
+print(err)
+assert code == 3
+assert out == ""
+=== END AC cli003-freq-unknown ===
+
+=== AC cli003-lookup-exact ===
+Intent: The lookup is exact and case-sensitive, and matches trimmed header names.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+present = "qty"
+wrong_case = present.upper()
+assert wrong_case != present
+
+body = io.StringIO()
+writer = csv.writer(body, lineterminator="\n")
+writer.writerow(["id", " " + present + " "])
+writer.writerow(["1", "10"])
+
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, "t.csv")
+    with open(path, "w", newline="") as f:
+        f.write(body.getvalue())
+    code_ok, out_ok, err_ok = cli_runner("--column", present, path)
+    code_bad, out_bad, err_bad = cli_runner("--column", wrong_case, path)
+print(out_ok)
+print(err_ok)
+print(err_bad)
+assert code_ok == 0
+columns = [r["column"] for r in csv.DictReader(io.StringIO(out_ok))]
+assert present in columns
+assert code_bad == 3
+assert out_bad == ""
+=== END AC cli003-lookup-exact ===
+
+=== AC cli003-rejection-precedes-lookup ===
+Intent: A ragged file reports its own rejection (exit 3) and writes nothing even when the column name is valid.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+header = ["a", "b"]
+body = io.StringIO()
+writer = csv.writer(body, lineterminator="\n")
+writer.writerow(header)
+writer.writerow(["1", "2"])
+writer.writerow(["3", "4", "5"])
+
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, "t.csv")
+    with open(path, "w", newline="") as f:
+        f.write(body.getvalue())
+    code, out, err = cli_runner("--column", header[0], path)
+print(out)
+print(err)
+assert code == 3
+assert out == ""
+=== END AC cli003-rejection-precedes-lookup ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- An unknown column is exit 3 (rejected), never exit 2 and never exit 1.
+- A failing command writes nothing to standard output.
+- Application code never reads `sources/run.sh` or any supplied data file.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-Type-Integer.md ===
+# FEATURE: Type Integer
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Infer integer columns and report the type in the profile row. |
+| Depends On  | FEATURE-Profile-Rows.md |
+| Provides    | type integer |
+| Consumes    | csvdata.IsNull |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Start the first-match type ladder in `internal/infer` and fill the `type` field of each profile row
+for integer columns.
+
+## Behavior
+
+- A column is `integer` when it has at least one non-null value and every non-null value, after
+  trimming, matches `-?[0-9]+`.
+- Null values (empty, `NA`, `N/A`, `NULL` ignoring case) are ignored for inference.
+- Leading zeros are allowed. A decimal point, a leading `+`, an exponent, or any other character
+  makes the column not integer.
+- Columns this story does not classify leave `type` empty until later type stories are built.
+  Column with no non-null value is never `integer`.
+
+## Interfaces
+
+- `internal/infer` exposes a classification function over a column's non-null trimmed values; the
+  profile writer calls it per column.
+
+## Programmatic Acceptance
+
+=== AC typ001-integer-detected ===
+Intent: Columns whose non-null values all match the integer pattern, including negatives, leading zeros, padding, and nulls, are typed integer.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+columns = {
+    "plain": ["1", "-20", "0", "007"],
+    "padded": [" 5 ", "6", "-7", "8"],
+    "with_nulls": ["1", "", "NA", "N/A"],
+    "with_null_word": ["10", "NULL", "null", "-3"],
+}
+names = list(columns)
+count = len(columns[names[0]])
+body = io.StringIO()
+writer = csv.writer(body, lineterminator="\n")
+writer.writerow(names)
+for i in range(count):
+    writer.writerow([columns[k][i] for k in names])
+
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, "t.csv")
+    with open(path, "w", newline="") as f:
+        f.write(body.getvalue())
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 0
+rows = {r["column"]: r for r in csv.DictReader(io.StringIO(out))}
+for name in names:
+    assert rows[name]["type"] == "integer", name
+=== END AC typ001-integer-detected ===
+
+=== AC typ001-non-integer-rejected ===
+Intent: Columns with a decimal, a plus sign, an exponent, or a non-numeric value, and columns with no non-null value, are not typed integer.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+columns = {
+    "decimal": ["1", "2.5", "3", "4"],
+    "plus": ["+1", "2", "3", "4"],
+    "exponent": ["1e3", "2", "3", "4"],
+    "word": ["1", "two", "3", "4"],
+    "all_null": ["", "NA", "N/A", "NULL"],
+}
+names = list(columns)
+count = len(columns[names[0]])
+body = io.StringIO()
+writer = csv.writer(body, lineterminator="\n")
+writer.writerow(names)
+for i in range(count):
+    writer.writerow([columns[k][i] for k in names])
+
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, "t.csv")
+    with open(path, "w", newline="") as f:
+        f.write(body.getvalue())
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 0
+rows = {r["column"]: r for r in csv.DictReader(io.StringIO(out))}
+for name in names:
+    assert rows[name]["type"] != "integer", name
+=== END AC typ001-non-integer-rejected ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Inference uses only the values of the file examined; no column name or value is hardcoded.
+- Null values never influence the type.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-Type-Number.md ===
+# FEATURE: Type Number
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Infer number columns for decimal values that are not all integers. |
+| Depends On  | FEATURE-Type-Integer.md |
+| Provides    | type number |
+| Consumes    | csvdata.IsNull |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Extend the type ladder so columns with decimal values are typed `number`.
+
+## Behavior
+
+- A column that is not `integer` is `number` when every non-null trimmed value matches
+  `-?[0-9]+(\.[0-9]+)?`.
+- A column of only integer-shaped values stays `integer` (first match wins).
+- Forms such as `1.`, `.5`, `+1`, `1e3`, and `1,5` are not numbers.
+- Null values are ignored; a column with no non-null value is never `number`.
+
+## Programmatic Acceptance
+
+=== AC typ002-number-detected ===
+Intent: Columns mixing integers and decimals, including negatives and padding and nulls, are typed number.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+columns = {
+    "mixed": ["1", "2.50", "-3", "4"],
+    "all_decimal": ["0.5", "-0.25", "3.14159", "10.0"],
+    "padded": [" 1.5 ", "2", "3", "4"],
+    "with_nulls": ["1.5", "", "NA", "N/A"],
+}
+names = list(columns)
+count = len(columns[names[0]])
+body = io.StringIO()
+writer = csv.writer(body, lineterminator="\n")
+writer.writerow(names)
+for i in range(count):
+    writer.writerow([columns[k][i] for k in names])
+
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, "t.csv")
+    with open(path, "w", newline="") as f:
+        f.write(body.getvalue())
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 0
+rows = {r["column"]: r for r in csv.DictReader(io.StringIO(out))}
+for name in names:
+    assert rows[name]["type"] == "number", name
+=== END AC typ002-number-detected ===
+
+=== AC typ002-integer-wins-and-malformed-rejected ===
+Intent: An all-integer column stays integer, and malformed decimal forms are typed neither number nor integer.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+columns = {
+    "ints": ["1", "2", "3", "4"],
+    "trailing_dot": ["1.", "2.5", "3", "4"],
+    "leading_dot": [".5", "2.5", "3", "4"],
+    "plus": ["+1.5", "2.5", "3", "4"],
+    "exponent": ["1e3", "2.5", "3", "4"],
+    "words": ["1.5", "abc", "3", "4"],
+}
+names = list(columns)
+count = len(columns[names[0]])
+body = io.StringIO()
+writer = csv.writer(body, lineterminator="\n")
+writer.writerow(names)
+for i in range(count):
+    writer.writerow([columns[k][i] for k in names])
+
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, "t.csv")
+    with open(path, "w", newline="") as f:
+        f.write(body.getvalue())
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 0
+rows = {r["column"]: r for r in csv.DictReader(io.StringIO(out))}
+assert rows["ints"]["type"] == "integer"
+for name in names[1:]:
+    assert rows[name]["type"] not in ("number", "integer"), name
+=== END AC typ002-integer-wins-and-malformed-rejected ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Inference uses only the values of the file examined.
+- Integer takes precedence over number whenever both patterns are satisfied.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-Type-Date.md ===
+# FEATURE: Type Date
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Infer date columns whose non-null values are real YYYY-MM-DD calendar dates. |
+| Depends On  | FEATURE-Type-Number.md |
+| Provides    | type date |
+| Consumes    | csvdata.IsNull |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Extend the type ladder so columns of calendar dates are typed `date`.
+
+## Behavior
+
+- A column that is neither `integer` nor `number` is `date` when every non-null trimmed value
+  matches `YYYY-MM-DD` (four digits, two digits, two digits, hyphen separated) and is a real
+  calendar date.
+- Validate the shape first, then the calendar with `time.Parse` on the `2006-01-02` layout.
+  Leap days are valid only in leap years.
+- A single impossible date (for example a February 30) means the column is not `date`; it falls
+  through to later types.
+- Null values are ignored; a column with no non-null value is never `date`.
+
+## Programmatic Acceptance
+
+=== AC typ003-date-detected ===
+Intent: Columns of real calendar dates, including a leap day, padding, and nulls, are typed date.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+columns = {
+    "plain": ["2025-01-15", "2024-12-31", "2019-06-01", "2020-02-10"],
+    "leap_day": ["2024-02-29", "2025-03-01", "2025-03-02", "2025-03-03"],
+    "padded": [" 2025-01-15 ", "2025-01-16", "2025-01-17", "2025-01-18"],
+    "with_nulls": ["2025-01-15", "", "NA", "NULL"],
+}
+names = list(columns)
+count = len(columns[names[0]])
+body = io.StringIO()
+writer = csv.writer(body, lineterminator="\n")
+writer.writerow(names)
+for i in range(count):
+    writer.writerow([columns[k][i] for k in names])
+
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, "t.csv")
+    with open(path, "w", newline="") as f:
+        f.write(body.getvalue())
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 0
+rows = {r["column"]: r for r in csv.DictReader(io.StringIO(out))}
+for name in names:
+    assert rows[name]["type"] == "date", name
+=== END AC typ003-date-detected ===
+
+=== AC typ003-invalid-dates-rejected ===
+Intent: A column with an impossible date, a non-leap leap day, a bad month, or a non-padded form is not typed date.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+columns = {
+    "feb30": ["2025-01-15", "2025-02-30", "2025-03-01", "2025-03-02"],
+    "feb29_non_leap": ["2023-02-29", "2025-03-01", "2025-03-02", "2025-03-03"],
+    "month13": ["2025-13-01", "2025-03-01", "2025-03-02", "2025-03-03"],
+    "unpadded": ["2025-1-5", "2025-03-01", "2025-03-02", "2025-03-03"],
+    "compact": ["20250115", "20250116", "20250117", "20250118"],
+}
+names = list(columns)
+count = len(columns[names[0]])
+body = io.StringIO()
+writer = csv.writer(body, lineterminator="\n")
+writer.writerow(names)
+for i in range(count):
+    writer.writerow([columns[k][i] for k in names])
+
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, "t.csv")
+    with open(path, "w", newline="") as f:
+        f.write(body.getvalue())
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 0
+rows = {r["column"]: r for r in csv.DictReader(io.StringIO(out))}
+for name in names:
+    assert rows[name]["type"] != "date", name
+=== END AC typ003-invalid-dates-rejected ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Inference uses only the values of the file examined.
+- Integer and number take precedence over date whenever their patterns are satisfied.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-Type-Boolean.md ===
+# FEATURE: Type Boolean
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Infer boolean columns whose non-null values are true or false in any letter case. |
+| Depends On  | FEATURE-Type-Date.md |
+| Provides    | type boolean |
+| Consumes    | csvdata.IsNull |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Extend the type ladder so columns of true/false values are typed `boolean`.
+
+## Behavior
+
+- A column that is not `integer`, `number`, or `date` is `boolean` when every non-null trimmed
+  value equals `true` or `false` ignoring case.
+- `1`, `0`, `yes`, `no`, `t`, and `f` are not boolean. A column of `0` and `1` is `integer`
+  because the ladder takes the first match.
+- Null values are ignored; a column with no non-null value is never `boolean`.
+
+## Programmatic Acceptance
+
+=== AC typ004-boolean-detected ===
+Intent: Columns of true/false in any letter case, with padding and nulls, are typed boolean.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+columns = {
+    "mixed_case": ["true", "FALSE", "True", "false"],
+    "upper": ["TRUE", "FALSE", "TRUE", "FALSE"],
+    "padded": [" true ", "false", "false", "true"],
+    "with_nulls": ["true", "", "NA", "N/A"],
+    "single_value": ["false", "false", "false", "false"],
+}
+names = list(columns)
+count = len(columns[names[0]])
+body = io.StringIO()
+writer = csv.writer(body, lineterminator="\n")
+writer.writerow(names)
+for i in range(count):
+    writer.writerow([columns[k][i] for k in names])
+
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, "t.csv")
+    with open(path, "w", newline="") as f:
+        f.write(body.getvalue())
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 0
+rows = {r["column"]: r for r in csv.DictReader(io.StringIO(out))}
+for name in names:
+    assert rows[name]["type"] == "boolean", name
+=== END AC typ004-boolean-detected ===
+
+=== AC typ004-non-boolean-rejected ===
+Intent: Yes/no words, a stray word among booleans, and short forms are not boolean, and a 0/1 column stays integer.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+columns = {
+    "zero_one": ["0", "1", "1", "0"],
+    "yes_no": ["yes", "no", "yes", "no"],
+    "stray": ["true", "false", "maybe", "true"],
+    "short": ["t", "f", "t", "f"],
+}
+names = list(columns)
+count = len(columns[names[0]])
+body = io.StringIO()
+writer = csv.writer(body, lineterminator="\n")
+writer.writerow(names)
+for i in range(count):
+    writer.writerow([columns[k][i] for k in names])
+
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, "t.csv")
+    with open(path, "w", newline="") as f:
+        f.write(body.getvalue())
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 0
+rows = {r["column"]: r for r in csv.DictReader(io.StringIO(out))}
+assert rows["zero_one"]["type"] == "integer"
+for name in names[1:]:
+    assert rows[name]["type"] != "boolean", name
+=== END AC typ004-non-boolean-rejected ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Inference uses only the values of the file examined.
+- Integer, number, and date take precedence over boolean whenever their patterns are satisfied.
+=== END ARTIFACT ===

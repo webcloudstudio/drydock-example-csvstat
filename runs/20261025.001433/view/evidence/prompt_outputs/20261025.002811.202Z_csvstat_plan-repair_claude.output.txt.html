@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/prompt_outputs/20261025.002811.202Z_csvstat_plan-repair_claude.output.txt</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/prompt_outputs/20261025.002811.202Z_csvstat_plan-repair_claude.output.txt</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/prompt_outputs/20261025.002811.202Z_csvstat_plan-repair_claude.output.txt">Raw file</a></div></header>
+<article class="doc"><pre>=== AC FEATURE-ColumnSelect.md :: colselect-only-named-column ===
+Intent: The output of --column contains one data row whose first cell is the name supplied, even for the last column of the file.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+names = [&quot;alpha&quot;, &quot;beta&quot;, &quot;gamma&quot;, &quot;delta&quot;]
+text = &quot;,&quot;.join(names) + &quot;\n1,x,true,2025-01-02\n2,y,false,2025-02-03\n&quot;
+for name in names:
+    code, out, err = run(text, &quot;--column&quot;, name)
+    print(out)
+    print(err)
+    assert code == 0
+    rows = list(csv.reader(io.StringIO(out)))
+    assert len(rows) == 2
+    assert rows[1][0] == name
+=== END AC FEATURE-ColumnSelect.md :: colselect-only-named-column ===
+=== AC FEATURE-ColumnSelect.md :: colselect-trimmed-header-and-values ===
+Intent: A padded header is selected by its trimmed name and the padded values are trimmed before they are profiled.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+name = &quot;Name&quot;
+text = &quot;id,  &quot; + name + &quot;  \n1,  Acme  \n2,Acme\n3,Globex\n&quot;
+code, out, err = run(text, &quot;--column&quot;, name)
+print(out)
+print(err)
+assert code == 0
+rows = list(csv.reader(io.StringIO(out)))
+assert len(rows) == 2
+assert rows[1][0] == name
+assert rows[1][2] == &quot;3&quot;
+assert rows[1][4] == &quot;2&quot;
+=== END AC FEATURE-ColumnSelect.md :: colselect-trimmed-header-and-values ===
+=== AC FEATURE-DecimalFormat.md :: decimalformat-number-columns ===
+Intent: Every number min, max, sum, mean, and median is written with exactly two decimals rounded half away from zero from the exact value.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from decimal import Decimal, ROUND_HALF_UP, getcontext
+from fractions import Fraction
+
+from drydock_go import cli_runner
+
+
+def fmt(fr):
+    getcontext().prec = 200
+    d = Decimal(fr.numerator) / Decimal(fr.denominator)
+    return str(d.quantize(Decimal(&quot;0.01&quot;), rounding=ROUND_HALF_UP))
+
+
+def median(vals):
+    s = sorted(vals)
+    n = len(s)
+    if n % 2:
+        return s[n // 2]
+    return (s[n // 2 - 1] + s[n // 2]) / 2
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+cases = [[&quot;1.255&quot;, &quot;3&quot;, &quot;4.5&quot;], [&quot;2.675&quot;], [&quot;-2.675&quot;, &quot;-1.004&quot;, &quot;10.125&quot;], [&quot;1234567.891&quot;, &quot;0.5&quot;]]
+for vals in cases:
+    text = &quot;v\n&quot; + &quot;\n&quot;.join(vals) + &quot;\n&quot;
+    code, out, err = run(text)
+    print(out)
+    print(err)
+    assert code == 0
+    row = list(csv.reader(io.StringIO(out)))[1]
+    frs = [Fraction(v) for v in vals]
+    assert row[1] == &quot;number&quot;
+    assert row[5] == fmt(min(frs))
+    assert row[6] == fmt(max(frs))
+    assert row[7] == fmt(sum(frs))
+    assert row[8] == fmt(sum(frs) / len(frs))
+    assert row[9] == fmt(median(frs))
+=== END AC FEATURE-DecimalFormat.md :: decimalformat-number-columns ===
+=== AC FEATURE-DecimalFormat.md :: decimalformat-integer-columns ===
+Intent: Integer min, max, and sum are plain integers while integer mean and median carry exactly two decimals.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from decimal import Decimal, ROUND_HALF_UP, getcontext
+from fractions import Fraction
+
+from drydock_go import cli_runner
+
+
+def fmt(fr):
+    getcontext().prec = 200
+    d = Decimal(fr.numerator) / Decimal(fr.denominator)
+    return str(d.quantize(Decimal(&quot;0.01&quot;), rounding=ROUND_HALF_UP))
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+vals = [-5, 12, 7, 1000, 2]
+text = &quot;v\n&quot; + &quot;\n&quot;.join(str(v) for v in vals) + &quot;\n&quot;
+code, out, err = run(text)
+print(out)
+print(err)
+assert code == 0
+row = list(csv.reader(io.StringIO(out)))[1]
+s = sorted(vals)
+assert row[1] == &quot;integer&quot;
+assert row[5] == str(min(vals))
+assert row[6] == str(max(vals))
+assert row[7] == str(sum(vals))
+assert row[8] == fmt(Fraction(sum(vals), len(vals)))
+assert row[9] == fmt(Fraction(s[len(s) // 2]))
+for cell in (row[5], row[6], row[7]):
+    assert &quot;.&quot; not in cell
+for cell in (row[8], row[9]):
+    assert len(cell.split(&quot;.&quot;)[1]) == 2
+=== END AC FEATURE-DecimalFormat.md :: decimalformat-integer-columns ===
+=== AC FEATURE-DecimalFormat.md :: decimalformat-single-rounding ===
+Intent: Rounding happens once from the exact value, so a value that double rounding would push up stays down.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from decimal import Decimal, ROUND_HALF_UP, getcontext
+from fractions import Fraction
+
+from drydock_go import cli_runner
+
+
+def fmt(fr):
+    getcontext().prec = 200
+    d = Decimal(fr.numerator) / Decimal(fr.denominator)
+    return str(d.quantize(Decimal(&quot;0.01&quot;), rounding=ROUND_HALF_UP))
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+vals = [&quot;1.0049&quot;, &quot;1.0049&quot;]
+text = &quot;v\n&quot; + &quot;\n&quot;.join(vals) + &quot;\n&quot;
+code, out, err = run(text)
+print(out)
+print(err)
+assert code == 0
+row = list(csv.reader(io.StringIO(out)))[1]
+exact = Fraction(vals[0])
+assert row[5] == fmt(exact)
+assert row[8] == fmt(exact)
+assert row[9] == fmt(exact)
+assert Decimal(row[8]) &lt; Decimal(vals[0]) + Decimal(&quot;0.005&quot;)
+=== END AC FEATURE-DecimalFormat.md :: decimalformat-single-rounding ===
+=== AC FEATURE-DecimalFormat.md :: decimalformat-no-negative-zero ===
+Intent: A negative value that rounds to zero is written as an unsigned zero with two decimals.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+vals = [&quot;-0.001&quot;, &quot;-0.002&quot;]
+text = &quot;v\n&quot; + &quot;\n&quot;.join(vals) + &quot;\n&quot;
+code, out, err = run(text)
+print(out)
+print(err)
+assert code == 0
+row = list(csv.reader(io.StringIO(out)))[1]
+assert row[1] == &quot;number&quot;
+for cell in row[5:10]:
+    assert not cell.startswith(&quot;-&quot;)
+    assert len(cell.split(&quot;.&quot;)[1]) == 2
+    assert int(cell.split(&quot;.&quot;)[0]) == 0
+    assert int(cell.split(&quot;.&quot;)[1]) == 0
+=== END AC FEATURE-DecimalFormat.md :: decimalformat-no-negative-zero ===
+=== AC FEATURE-Median.md :: median-odd-and-even-integers ===
+Intent: The median is the middle value of an odd count and the mean of the two middle values of an even count, regardless of input order.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from decimal import Decimal, ROUND_HALF_UP, getcontext
+from fractions import Fraction
+
+from drydock_go import cli_runner
+
+
+def fmt(fr):
+    getcontext().prec = 200
+    d = Decimal(fr.numerator) / Decimal(fr.denominator)
+    return str(d.quantize(Decimal(&quot;0.01&quot;), rounding=ROUND_HALF_UP))
+
+
+def median(vals):
+    s = sorted(vals)
+    n = len(s)
+    if n % 2:
+        return Fraction(s[n // 2])
+    return Fraction(s[n // 2 - 1] + s[n // 2], 2)
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+for vals in ([9, 1, 5, 7, 3], [8, 2, 6, 4], [42], [3, -10, 7, 7, 0, -4]):
+    text = &quot;v\n&quot; + &quot;\n&quot;.join(str(v) for v in vals) + &quot;\n&quot;
+    code, out, err = run(text)
+    print(out)
+    print(err)
+    assert code == 0
+    row = list(csv.reader(io.StringIO(out)))[1]
+    assert row[1] == &quot;integer&quot;
+    assert row[9] == fmt(median(vals))
+=== END AC FEATURE-Median.md :: median-odd-and-even-integers ===
+=== AC FEATURE-Median.md :: median-number-exact-rounding ===
+Intent: A number median that falls on a tie is rounded half away from zero from the exact value, for positive and negative values.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from decimal import Decimal, ROUND_HALF_UP, getcontext
+from fractions import Fraction
+
+from drydock_go import cli_runner
+
+
+def fmt(fr):
+    getcontext().prec = 200
+    d = Decimal(fr.numerator) / Decimal(fr.denominator)
+    return str(d.quantize(Decimal(&quot;0.01&quot;), rounding=ROUND_HALF_UP))
+
+
+def median(vals):
+    s = sorted(vals)
+    n = len(s)
+    if n % 2:
+        return s[n // 2]
+    return (s[n // 2 - 1] + s[n // 2]) / 2
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+cases = [[&quot;0.01&quot;, &quot;0.02&quot;], [&quot;-0.01&quot;, &quot;-0.02&quot;], [&quot;1.5&quot;, &quot;2.25&quot;, &quot;9.125&quot;], [&quot;2.675&quot;, &quot;2.675&quot;], [&quot;100&quot;, &quot;0.5&quot;]]
+for vals in cases:
+    text = &quot;v\n&quot; + &quot;\n&quot;.join(vals) + &quot;\n&quot;
+    code, out, err = run(text)
+    print(out)
+    print(err)
+    assert code == 0
+    row = list(csv.reader(io.StringIO(out)))[1]
+    assert row[1] == &quot;number&quot;
+    assert row[9] == fmt(median([Fraction(v) for v in vals]))
+=== END AC FEATURE-Median.md :: median-number-exact-rounding ===
+=== AC FEATURE-Median.md :: median-nulls-skipped ===
+Intent: Null values are excluded when counting and ordering values for the median.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from decimal import Decimal, ROUND_HALF_UP, getcontext
+from fractions import Fraction
+
+from drydock_go import cli_runner
+
+
+def fmt(fr):
+    getcontext().prec = 200
+    d = Decimal(fr.numerator) / Decimal(fr.denominator)
+    return str(d.quantize(Decimal(&quot;0.01&quot;), rounding=ROUND_HALF_UP))
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+cells = [&quot;50&quot;, &quot;NA&quot;, &quot;&quot;, &quot;10&quot;, &quot;N/A&quot;, &quot;30&quot;, &quot;NULL&quot;, &quot;20&quot;]
+text = &quot;k,v\n&quot; + &quot;\n&quot;.join(&quot;a,&quot; + c for c in cells) + &quot;\n&quot;
+code, out, err = run(text)
+print(out)
+print(err)
+assert code == 0
+row = list(csv.reader(io.StringIO(out)))[2]
+nonnull = sorted([50, 10, 30, 20])
+expected = Fraction(nonnull[1] + nonnull[2], 2)
+assert row[0] == &quot;v&quot;
+assert row[9] == fmt(expected)
+=== END AC FEATURE-Median.md :: median-nulls-skipped ===
+=== AC FEATURE-Median.md :: median-blank-for-other-types ===
+Intent: Text, date, boolean, and empty columns leave median blank.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+text = &quot;t,d,b,e,n\nabc,2025-01-31,true,NA,1\nxyz,2024-12-01,False,,2\n&quot;
+code, out, err = run(text)
+print(out)
+print(err)
+assert code == 0
+rows = list(csv.reader(io.StringIO(out)))
+by_name = {r[0]: r for r in rows[1:]}
+for name in (&quot;t&quot;, &quot;d&quot;, &quot;b&quot;, &quot;e&quot;):
+    assert by_name[name][9] == &quot;&quot;
+assert by_name[&quot;n&quot;][9] != &quot;&quot;
+=== END AC FEATURE-Median.md :: median-blank-for-other-types ===
+=== AC FEATURE-SumMean.md :: summean-integer-exact ===
+Intent: An integer column reports the exact integer sum and the two-decimal mean of its values.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from decimal import Decimal, ROUND_HALF_UP, getcontext
+from fractions import Fraction
+
+from drydock_go import cli_runner
+
+
+def fmt(fr):
+    getcontext().prec = 200
+    d = Decimal(fr.numerator) / Decimal(fr.denominator)
+    return str(d.quantize(Decimal(&quot;0.01&quot;), rounding=ROUND_HALF_UP))
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+vals = [4, -7, 12, 100, 3]
+text = &quot;v\n&quot; + &quot;\n&quot;.join(str(v) for v in vals) + &quot;\n&quot;
+code, out, err = run(text)
+print(out)
+print(err)
+assert code == 0
+rows = list(csv.reader(io.StringIO(out)))
+row = rows[1]
+total = sum(vals)
+assert row[1] == &quot;integer&quot;
+assert row[7] == str(total)
+assert row[8] == fmt(Fraction(total, len(vals)))
+=== END AC FEATURE-SumMean.md :: summean-integer-exact ===
+=== AC FEATURE-SumMean.md :: summean-integer-bigint ===
+Intent: Integer sums beyond 64 bits are computed with arbitrary precision and never overflow.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from decimal import Decimal, ROUND_HALF_UP, getcontext
+from fractions import Fraction
+
+from drydock_go import cli_runner
+
+
+def fmt(fr):
+    getcontext().prec = 200
+    d = Decimal(fr.numerator) / Decimal(fr.denominator)
+    return str(d.quantize(Decimal(&quot;0.01&quot;), rounding=ROUND_HALF_UP))
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+vals = [10**30 + 7, 10**30 + 9, -(10**29), 99999999999999999999]
+text = &quot;v\n&quot; + &quot;\n&quot;.join(str(v) for v in vals) + &quot;\n&quot;
+code, out, err = run(text)
+print(out)
+print(err)
+assert code == 0
+row = list(csv.reader(io.StringIO(out)))[1]
+total = sum(vals)
+assert row[7] == str(total)
+assert row[8] == fmt(Fraction(total, len(vals)))
+=== END AC FEATURE-SumMean.md :: summean-integer-bigint ===
+=== AC FEATURE-SumMean.md :: summean-number-exact-decimal ===
+Intent: Number sums and means come from exact decimal values and are rounded half away from zero once.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from decimal import Decimal, ROUND_HALF_UP, getcontext
+from fractions import Fraction
+
+from drydock_go import cli_runner
+
+
+def fmt(fr):
+    getcontext().prec = 200
+    d = Decimal(fr.numerator) / Decimal(fr.denominator)
+    return str(d.quantize(Decimal(&quot;0.01&quot;), rounding=ROUND_HALF_UP))
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+cases = [[&quot;2.675&quot;], [&quot;0.1&quot;, &quot;0.2&quot;, &quot;0.7&quot;], [&quot;-2.675&quot;, &quot;1.005&quot;, &quot;3&quot;], [&quot;1.0049&quot;, &quot;1.0049&quot;]]
+for vals in cases:
+    text = &quot;v\n&quot; + &quot;\n&quot;.join(vals) + &quot;\n&quot;
+    code, out, err = run(text)
+    print(out)
+    print(err)
+    assert code == 0
+    row = list(csv.reader(io.StringIO(out)))[1]
+    frs = [Fraction(v) for v in vals]
+    total = sum(frs)
+    assert row[1] == &quot;number&quot;
+    assert row[7] == fmt(total)
+    assert row[8] == fmt(total / len(frs))
+=== END AC FEATURE-SumMean.md :: summean-number-exact-decimal ===
+=== AC FEATURE-SumMean.md :: summean-nulls-skipped ===
+Intent: Null values are excluded from both the sum and the divisor of the mean.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from decimal import Decimal, ROUND_HALF_UP, getcontext
+from fractions import Fraction
+
+from drydock_go import cli_runner
+
+
+def fmt(fr):
+    getcontext().prec = 200
+    d = Decimal(fr.numerator) / Decimal(fr.denominator)
+    return str(d.quantize(Decimal(&quot;0.01&quot;), rounding=ROUND_HALF_UP))
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+cells = [&quot;10&quot;, &quot;&quot;, &quot;NA&quot;, &quot; n/a &quot;, &quot;20&quot;, &quot;Null&quot;, &quot;35&quot;]
+text = &quot;k,v\n&quot; + &quot;\n&quot;.join(&quot;a,&quot; + c for c in cells) + &quot;\n&quot;
+code, out, err = run(text)
+print(out)
+print(err)
+assert code == 0
+row = list(csv.reader(io.StringIO(out)))[2]
+nonnull = [10, 20, 35]
+assert row[0] == &quot;v&quot;
+assert row[1] == &quot;integer&quot;
+assert row[7] == str(sum(nonnull))
+assert row[8] == fmt(Fraction(sum(nonnull), len(nonnull)))
+=== END AC FEATURE-SumMean.md :: summean-nulls-skipped ===
+=== AC FEATURE-SumMean.md :: summean-blank-for-other-types ===
+Intent: Text, date, boolean, and empty columns leave sum and mean blank.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+
+def run(text, *opts):
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, &quot;data.csv&quot;)
+        with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh:
+            fh.write(text)
+        code, out, err = cli_runner(*opts, p)
+        assert code == 0
+        return code, out, err
+
+
+text = &quot;t,d,b,e,n\nabc,2025-01-31,true,NA,1\nxyz,2024-12-01,False,,2\n&quot;
+code, out, err = run(text)
+print(out)
+print(err)
+assert code == 0
+rows = list(csv.reader(io.StringIO(out)))
+by_name = {r[0]: r for r in rows[1:]}
+for name in (&quot;t&quot;, &quot;d&quot;, &quot;b&quot;, &quot;e&quot;):
+    assert by_name[name][7] == &quot;&quot;
+    assert by_name[name][8] == &quot;&quot;
+assert by_name[&quot;n&quot;][7] != &quot;&quot;
+assert by_name[&quot;n&quot;][8] != &quot;&quot;
+=== END AC FEATURE-SumMean.md :: summean-blank-for-other-types ===</pre></article>
+</main>
+</body>
+</html>

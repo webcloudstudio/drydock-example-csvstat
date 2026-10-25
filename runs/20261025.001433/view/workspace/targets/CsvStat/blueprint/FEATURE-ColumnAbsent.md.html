@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-ColumnAbsent.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-ColumnAbsent.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-ColumnAbsent.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Column Absent</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Reject a --column or --freq name that is not in the header with exit code 3 and nothing on standard output.</td></tr><tr><td>Depends On</td><td>FEATURE-ColumnSelect.md, FEATURE-RejectMalformed.md</td></tr><tr><td>Provides</td><td>exit 3 for an absent column name</td></tr><tr><td>Consumes</td><td>csvstat --column &lt;name&gt; &lt;file&gt;, csvstat --freq &lt;name&gt; &lt;file&gt;, rejection exit mapping</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>A misspelled or absent column name is a rejected request, not an empty result. The caller must be able to tell it apart from a usage error (exit 2) and from an unreadable file (exit 1).</p>
+<h2>Trigger</h2>
+<p><code>csvstat --column &lt;name&gt; &lt;file&gt;</code> or <code>csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</code> where <code>&lt;name&gt;</code> matches no trimmed header name of the file.</p>
+<h2>Behavior</h2>
+<ul><li>Matching is exact and case-sensitive against trimmed header names (<code>salary</code> does not select</li></ul>
+<p><code>Salary</code>).</p>
+<ul><li>The check happens after the file is read and validated and before any output is written, so</li></ul>
+<p>standard output stays empty.</p>
+<ul><li>The process exits 3 and writes one diagnostic line to standard error naming the file.</li><li>A name that is present is unaffected and continues to succeed.</li><li>A file that cannot be read still exits 1 first, and a usage error still exits 2 first; this</li></ul>
+<p>story only owns the absent-name rejection.</p>
+<ul><li>A file that is itself rejected (empty, ragged, bad header) exits 3 for that reason, with the same</li></ul>
+<p>empty standard output.</p>
+<h2>Reads</h2>
+<ul><li>The CSV file header after trimming.</li></ul>
+<h2>Writes</h2>
+<ul><li>One diagnostic line on standard error. Nothing on standard output.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC colabsent-column-exit-3 ===<br>Intent: --column with a name absent from the header exits 3 and writes nothing to standard output.<br>Suite: scoped<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import cli_runner</p>
+<p>for path in (&quot;sources/orders.csv&quot;, &quot;sources/employees.csv&quot;, &quot;sources/sensors.csv&quot;, &quot;sources/header_only.csv&quot;): code, out, err = cli_runner(&quot;--column&quot;, &quot;no_such_column&quot;, path) print(out) print(err) assert code == 3 assert out == &quot;&quot; === END AC colabsent-column-exit-3 ===</p>
+<p>=== AC colabsent-freq-exit-3 ===<br>Intent: --freq with a name absent from the header exits 3 and writes nothing to standard output, with and without --top.<br>Suite: scoped<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import cli_runner</p>
+<p>for path in (&quot;sources/orders.csv&quot;, &quot;sources/employees.csv&quot;, &quot;sources/sensors.csv&quot;): for extra in ([], [&quot;--top&quot;, &quot;2&quot;]): code, out, err = cli_runner(&quot;--freq&quot;, &quot;no_such_column&quot;, *extra, path) print(out) print(err) assert code == 3 assert out == &quot;&quot; === END AC colabsent-freq-exit-3 ===</p>
+<p>=== AC colabsent-case-sensitive ===<br>Intent: A name that differs from a real header name only by letter case is absent and is rejected.<br>Suite: scoped<br>Requires: executable=go; scope=test</p>
+<p>import csv</p>
+<p>from drydock_go import cli_runner</p>
+<p>path = &quot;sources/employees.csv&quot; with open(path, newline=&quot;&quot;) as fh: heads = [h.strip() for h in next(csv.reader(fh))] for name in heads: wrong = name.upper() assert wrong != name for mode in (&quot;--column&quot;, &quot;--freq&quot;): code, out, err = cli_runner(mode, wrong, path) print(out) print(err) assert code == 3 assert out == &quot;&quot; === END AC colabsent-case-sensitive ===</p>
+<p>=== AC colabsent-present-name-still-succeeds ===<br>Intent: Every real header name is accepted by --column and --freq, so rejection is specific to absent names.<br>Suite: scoped<br>Requires: executable=go; scope=test</p>
+<p>import csv</p>
+<p>from drydock_go import cli_runner</p>
+<p>path = &quot;sources/orders.csv&quot; with open(path, newline=&quot;&quot;) as fh: heads = [h.strip() for h in next(csv.reader(fh))] for name in heads: for mode in (&quot;--column&quot;, &quot;--freq&quot;): code, out, err = cli_runner(mode, name, path) print(out) print(err) assert code == 0 assert out != &quot;&quot; === END AC colabsent-present-name-still-succeeds ===</p>
+<p>=== AC colabsent-header-only-and-ragged ===<br>Intent: An absent name is rejected for a header-only file, and a ragged file is rejected with exit 3 whatever name is given.<br>Suite: scoped<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import cli_runner</p>
+<p>code, out, err = cli_runner(&quot;--column&quot;, &quot;no_such_column&quot;, &quot;sources/header_only.csv&quot;) print(out) print(err) assert code == 3 assert out == &quot;&quot;</p>
+<p>for args in ([&quot;--column&quot;, &quot;no_such_column&quot;], [&quot;--freq&quot;, &quot;no_such_column&quot;], [&quot;--column&quot;, &quot;sku&quot;]): code, out, err = cli_runner(*args, &quot;sources/ragged.csv&quot;) print(out) print(err) assert code == 3 assert out == &quot;&quot; === END AC colabsent-header-only-and-ragged ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Nothing is written to standard output when the name is absent, not even a header.</li><li>An absent name is exit 3, never exit 1 or exit 2.</li><li>Application code never reads <code>sources/run.sh</code> or any supplied data file and never embeds an answer.</li></ul></article>
+</main>
+</body>
+</html>

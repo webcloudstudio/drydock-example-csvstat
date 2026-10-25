@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-UnreadableFile.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-UnreadableFile.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-UnreadableFile.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Unreadable File</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Maps a file that cannot be opened or read to exit code 1 with nothing on standard output.</td></tr><tr><td>Depends On</td><td>FEATURE-CliParsing.md, ARCHITECTURE.md</td></tr><tr><td>Provides</td><td>exit code 1</td></tr><tr><td>Consumes</td><td>csvstat [--column &lt;name&gt;] &lt;file&gt;, csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>An operational failure to obtain the input is reported as exit 1, distinct from a usage error (2) and from rejected content (3).</p>
+<h2>Behavior</h2>
+<ul><li>A path that does not exist, cannot be opened, is a directory, or fails while being read exits 1.</li><li>Nothing is written to standard output.</li><li>One diagnostic line on standard error names the file.</li><li>The rule applies to the profile form and the <code>--freq</code> form alike.</li><li>Arguments are validated first, so a well-formed command line naming an unreadable file is exit 1</li></ul>
+<p>and a malformed one is exit 2.</p>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC unreadable-missing-path ===<br>Intent: A path that does not exist exits 1 with empty standard output.<br>Suite: scoped<br>Requires: python-package=drydock_go; scope=test</p>
+<p>import os</p>
+<p>from drydock_go import cli_runner</p>
+<p>missing = os.path.abspath(&quot;no-such-file-for-unreadable-check.csv&quot;) assert not os.path.exists(missing) code, out, err = cli_runner(missing) print(err) assert code == 1, (code, out, err) assert out == &quot;&quot;, out === END AC unreadable-missing-path ===</p>
+<p>=== AC unreadable-directory ===<br>Intent: A path that is a directory exits 1 with empty standard output.<br>Suite: scoped<br>Requires: python-package=drydock_go; scope=test</p>
+<p>import os</p>
+<p>from drydock_go import cli_runner</p>
+<p>directory = os.path.abspath(&quot;sources&quot;) assert os.path.isdir(directory) code, out, err = cli_runner(directory) print(err) assert code == 1, (code, out, err) assert out == &quot;&quot;, out === END AC unreadable-directory ===</p>
+<p>=== AC unreadable-with-options ===<br>Intent: The --column and --freq forms also exit 1 for an unreadable file.<br>Suite: scoped<br>Requires: python-package=drydock_go; scope=test</p>
+<p>import os</p>
+<p>from drydock_go import cli_runner</p>
+<p>missing = os.path.abspath(&quot;no-such-file-for-unreadable-check.csv&quot;) assert not os.path.exists(missing)</p>
+<p>code, out, err = cli_runner(&quot;--column&quot;, &quot;qty&quot;, missing) print(err) assert code == 1, (code, out, err) assert out == &quot;&quot;, out</p>
+<p>code, out, err = cli_runner(&quot;--freq&quot;, &quot;qty&quot;, &quot;--top&quot;, &quot;2&quot;, missing) print(err) assert code == 1, (code, out, err) assert out == &quot;&quot;, out === END AC unreadable-with-options ===</p>
+<p>=== AC unreadable-diagnostic-on-stderr ===<br>Intent: The failure is reported on standard error and names the file.<br>Suite: scoped<br>Requires: python-package=drydock_go; scope=test</p>
+<p>import os</p>
+<p>from drydock_go import cli_runner</p>
+<p>missing = os.path.abspath(&quot;no-such-file-for-unreadable-check.csv&quot;) code, out, err = cli_runner(missing) print(err) assert code == 1, (code, out, err) assert out == &quot;&quot;, out assert os.path.basename(missing) in err === END AC unreadable-diagnostic-on-stderr ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>An unreadable file never produces standard output.</li><li>An unreadable file is never exit 2 or 3.</li><li>Application code never reads <code>sources/run.sh</code> or any supplied data file.</li></ul></article>
+</main>
+</body>
+</html>

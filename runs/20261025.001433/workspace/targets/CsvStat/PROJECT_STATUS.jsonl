@@ -1,0 +1,8 @@
+{"label": "INITIALIZED", "result": "pass", "at": "2026-10-25T00:14:35.979+00:00", "detail": "", "command": "drydock init CsvStat", "attempts": 1}
+{"label": "IMPORTED", "result": "pass", "at": "2026-10-25T00:14:40.773+00:00", "detail": "", "command": "drydock import CsvStat", "attempts": 1}
+{"label": "ANALYZED", "result": "pass", "at": "2026-10-25T00:17:47.244+00:00", "detail": "", "command": "drydock analyze CsvStat", "attempts": 1}
+{"label": "PLAN CREATED", "result": "fail", "at": "2026-10-25T00:27:29.771+00:00", "detail": "15 criteria cannot run", "command": "drydock plan verify CsvStat", "attempts": 2}
+{"label": "PLAN REPAIRED", "result": "pass", "at": "2026-10-25T00:29:31.707+00:00", "detail": "", "command": "drydock plan repair CsvStat", "attempts": 1}
+{"label": "BUILDING", "result": "pass", "at": "2026-10-25T00:30:21.080+00:00", "detail": "", "command": "drydock build CsvStat", "attempts": 1}
+{"label": "BUILT", "result": "fail", "at": "2026-10-25T00:39:26.790+00:00", "detail": "1 step(s) failed", "command": "drydock build CsvStat", "attempts": 1}
+{"state": "BUILT", "result": "fail", "at": "2026-10-25T00:39:26.790+00:00", "attempts": 1}

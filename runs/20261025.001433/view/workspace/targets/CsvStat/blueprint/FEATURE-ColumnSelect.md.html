@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-ColumnSelect.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-ColumnSelect.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-ColumnSelect.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Column Select</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Profile only the column named by --column, writing the profile header and one row.</td></tr><tr><td>Depends On</td><td>FEATURE-CliParsing.md, FEATURE-CsvReading.md, FEATURE-DecimalFormat.md</td></tr><tr><td>Provides</td><td>csvstat --column &lt;name&gt; &lt;file&gt;</td></tr><tr><td>Consumes</td><td>csvstat &lt;file&gt; profile rows, trimmed header names</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>Lets a user profile a single column of a wide file without reading every row of the full profile.</p>
+<h2>Trigger</h2>
+<p><code>csvstat --column &lt;name&gt; &lt;file&gt;</code>. <code>--column</code> cannot be combined with <code>--freq</code> (a usage error owned by <code>FEATURE-UsageErrors.md</code>).</p>
+<h2>Behavior</h2>
+<ul><li>The output is the profile header <code>column,type,rows,nulls,distinct,min,max,sum,mean,median</code></li></ul>
+<p>followed by exactly one row, the row of the named column, identical in every field to the row the full profile writes for that column.</p>
+<ul><li>The <code>&lt;name&gt;</code> argument matches a trimmed header name exactly and case-sensitively. Header names</li></ul>
+<p>are trimmed of leading and trailing spaces before matching, so a file header <code>Name</code> is selected by <code>Name</code>.</p>
+<ul><li>The statistics of the other columns are not written; the named column&#x27;s values are still</li></ul>
+<p>validated like any other (a ragged record still rejects the file).</p>
+<ul><li>A name that is not in the header is rejected with exit 3 (owned by <code>FEATURE-ColumnAbsent.md</code>).</li><li>Output is CSV with <code>\n</code> line endings produced by <code>encoding/csv</code>&#x27;s writer, so a field containing a</li></ul>
+<p>comma, quote, or newline is quoted.</p>
+<ul><li>Success exits 0.</li></ul>
+<h2>Reads</h2>
+<ul><li>The CSV file given on the command line.</li></ul>
+<h2>Writes</h2>
+<ul><li>Standard output only.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC colselect-matches-full-profile-row ===<br>Intent: For every column of the supplied files, --column writes the profile header and exactly the row the full profile writes for that column.<br>Suite: scoped<br>Requires: executable=go; scope=test</p>
+<p>import csv import io</p>
+<p>from drydock_go import cli_runner</p>
+<p>for path in (&quot;sources/employees.csv&quot;, &quot;sources/sensors.csv&quot;, &quot;sources/orders.csv&quot;, &quot;sources/header_only.csv&quot;): code, out, err = cli_runner(path) print(out) print(err) assert code == 0 full = list(csv.reader(io.StringIO(out))) header = full[0] assert len(full) &gt; 1 for row in full[1:]: name = row[0] code, out, err = cli_runner(&quot;--column&quot;, name, path) print(out) print(err) assert code == 0 picked = list(csv.reader(io.StringIO(out))) assert len(picked) == 2 assert picked[0] == header assert picked[1] == row === END AC colselect-matches-full-profile-row ===</p>
+<p>=== AC colselect-only-named-column ===<br>Intent: The output of --column contains one data row whose first cell is the name supplied, even for the last column of the file.<br>Suite: scoped<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>def run(text, *opts): with tempfile.TemporaryDirectory() as d: p = os.path.join(d, &quot;data.csv&quot;) with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh: fh.write(text) code, out, err = cli_runner(*opts, p) assert code == 0 return code, out, err</p>
+<p>names = [&quot;alpha&quot;, &quot;beta&quot;, &quot;gamma&quot;, &quot;delta&quot;] text = &quot;,&quot;.join(names) + &quot;\n1,x,true,2025-01-02\n2,y,false,2025-02-03\n&quot; for name in names: code, out, err = run(text, &quot;--column&quot;, name) print(out) print(err) assert code == 0 rows = list(csv.reader(io.StringIO(out))) assert len(rows) == 2 assert rows[1][0] == name === END AC colselect-only-named-column ===</p>
+<p>=== AC colselect-trimmed-header-and-values ===<br>Intent: A padded header is selected by its trimmed name and the padded values are trimmed before they are profiled.<br>Suite: scoped<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>def run(text, *opts): with tempfile.TemporaryDirectory() as d: p = os.path.join(d, &quot;data.csv&quot;) with open(p, &quot;w&quot;, newline=&quot;&quot;) as fh: fh.write(text) code, out, err = cli_runner(*opts, p) assert code == 0 return code, out, err</p>
+<p>name = &quot;Name&quot; text = &quot;id,  &quot; + name + &quot;  \n1,  Acme  \n2,Acme\n3,Globex\n&quot; code, out, err = run(text, &quot;--column&quot;, name) print(out) print(err) assert code == 0 rows = list(csv.reader(io.StringIO(out))) assert len(rows) == 2 assert rows[1][0] == name assert rows[1][2] == &quot;3&quot; assert rows[1][4] == &quot;2&quot; === END AC colselect-trimmed-header-and-values ===</p>
+<p>=== AC colselect-output-format ===<br>Intent: Selected-column output uses newline line endings only and quotes a field containing a comma as one value.<br>Suite: scoped<br>Requires: executable=go; scope=test</p>
+<p>import csv import io</p>
+<p>from drydock_go import cli_runner</p>
+<p>path = &quot;sources/employees.csv&quot; name = &quot;notes&quot; code, out, err = cli_runner(&quot;--column&quot;, name, path) print(out) print(err) assert code == 0 assert out.endswith(&quot;\n&quot;) assert &quot;\r&quot; not in out rows = list(csv.reader(io.StringIO(out))) assert len(rows) == 2 assert len(rows[0]) == len(rows[1]) with open(path, newline=&quot;&quot;) as fh: recs = list(csv.reader(fh)) i = recs[0].index(name) cells = [r[i].strip() for r in recs[1:]] comma_cells = [c for c in cells if &quot;,&quot; in c] assert comma_cells assert max(c for c in cells if c.lower() not in (&quot;&quot;, &quot;na&quot;, &quot;n/a&quot;, &quot;null&quot;)) == rows[1][6] === END AC colselect-output-format ===</p>
+<p>=== AC colselect-header-only-file ===<br>Intent: Selecting a column of a file with a header and no rows succeeds and reports zero rows.<br>Suite: scoped<br>Requires: executable=go; scope=test</p>
+<p>import csv import io</p>
+<p>from drydock_go import cli_runner</p>
+<p>path = &quot;sources/header_only.csv&quot; with open(path, newline=&quot;&quot;) as fh: name = next(csv.reader(fh))[1].strip() code, out, err = cli_runner(&quot;--column&quot;, name, path) print(out) print(err) assert code == 0 rows = list(csv.reader(io.StringIO(out))) assert len(rows) == 2 assert rows[1][0] == name assert rows[1][1] == &quot;empty&quot; assert rows[1][2] == str(0) === END AC colselect-header-only-file ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li><code>--column</code> never writes more than one data row.</li><li>Column names are not matched case-insensitively and are not fuzzy matched.</li><li>Application code never reads <code>sources/run.sh</code> or any supplied data file and never embeds an answer.</li></ul></article>
+</main>
+</body>
+</html>

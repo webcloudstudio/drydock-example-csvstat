@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/DECISIONS.json</title>
+<link rel="stylesheet" href="../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/DECISIONS.json</h1><div class="filenav"><a href="../../../../index.html">&larr; Report</a><a href="../../../../workspace/targets/CsvStat/DECISIONS.json">Raw file</a></div></header>
+<article class="doc"><pre>[
+  {
+    &quot;id&quot;: &quot;Q-001&quot;,
+    &quot;type&quot;: &quot;choice&quot;,
+    &quot;severity&quot;: &quot;low&quot;,
+    &quot;origin&quot;: &quot;plan&quot;,
+    &quot;blueprint&quot;: &quot;FEATURE-RejectMalformed.md&quot;,
+    &quot;story&quot;: &quot;input-reject&quot;,
+    &quot;status&quot;: &quot;recommended&quot;,
+    &quot;archived&quot;: false,
+    &quot;title&quot;: &quot;Exit code for CSV syntax errors&quot;,
+    &quot;description&quot;: &quot;The sources list only ragged records under exit 3. An encoding/csv syntax error (for example a bare quote) could be exit 1 or exit 3. Chosen: 3, the nearest rejection code, with nothing on stdout.&quot;,
+    &quot;options&quot;: [
+      {
+        &quot;value&quot;: &quot;3&quot;,
+        &quot;label&quot;: &quot;Exit 3 (rejected input)&quot;
+      },
+      {
+        &quot;value&quot;: &quot;1&quot;,
+        &quot;label&quot;: &quot;Exit 1 (operational failure)&quot;
+      }
+    ],
+    &quot;system_choice&quot;: &quot;3&quot;
+  },
+  {
+    &quot;id&quot;: &quot;Q-002&quot;,
+    &quot;type&quot;: &quot;choice&quot;,
+    &quot;severity&quot;: &quot;low&quot;,
+    &quot;origin&quot;: &quot;plan&quot;,
+    &quot;blueprint&quot;: &quot;FEATURE-CliParsing.md&quot;,
+    &quot;story&quot;: &quot;cli-args&quot;,
+    &quot;status&quot;: &quot;recommended&quot;,
+    &quot;archived&quot;: false,
+    &quot;title&quot;: &quot;Destination and exit status of --help&quot;,
+    &quot;description&quot;: &quot;The sources define no help behavior. Chosen: usage text on standard output and exit 0.&quot;,
+    &quot;options&quot;: [
+      {
+        &quot;value&quot;: &quot;stdout-0&quot;,
+        &quot;label&quot;: &quot;Usage on stdout, exit 0&quot;
+      },
+      {
+        &quot;value&quot;: &quot;stderr-2&quot;,
+        &quot;label&quot;: &quot;Usage on stderr, exit 2&quot;
+      }
+    ],
+    &quot;system_choice&quot;: &quot;stdout-0&quot;
+  },
+  {
+    &quot;id&quot;: &quot;Q-003&quot;,
+    &quot;type&quot;: &quot;choice&quot;,
+    &quot;severity&quot;: &quot;low&quot;,
+    &quot;origin&quot;: &quot;plan&quot;,
+    &quot;blueprint&quot;: &quot;FEATURE-ColumnSelect.md&quot;,
+    &quot;story&quot;: &quot;select-column&quot;,
+    &quot;status&quot;: &quot;recommended&quot;,
+    &quot;archived&quot;: false,
+    &quot;title&quot;: &quot;Column name matching&quot;,
+    &quot;description&quot;: &quot;Chosen: --column and --freq names match a trimmed header name exactly and case-sensitively.&quot;,
+    &quot;options&quot;: [
+      {
+        &quot;value&quot;: &quot;exact&quot;,
+        &quot;label&quot;: &quot;Exact, case-sensitive&quot;
+      },
+      {
+        &quot;value&quot;: &quot;fold&quot;,
+        &quot;label&quot;: &quot;Case-insensitive&quot;
+      }
+    ],
+    &quot;system_choice&quot;: &quot;exact&quot;
+  },
+  {
+    &quot;id&quot;: &quot;Q-004&quot;,
+    &quot;type&quot;: &quot;text&quot;,
+    &quot;severity&quot;: &quot;low&quot;,
+    &quot;origin&quot;: &quot;plan&quot;,
+    &quot;blueprint&quot;: &quot;FEATURE-SumMean.md&quot;,
+    &quot;story&quot;: &quot;stats-summean&quot;,
+    &quot;status&quot;: &quot;recommended&quot;,
+    &quot;archived&quot;: false,
+    &quot;title&quot;: &quot;Exact arithmetic&quot;,
+    &quot;description&quot;: &quot;Sums, means, and medians use math/big (big.Int and big.Rat) and are rounded half away from zero only when written.&quot;,
+    &quot;options&quot;: [],
+    &quot;system_choice&quot;: &quot;math/big exact arithmetic, single rounding at output&quot;
+  },
+  {
+    &quot;id&quot;: &quot;Q-005&quot;,
+    &quot;type&quot;: &quot;text&quot;,
+    &quot;severity&quot;: &quot;low&quot;,
+    &quot;origin&quot;: &quot;plan&quot;,
+    &quot;blueprint&quot;: &quot;FEATURE-UnreadableFile.md&quot;,
+    &quot;story&quot;: &quot;cli-unreadable&quot;,
+    &quot;status&quot;: &quot;recommended&quot;,
+    &quot;archived&quot;: false,
+    &quot;title&quot;: &quot;Directory as input path&quot;,
+    &quot;description&quot;: &quot;A path that is a directory, or any path that cannot be opened or read, exits 1 with nothing on standard output.&quot;,
+    &quot;options&quot;: [],
+    &quot;system_choice&quot;: &quot;exit 1&quot;
+  },
+  {
+    &quot;id&quot;: &quot;Q-006&quot;,
+    &quot;type&quot;: &quot;text&quot;,
+    &quot;severity&quot;: &quot;low&quot;,
+    &quot;origin&quot;: &quot;plan&quot;,
+    &quot;blueprint&quot;: &quot;FEATURE-CsvReading.md&quot;,
+    &quot;story&quot;: &quot;input-profile&quot;,
+    &quot;status&quot;: &quot;recommended&quot;,
+    &quot;archived&quot;: false,
+    &quot;title&quot;: &quot;Byte handling&quot;,
+    &quot;description&quot;: &quot;Input bytes are compared as bytes: a byte-order mark is not stripped and invalid UTF-8 is not rejected.&quot;,
+    &quot;options&quot;: [],
+    &quot;system_choice&quot;: &quot;bytes compared as bytes&quot;
+  },
+  {
+    &quot;id&quot;: &quot;build-feature-frequencytop.md---top-accepts-digits-only&quot;,
+    &quot;type&quot;: &quot;text&quot;,
+    &quot;severity&quot;: &quot;low&quot;,
+    &quot;origin&quot;: &quot;build&quot;,
+    &quot;blueprint&quot;: &quot;FEATURE-FrequencyTop.md&quot;,
+    &quot;story&quot;: null,
+    &quot;status&quot;: &quot;recommended&quot;,
+    &quot;archived&quot;: false,
+    &quot;title&quot;: &quot;--top accepts digits only&quot;,
+    &quot;description&quot;: &quot;Options were to accept a leading &#x27;+&#x27; or to accept digits only. I accept digits only, so &#x27;+5&#x27; is a usage error (exit 2). A value too large for int is treated as unbounded. Is that acceptable, or should &#x27;+5&#x27; be accepted?&quot;,
+    &quot;options&quot;: [],
+    &quot;system_choice&quot;: &quot;Options were to accept a leading &#x27;+&#x27; or to accept digits only. I accept digits only, so &#x27;+5&#x27; is a usage error (exit 2). A value too large for int is treated as unbounded. Is that acceptable, or should &#x27;+5&#x27; be accepted?&quot;
+  }
+]
+</pre></article>
+</main>
+</body>
+</html>

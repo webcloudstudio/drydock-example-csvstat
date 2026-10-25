@@ -1,0 +1,51 @@
+Drydock 0.8.0  Copyright (c) 2026 Web Cloud Studio. All rights reserved.
+Build: CsvStat
+scope: entire project
+frontier: foundation
+git: baseline CsvStat 3f59e83f9a20
+git: baseline CsvStat 99a4ab5575f0
+
+BLOCK block-1  name="Block 1 · Foundational"  calls_max=7
+  story=foundation  "Stand up the Go module, package layout, and the CLI entry contract everything else builds into."
+
+  [call 1/7]  kind=initial  llm=claude/claude-haiku-5-5
+    result=ok  rc=0  execution=20261025.003040.578Z-7fa8824b
+    acceptance=4/4
+git: block-1 | go.md, ARCHITECTURE.md | call=1 | app=952563d75a9f target=de924797a094
+
+  DONE  story=foundation  state=closed/implemented  execution=20261025.003040.578Z-7fa8824b  elapsed=1m21s
+git: block-1 | go.md, ARCHITECTURE.md | step_completed | app=unchanged target=0d3471af95f7
+
+BLOCK block-2  name="Block 2 · Service"  calls_max=7
+  story=MOD-001  "Build the csvstat executable from the application root with the standard library only."
+  story=CLI-001  "Parse options that precede exactly one file argument."
+  story=CSV-001  "Read a UTF-8 RFC 4180 CSV file with encoding/csv and trim header names and values."
+  story=CSV-003  "Classify null values: empty, NA, N/A, NULL ignoring case."
+  story=CLI-002  "Reject unknown options, missing option values, and invalid option combinations with exit 2."
+  story=CSV-002  "Reject an empty file, an empty or repeated header name, or a ragged record with exit 3."
+  story=CSV-004  "Exit 1 with no stdout when the file cannot be opened or read."
+  story=MOD-002  "Provide the POSIX bin/test.sh that runs go vet and go test."
+
+  [call 1/7]  kind=initial  llm=claude/claude-haiku-5-5
+    result=ok  rc=0  execution=20261025.003324.199Z-eed4a650
+    acceptance=31/37  skipped=csv-reading-trims-header-and-values,csv-reading-quoted-field,csv-reading-ragged-records-returned,null-values-sentinels,null-values-lookalikes,csv-rejection-diagnostic-names-file-and-line
+git: block-2 | FEATURE-Executable-Build.md, FEATURE-CLI-Arguments.md, FEATURE-CSV-Reading.md, FEATURE-Null-Values.md, FEATURE-CLI-Option-Validation.md, FEATURE-CSV-Rejection.md, FEATURE-Read-Failure.md, FEATURE-Test-Entry.md | call=1 | app=e7720da6c28c target=032798d326e8
+
+  DONE  story=MOD-001  state=closed/implemented  execution=20261025.003324.199Z-eed4a650  elapsed=4m42s
+git: block-2 | FEATURE-Executable-Build.md, FEATURE-CLI-Arguments.md, FEATURE-CSV-Reading.md, FEATURE-Null-Values.md, FEATURE-CLI-Option-Validation.md, FEATURE-CSV-Rejection.md, FEATURE-Read-Failure.md, FEATURE-Test-Entry.md | step_completed | app=unchanged target=6b634f87a1e2
+
+BLOCK block-3  name="Block 3 · Service"  calls_max=7
+  story=PRF-001  "Emit the profile header and one row per column in file order."
+  story=TYP-001  "Infer integer columns."
+  story=TYP-002  "Infer number columns."
+  story=TYP-003  "Infer date columns."
+  story=TYP-004  "Infer boolean columns."
+  story=PRF-002  "Compute rows, nulls, and distinct counts."
+  story=CLI-003  "Reject a named column that is absent from the header with exit 3."
+  story=TYP-005  "Fall back to text and report columns with no non-null values as empty."
+  story=PRF-004  "Compute exact sum, mean, and median for integer and number columns."
+  story=PRF-005  "Format decimals to two places with a single half-away-from-zero rounding."
+  story=PRF-003  "Compute min and max for every column type."
+  story=PRF-006  "Profile a single named column with --column."
+
+  [call 1/7]  kind=initial  llm=claude/claude-haiku-5-5

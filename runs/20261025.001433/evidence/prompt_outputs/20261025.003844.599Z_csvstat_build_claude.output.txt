@@ -1,0 +1,10 @@
+RESULT: FAILED
+
+FILES CHANGED:
+- (none)
+
+SUMMARY:
+This repair request is the same empty template again, with no failing check IDs and no diagnostic output. I re-checked the tree just now: `git status` is clean, `sh sources/run.sh` exits 0 with 22 of 22 passing, and `sh bin/test.sh` exits 0. I made no changes, and no `AC_BROKEN` token applies, because no criterion fails.
+
+FAILURE_SUMMARY: No files written: the repair feedback names no failing checks, and all declared checks already pass.
+FAILURE_DETAIL: There is nothing to repair. Resending this same feedback will produce the same result. To get a real repair pass, send the failing check IDs with their full output, such as the `FAIL` blocks from `sh sources/run.sh` or the traceback from a failing criterion. If the qa-verification story should close as is, it already passes.

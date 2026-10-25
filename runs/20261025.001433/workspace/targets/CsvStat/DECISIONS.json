@@ -1,0 +1,127 @@
+[
+  {
+    "id": "Q-001",
+    "type": "choice",
+    "severity": "low",
+    "origin": "plan",
+    "blueprint": "FEATURE-RejectMalformed.md",
+    "story": "input-reject",
+    "status": "recommended",
+    "archived": false,
+    "title": "Exit code for CSV syntax errors",
+    "description": "The sources list only ragged records under exit 3. An encoding/csv syntax error (for example a bare quote) could be exit 1 or exit 3. Chosen: 3, the nearest rejection code, with nothing on stdout.",
+    "options": [
+      {
+        "value": "3",
+        "label": "Exit 3 (rejected input)"
+      },
+      {
+        "value": "1",
+        "label": "Exit 1 (operational failure)"
+      }
+    ],
+    "system_choice": "3"
+  },
+  {
+    "id": "Q-002",
+    "type": "choice",
+    "severity": "low",
+    "origin": "plan",
+    "blueprint": "FEATURE-CliParsing.md",
+    "story": "cli-args",
+    "status": "recommended",
+    "archived": false,
+    "title": "Destination and exit status of --help",
+    "description": "The sources define no help behavior. Chosen: usage text on standard output and exit 0.",
+    "options": [
+      {
+        "value": "stdout-0",
+        "label": "Usage on stdout, exit 0"
+      },
+      {
+        "value": "stderr-2",
+        "label": "Usage on stderr, exit 2"
+      }
+    ],
+    "system_choice": "stdout-0"
+  },
+  {
+    "id": "Q-003",
+    "type": "choice",
+    "severity": "low",
+    "origin": "plan",
+    "blueprint": "FEATURE-ColumnSelect.md",
+    "story": "select-column",
+    "status": "recommended",
+    "archived": false,
+    "title": "Column name matching",
+    "description": "Chosen: --column and --freq names match a trimmed header name exactly and case-sensitively.",
+    "options": [
+      {
+        "value": "exact",
+        "label": "Exact, case-sensitive"
+      },
+      {
+        "value": "fold",
+        "label": "Case-insensitive"
+      }
+    ],
+    "system_choice": "exact"
+  },
+  {
+    "id": "Q-004",
+    "type": "text",
+    "severity": "low",
+    "origin": "plan",
+    "blueprint": "FEATURE-SumMean.md",
+    "story": "stats-summean",
+    "status": "recommended",
+    "archived": false,
+    "title": "Exact arithmetic",
+    "description": "Sums, means, and medians use math/big (big.Int and big.Rat) and are rounded half away from zero only when written.",
+    "options": [],
+    "system_choice": "math/big exact arithmetic, single rounding at output"
+  },
+  {
+    "id": "Q-005",
+    "type": "text",
+    "severity": "low",
+    "origin": "plan",
+    "blueprint": "FEATURE-UnreadableFile.md",
+    "story": "cli-unreadable",
+    "status": "recommended",
+    "archived": false,
+    "title": "Directory as input path",
+    "description": "A path that is a directory, or any path that cannot be opened or read, exits 1 with nothing on standard output.",
+    "options": [],
+    "system_choice": "exit 1"
+  },
+  {
+    "id": "Q-006",
+    "type": "text",
+    "severity": "low",
+    "origin": "plan",
+    "blueprint": "FEATURE-CsvReading.md",
+    "story": "input-profile",
+    "status": "recommended",
+    "archived": false,
+    "title": "Byte handling",
+    "description": "Input bytes are compared as bytes: a byte-order mark is not stripped and invalid UTF-8 is not rejected.",
+    "options": [],
+    "system_choice": "bytes compared as bytes"
+  },
+  {
+    "id": "build-feature-frequencytop.md---top-accepts-digits-only",
+    "type": "text",
+    "severity": "low",
+    "origin": "build",
+    "blueprint": "FEATURE-FrequencyTop.md",
+    "story": null,
+    "status": "recommended",
+    "archived": false,
+    "title": "--top accepts digits only",
+    "description": "Options were to accept a leading '+' or to accept digits only. I accept digits only, so '+5' is a usage error (exit 2). A value too large for int is treated as unbounded. Is that acceptable, or should '+5' be accepted?",
+    "options": [],
+    "system_choice": "Options were to accept a leading '+' or to accept digits only. I accept digits only, so '+5' is a usage error (exit 2). A value too large for int is treated as unbounded. Is that acceptable, or should '+5' be accepted?"
+  }
+]

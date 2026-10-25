@@ -1,0 +1,27 @@
+<requirement name="reject-ragged-records" stories="input-reject">
+sku,price,in_stock
+A1,9.99,true
+A2,4.50,false
+A3,1.25,true,extra
+A4,3.00,false
+</requirement>
+<unattached story="foundation"/>
+<unattached story="cli-args"/>
+<unattached story="cli-unreadable"/>
+<unattached story="input-profile"/>
+<unattached story="input-trim"/>
+<unattached story="cli-usage"/>
+<unattached story="counts"/>
+<unattached story="types-date"/>
+<unattached story="types-numeric"/>
+<unattached story="freq-list"/>
+<unattached story="freq-top"/>
+<unattached story="types-other"/>
+<unattached story="stats-minmax"/>
+<unattached story="stats-median"/>
+<unattached story="stats-summean"/>
+<unattached story="stats-format"/>
+<unattached story="select-column"/>
+<unattached story="select-absent"/>
+<unattached story="qa-testrunner"/>
+<unattached story="qa-verification"/>

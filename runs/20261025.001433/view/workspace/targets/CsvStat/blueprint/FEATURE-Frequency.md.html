@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-Frequency.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-Frequency.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-Frequency.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Frequency Listing</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Lists the most frequent non-null values of one named column with --freq.</td></tr><tr><td>Depends On</td><td>ARCHITECTURE.md, FEATURE-ProfileCounts.md, FEATURE-CliParsing.md</td></tr><tr><td>Provides</td><td>value,count output</td></tr><tr><td>Consumes</td><td>csvstat --freq &lt;name&gt; &lt;file&gt;</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p><code>csvstat --freq &lt;name&gt; &lt;file&gt;</code> writes a two-column CSV of the distinct non-null values of the named column and how often each occurs, instead of the profile.</p>
+<h2>Behavior</h2>
+<ul><li>Header line is <code>value,count</code>.</li><li>One row per distinct non-null value, ordered by count descending, then by value ascending by byte</li></ul>
+<p>value.</p>
+<ul><li>Values are trimmed before counting and compared as exact strings. Null values (empty, or <code>NA</code>,</li></ul>
+<p><code>N/A</code>, <code>NULL</code> ignoring case) are not listed.</p>
+<ul><li>A column with no non-null values writes only the header.</li><li>At most the <code>--top</code> limit of rows is written; the default limit is 5 (the limit itself is owned by</li></ul>
+<p>FEATURE-FrequencyTop.md).</p>
+<ul><li>Output is CSV with <code>\n</code> line endings, written with <code>encoding/csv</code>, and only after the whole file</li></ul>
+<p>has been read and validated.</p>
+<ul><li>Success exits 0.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC freq-department ===<br>Intent: Frequencies for a text column are counted, ordered by count then byte value, and parsed back as CSV.<br>Suite: scoped<br>Requires: python-package=drydock_go; scope=test</p>
+<p>import csv import io import os from collections import Counter</p>
+<p>from drydock_go import cli_runner</p>
+<p>path = os.path.abspath(&quot;sources/employees.csv&quot;) col = &quot;department&quot; top = 5 with open(path, newline=&quot;&quot;) as fh: rows = list(csv.reader(fh)) header = [h.strip() for h in rows[0]] idx = header.index(col) vals = [r[idx].strip() for r in rows[1:]] vals = [v for v in vals if v != &quot;&quot; and v.upper() not in (&quot;NA&quot;, &quot;N/A&quot;, &quot;NULL&quot;)] ordered = sorted(Counter(vals).items(), key=lambda kv: (-kv[1], kv[0].encode())) want = [[v, str(c)] for v, c in ordered[:top]]</p>
+<p>code, out, err = cli_runner(&quot;--freq&quot;, col, path) print(out) print(err) assert code == 0, (code, out, err) got = list(csv.reader(io.StringIO(out))) assert got[0] == [&quot;value&quot;, &quot;count&quot;], got assert got[1:] == want, (got[1:], want) === END AC freq-department ===</p>
+<p>=== AC freq-tie-order ===<br>Intent: Values with equal counts are ordered ascending by byte value and the limit is honored.<br>Suite: scoped<br>Requires: python-package=drydock_go; scope=test</p>
+<p>import csv import io import os from collections import Counter</p>
+<p>from drydock_go import cli_runner</p>
+<p>path = os.path.abspath(&quot;sources/sensors.csv&quot;) col = &quot;sensor&quot; top = 2 with open(path, newline=&quot;&quot;) as fh: rows = list(csv.reader(fh)) header = [h.strip() for h in rows[0]] idx = header.index(col) vals = [r[idx].strip() for r in rows[1:]] vals = [v for v in vals if v != &quot;&quot; and v.upper() not in (&quot;NA&quot;, &quot;N/A&quot;, &quot;NULL&quot;)] ordered = sorted(Counter(vals).items(), key=lambda kv: (-kv[1], kv[0].encode())) want = [[v, str(c)] for v, c in ordered[:top]]</p>
+<p>code, out, err = cli_runner(&quot;--freq&quot;, col, &quot;--top&quot;, str(top), path) print(out) print(err) assert code == 0, (code, out, err) got = list(csv.reader(io.StringIO(out))) assert got[1:] == want, (got[1:], want) assert len(got) == top + 1 === END AC freq-tie-order ===</p>
+<p>=== AC freq-trims-and-skips-nulls ===<br>Intent: Padded values are trimmed before counting and null spellings (blank, NA) are not listed.<br>Suite: scoped<br>Requires: python-package=drydock_go; scope=test</p>
+<p>import csv import io import os from collections import Counter</p>
+<p>from drydock_go import cli_runner</p>
+<p>for fname, col, top in ((&quot;orders.csv&quot;, &quot;customer&quot;, 5), (&quot;employees.csv&quot;, &quot;manager_id&quot;, 10)): path = os.path.abspath(os.path.join(&quot;sources&quot;, fname)) with open(path, newline=&quot;&quot;) as fh: rows = list(csv.reader(fh)) header = [h.strip() for h in rows[0]] idx = header.index(col) vals = [r[idx].strip() for r in rows[1:]] vals = [v for v in vals if v != &quot;&quot; and v.upper() not in (&quot;NA&quot;, &quot;N/A&quot;, &quot;NULL&quot;)] ordered = sorted(Counter(vals).items(), key=lambda kv: (-kv[1], kv[0].encode())) want = [[v, str(c)] for v, c in ordered[:top]]</p>
+<p>code, out, err = cli_runner(&quot;--freq&quot;, col, &quot;--top&quot;, str(top), path) print(out) print(err) assert code == 0, (code, out, err) got = list(csv.reader(io.StringIO(out))) assert got[1:] == want, (fname, got[1:], want) listed = {r[0] for r in got[1:]} assert &quot;&quot; not in listed and &quot;NA&quot; not in listed === END AC freq-trims-and-skips-nulls ===</p>
+<p>=== AC freq-all-null-column ===<br>Intent: A column with no non-null values writes only the header and exits 0.<br>Suite: scoped<br>Requires: python-package=drydock_go; scope=test</p>
+<p>import csv import io import os</p>
+<p>from drydock_go import cli_runner</p>
+<p>path = os.path.abspath(&quot;sources/sensors.csv&quot;) code, out, err = cli_runner(&quot;--freq&quot;, &quot;battery&quot;, path) print(out) print(err) assert code == 0, (code, out, err) got = list(csv.reader(io.StringIO(out))) assert got == [[&quot;value&quot;, &quot;count&quot;]], got === END AC freq-all-null-column ===</p>
+<p>=== AC freq-output-line-endings ===<br>Intent: Frequency output uses \n line endings only and ends with a newline.<br>Suite: scoped<br>Requires: python-package=drydock_go; scope=test</p>
+<p>import os</p>
+<p>from drydock_go import cli_runner</p>
+<p>path = os.path.abspath(&quot;sources/employees.csv&quot;) code, out, err = cli_runner(&quot;--freq&quot;, &quot;department&quot;, path) print(err) assert code == 0, (code, out, err) assert &quot;\r&quot; not in out assert out.endswith(&quot;\n&quot;) === END AC freq-output-line-endings ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Null values are never listed.</li><li>Nothing is written to standard output unless the whole file has been read and validated.</li><li>No frequency or value list is hardcoded; every value comes from the file examined.</li><li>Application code never reads <code>sources/run.sh</code> or any supplied data file.</li></ul></article>
+</main>
+</body>
+</html>

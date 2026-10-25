@@ -1,0 +1,22 @@
+Drydock 0.8.0  Copyright (c) 2026 Web Cloud Studio. All rights reserved.
+Drydock status
+
+  Target          /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.001433/workspace/targets/CsvStat
+  Name            drydock CsvStat Uat Case
+  Description     Drydock uat - CsvStat builds a Go CSV column profiler. The source is an original brief: infer each
+                  column's type (integer, number, date, boolean, text, empty), report rows, nulls, distinct, min, max,…
+  Phase           Implement
+  State           Error: plan cannot be built as written
+  Metadata        planned · approved
+  Sources         7 imported · 21 authored blueprint files
+  Analysis        Ready · 20 stories · 0 questions · 0 blockers
+  Blueprint       ✓  0 errors · 0 warnings
+  Plan            21 pending
+  Frontier        foundation: Stand up the Go module, package layout, and architecture for the csvstat CLI.
+  Workflow        5 steps
+                  Initialize         complete at 2026-10-25T00:14:35.979+00:00
+                  Import             complete at 2026-10-25T00:14:40.773+00:00
+                  Analyze            complete at 2026-10-25T00:17:47.244+00:00
+                  Plan               failed at 2026-10-25T00:27:29.771+00:00
+                  Plan repair        complete at 2026-10-25T00:29:31.707+00:00
+  Next step       drydock run quarterdeck CsvStat
