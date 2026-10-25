@@ -1,0 +1,49 @@
+{
+  "stories": [
+    {
+      "id": "INPUT-002",
+      "provenance": "plan",
+      "note": "sources/run.sh E4: missing file exits 1"
+    },
+    {
+      "id": "CLI-001",
+      "provenance": "plan",
+      "note": "sources/run.sh U1, U2, U6: usage errors with exit 2"
+    },
+    {
+      "id": "CLI-002",
+      "provenance": "plan",
+      "note": "sources/run.sh U3, U4, U5: option combination and --top usage errors"
+    },
+    {
+      "id": "INPUT-006",
+      "provenance": "plan",
+      "note": "sources/run.sh E1: ragged.csv rejected with exit 3"
+    },
+    {
+      "id": "PROF-001",
+      "provenance": "plan",
+      "note": "sources/run.sh section A: whole-file profiles A1 to A4"
+    },
+    {
+      "id": "PROF-002",
+      "provenance": "plan",
+      "note": "sources/run.sh section B: single-column profiles B1 to B3, and E2 absent column"
+    },
+    {
+      "id": "FREQ-001",
+      "provenance": "plan",
+      "note": "sources/run.sh section C: frequency listings C1, C3"
+    },
+    {
+      "id": "FREQ-002",
+      "provenance": "plan",
+      "note": "sources/run.sh section C: --top limits C2, C4"
+    },
+    {
+      "id": "CONF-001",
+      "provenance": "plan",
+      "note": "sources/run.sh whole harness, run unfiltered"
+    }
+  ]
+}

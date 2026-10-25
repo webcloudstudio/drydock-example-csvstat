@@ -1,0 +1,114 @@
+{
+  "version": 1,
+  "import": {
+    "root": "/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.184203/sources",
+    "format": "markdown"
+  },
+  "sources": {
+    "INSTRUCTIONS.md": {
+      "state": "current",
+      "versions": [
+        {
+          "commit": "3eb0a16",
+          "date": "2026-10-25",
+          "hash": "a4a0357965923ada8afb3528e85c937802a26eb02db8685900dbe0e9566c7a57",
+          "release": "",
+          "state": "pending",
+          "via": null,
+          "ticket": null,
+          "requirements": []
+        }
+      ]
+    },
+    "employees.csv": {
+      "state": "current",
+      "versions": [
+        {
+          "commit": "3eb0a16",
+          "date": "2026-10-25",
+          "hash": "057f30060e45647dbb5773a0f2cef7fa541bbd462f5a65746083d7a169222ee0",
+          "release": "",
+          "state": "pending",
+          "via": null,
+          "ticket": null,
+          "requirements": []
+        }
+      ]
+    },
+    "header_only.csv": {
+      "state": "current",
+      "versions": [
+        {
+          "commit": "3eb0a16",
+          "date": "2026-10-25",
+          "hash": "428b2fe8db619499f227e2ce2a56cebcf5149c161e680c5a65d792d74211f449",
+          "release": "",
+          "state": "pending",
+          "via": null,
+          "ticket": null,
+          "requirements": []
+        }
+      ]
+    },
+    "orders.csv": {
+      "state": "current",
+      "versions": [
+        {
+          "commit": "3eb0a16",
+          "date": "2026-10-25",
+          "hash": "93026827c46e9b0eab4a7e4e4eefc7518265dc56712f044061006b85adeb6ae8",
+          "release": "",
+          "state": "pending",
+          "via": null,
+          "ticket": null,
+          "requirements": []
+        }
+      ]
+    },
+    "ragged.csv": {
+      "state": "current",
+      "versions": [
+        {
+          "commit": "3eb0a16",
+          "date": "2026-10-25",
+          "hash": "fd838208607b5e74d69d29662bd4961928d69fdd80a5e2752ece90f78b333465",
+          "release": "",
+          "state": "pending",
+          "via": null,
+          "ticket": null,
+          "requirements": []
+        }
+      ]
+    },
+    "run.sh": {
+      "state": "current",
+      "versions": [
+        {
+          "commit": "3eb0a16",
+          "date": "2026-10-25",
+          "hash": "8f598aabc017377364ec4a99f5c34bb81e06d68c9ef7b191513c6e9d3999bcbb",
+          "release": "",
+          "state": "pending",
+          "via": null,
+          "ticket": null,
+          "requirements": []
+        }
+      ]
+    },
+    "sensors.csv": {
+      "state": "current",
+      "versions": [
+        {
+          "commit": "3eb0a16",
+          "date": "2026-10-25",
+          "hash": "159d38499f5e2df7e2bfe5245c20e7f76c9d5f091aa497567b47bf707bde3c20",
+          "release": "",
+          "state": "pending",
+          "via": null,
+          "ticket": null,
+          "requirements": []
+        }
+      ]
+    }
+  }
+}
