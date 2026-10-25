@@ -1,0 +1,210 @@
+# Blueprint Analysis: drydock CsvStat Uat Case
+
+## Commander Expectations
+
+- assert the program profiles one CSV file and reports each column's inferred type and statistics
+- assert the supplied grader `sh sources/run.sh` exits zero against the completed application
+- assert the program uses only the Go standard library and no database
+
+## Crew
+
+| Crew | Charge |
+|---|---|
+| Commander | Defines intent and decides what done means. |
+| Team Lead | Confirms epic completeness and stakeholder expectations. |
+| Planning Crew | Authors atomic specifications and the ordered Manifest. |
+| Shipyard Crew | Builds the tickets without synchronous Commander access. |
+
+## Story List
+
+### Feature: Argument Handling
+
+| ID | Story | High-level AC |
+|---|---|---|
+| ARG-001 | Reject malformed arguments with a usage error | Missing or extra file, unknown option, option without its value, `--column` with `--freq`, and `--top` without `--freq` each exit 2 with nothing on standard output. |
+
+### Feature: Input Reading
+
+| ID | Story | High-level AC |
+|---|---|---|
+| INP-001 | Read the CSV file and trim its values | The file is read as RFC 4180 CSV with `encoding/csv`; the first record is the header; every header name and value is trimmed of leading and trailing spaces. |
+| INP-002 | Reject an empty, malformed, or ragged file | An empty file, an empty or repeated header name, or a record whose field count differs from the header exits 3 with nothing on standard output and one standard error line naming the file and, for a record, its line number. |
+| INP-003 | Report an unreadable file | A file that cannot be opened or read exits 1 with nothing on standard output. |
+| INP-004 | Classify null values | A value that is empty, or equals `NA`, `N/A`, or `NULL` ignoring case, after trimming, is null; every other value is non-null. |
+
+### Feature: Column Selection
+
+| ID | Story | High-level AC |
+|---|---|---|
+| SEL-001 | Profile one named column | `--column <name>` profiles only that column; a name absent from the header exits 3 with nothing on standard output. |
+
+### Feature: Column Typing
+
+| ID | Story | High-level AC |
+|---|---|---|
+| TYP-001 | Infer integer and number types | A column is `integer` when every non-null value matches `-?[0-9]+`, and `number` when every non-null value matches `-?[0-9]+(\.[0-9]+)?`. |
+| TYP-002 | Infer date type | A column is `date` when every non-null value matches `YYYY-MM-DD` and is a real calendar date. |
+| TYP-003 | Infer boolean, text, and empty types | A column is `boolean` when every non-null value is `true` or `false` ignoring case, `text` otherwise, and `empty` when it has no non-null value. |
+
+### Feature: Column Profile
+
+| ID | Story | High-level AC |
+|---|---|---|
+| PRO-001 | Count rows, nulls, and distinct values | `rows` counts data records; `nulls` counts null values; `distinct` counts different non-null values compared as exact trimmed strings. |
+| PRO-002 | Report min and max for each type | `integer` and `number` compare numerically; `date` gives earliest and latest; `boolean` follows the false-if-any rule; `text` compares by byte value; `empty` is blank. |
+| PRO-003 | Report sum and mean for numeric columns | `integer` sum is a plain integer; `number` sum and mean have two decimals, rounded half away from zero from the exact value; mean is total divided by non-null count; other types are blank. |
+| PRO-004 | Report median for numeric columns | `integer` and `number` median is the middle sorted non-null value, or the mean of the two middle values when the count is even; other types are blank. |
+
+### Feature: Profile Output
+
+| ID | Story | High-level AC |
+|---|---|---|
+| OUT-001 | Write the profile table | Output has header `column,type,rows,nulls,distinct,min,max,sum,mean,median` and one row per column in file order, or only the named column; lines end in `\n`; quoting follows the `encoding/csv` writer. |
+
+### Feature: Frequency Listing
+
+| ID | Story | High-level AC |
+|---|---|---|
+| FRQ-001 | List the most frequent values of a column | `--freq <name>` writes header `value,count` and one row per distinct non-null value ordered by count descending, then value ascending by bytes; nulls are not listed; an all-null column writes only the header; an absent name exits 3. |
+| FRQ-002 | Limit frequency rows with `--top` | `--top <n>` lists at most `n` rows, default 5; a value that is not a positive integer exits 2 with nothing on standard output. |
+
+### Feature: Build and Test
+
+| ID | Story | High-level AC |
+|---|---|---|
+| BLD-001 | Build the csvstat executable | The application root is a Go module of Go 1.22 or newer; `go build -o <path> ./cmd/csvstat` succeeds using only the standard library. |
+| BLD-002 | Provide the POSIX test runner | `bin/test.sh`, POSIX-compatible, runs `go vet ./...` and `go test ./...` from the application root and exits zero only when both pass. |
+
+### Feature: Conformance Verification
+
+| ID | Story | High-level AC |
+|---|---|---|
+| CNF-001 | Pass the supplied conformance grader | Running `sh sources/run.sh` from the application root exits zero, with every supplied check passing. Depends on every other implementation story. |
+
+## Story Guidance
+
+Named stories planning must produce. Authoritative record: `STORY_GUIDANCE.json`.
+
+None.
+
+## Surfaced Acceptance Criteria
+
+| ID | Story ID | Criterion |
+|---|---|---|
+| AC-001 | ARG-001 | On a usage error, the application writes one standard error line naming the profile and frequency command forms, so the tool has discoverable help text. No `--help` option is added. |
+| AC-002 | INP-003 | A path that names a directory exits 1 with nothing on standard output, and does not panic. |
+| AC-003 | INP-001 | A file containing bytes that are not valid UTF-8 is read and not rejected, because INP-002 lists the rejection conditions exhaustively. |
+
+## Source Inventory
+
+| Path | Content kind | Disposition | Reason |
+|---|---|---|---|
+| `sources/INSTRUCTIONS.md` | markdown | analyzed | readable UTF-8 |
+| `sources/employees.csv` | text | analyzed | readable UTF-8 |
+| `sources/header_only.csv` | text | analyzed | readable UTF-8 |
+| `sources/orders.csv` | text | analyzed | readable UTF-8 |
+| `sources/ragged.csv` | text | analyzed | readable UTF-8 |
+| `sources/run.sh` | code | analyzed | readable UTF-8 |
+| `sources/sensors.csv` | text | analyzed | readable UTF-8 |
+
+## Relationship Model
+
+| Source or group | Relationship type | Related source or group | Evidence | Delivery implication |
+|---|---|---|---|---|
+| `sources/run.sh` | test-kit-to-implementation | `sources/employees.csv`, `sensors.csv`, `orders.csv`, `header_only.csv`, `ragged.csv` | `run.sh` section A, B, C, E, U checks name these fixtures | Stage the grader beside the fixtures; the fixtures are the data every story is measured against. |
+| `sources/INSTRUCTIONS.md` | instruction-to-test | `sources/run.sh` | Command, output, and exit-code rules are the grader's checks | Story ACs cite the instruction sections; the grader is the terminal check. |
+| `sources/ragged.csv` | fixture-to-implementation | INP-002 | `run.sh` E1 expects exit 3 | INP-002 must exist before CNF-001. |
+| INP-001 | parser-to-normalizer | INP-004 | Null rules and trimming both act on parsed values | INP-001 before INP-004. |
+| INP-004 | normalizer-to-type | TYP-001, TYP-002, TYP-003 | Type rules apply only to non-null values | INP-004 before TYP. |
+| TYP-001..003 | type-to-statistic | PRO-002, PRO-003, PRO-004 | Statistics depend on the inferred type | TYP before PRO. |
+| INP-004 | normalizer-to-frequency | FRQ-001 | Nulls are excluded from frequency lists | INP-004 before FRQ-001. |
+| PRO-001..004 | statistic-to-output | OUT-001, SEL-001 | Table columns are the statistics | PRO before OUT. |
+| OUT-001 | output-to-frequency | FRQ-001 | Frequency output uses the same CSV writer | OUT-001 before FRQ-001. |
+| BLD-001 | build-before-test | BLD-002, CNF-001 | Tests and grader both build `./cmd/csvstat` | BLD-001 first. |
+
+## Source Roles
+
+| Path | Role | Plan disposition | Build disposition |
+|---|---|---|---|
+| sources/INSTRUCTIONS.md | normative specification | context | prompt-only |
+| sources/run.sh | conformance harness | context | stage |
+| sources/employees.csv | asset | context | stage |
+| sources/sensors.csv | asset | context | stage |
+| sources/orders.csv | asset | context | stage |
+| sources/header_only.csv | asset | context | stage |
+| sources/ragged.csv | asset | context | stage |
+
+## Planning Instructions
+
+### Delivery Shape
+
+The system is a single-file command-line profiler, `csvstat`. Inputs are options and exactly one CSV file path. Outputs are CSV on standard output, with diagnostics on standard error and exit codes 0 to 3. Execution flow: parse arguments, read and trim the file, reject malformed input, classify nulls, infer column types, compute statistics or frequencies, then write output.
+
+### Story Realization Map
+
+- **ARG-001**: usage-error path. Evidence: `sources/INSTRUCTIONS.md` Command and Exit codes (2); `sources/run.sh` U1–U6. Requires an acceptance contract. Related: AC-001.
+- **INP-001**: read and trim. Evidence: `INSTRUCTIONS.md` Reading the file, steps 1–2. Requires a capability. Related: `sources/employees.csv`.
+- **INP-002**: rejection. Evidence: `INSTRUCTIONS.md` step 3 and Exit codes (3); `run.sh` E1; `sources/ragged.csv`. Requires an acceptance contract.
+- **INP-003**: read failure. Evidence: `INSTRUCTIONS.md` Exit codes (1); `run.sh` E4. Requires an acceptance contract. Related: AC-002.
+- **INP-004**: null rules. Evidence: `INSTRUCTIONS.md` step 4; `sources/sensors.csv`, `sources/orders.csv`. Requires a capability.
+- **SEL-001**: named-column profile. Evidence: `INSTRUCTIONS.md` Command and Exit codes (3); `run.sh` B1–B3, E2.
+- **TYP-001**: integer and number. Evidence: `INSTRUCTIONS.md` Types; `sources/sensors.csv` `reading_id`, `temp_c`.
+- **TYP-002**: date with calendar validation. Evidence: `INSTRUCTIONS.md` Types; `sources/orders.csv` `shipped` (`2025-02-30`).
+- **TYP-003**: boolean, text, empty. Evidence: `INSTRUCTIONS.md` Types; `sources/sensors.csv` `battery`; `sources/header_only.csv`.
+- **PRO-001**: counts. Evidence: `INSTRUCTIONS.md` Profile output table; `run.sh` A1–A4.
+- **PRO-002**: min and max. Evidence: `INSTRUCTIONS.md` Profile output table; `run.sh` A1–A3.
+- **PRO-003**: sum and mean with rounding. Evidence: `INSTRUCTIONS.md` Decimals; `run.sh` A1, A2, A3.
+- **PRO-004**: median. Evidence: `INSTRUCTIONS.md` Profile output table; `run.sh` A1–A3.
+- **OUT-001**: table output. Evidence: `INSTRUCTIONS.md` Profile output and Output format; `run.sh` A1–A4, B1–B3.
+- **FRQ-001**: frequency list. Evidence: `INSTRUCTIONS.md` Frequency output; `run.sh` C1, C3, C5, E3.
+- **FRQ-002**: `--top`. Evidence: `INSTRUCTIONS.md` Command and Exit codes (2); `run.sh` C2, C4, U3, U4.
+- **BLD-001**: module and build. Evidence: `INSTRUCTIONS.md` Stack; `run.sh` build step. Requires a build gate.
+- **BLD-002**: test runner. Evidence: `INSTRUCTIONS.md` Tests. Requires a test harness. Acceptance is the `bin/test.sh` argv in st-002.
+- **CNF-001**: terminal conformance. Evidence: `run.sh` entire file; st-001. Requires an acceptance contract.
+
+### Test and Acceptance Strategy
+
+Focused story tests run with `go test` and select only the tests the story owns. Those stories declare `Suite: scoped`. The supplied grader `sources/run.sh` is run once, by CNF-001, unfiltered; that story declares `Suite: full` and is the only story that runs it. Its acceptance is that every supplied check passes, with no numeric count asserted, because the source's requirement is universal. Other stories never run the grader. The grader has no scope selector, so none is used. No source-supplied numeric release threshold exists.
+
+### Sequencing and Dependencies
+
+1. BLD-001 first.
+2. INP-001, then INP-002 and INP-003 in parallel; ARG-001 after BLD-001.
+3. INP-004 after INP-001.
+4. TYP-001, then TYP-002 and TYP-003.
+5. PRO-001, PRO-002 through PRO-004 after TYP-001.
+6. OUT-001 after PRO-001; SEL-001 after OUT-001 and INP-004.
+7. FRQ-001 after INP-004 and OUT-001; FRQ-002 after FRQ-001.
+8. BLD-002 after all implementation stories.
+9. CNF-001 last, after every implementation story.
+
+External dependencies: Go 1.22 or newer. No network or service dependency.
+
+### Source Conflicts and Gaps
+
+No cross-source conflicts. The known answers in `sources/run.sh` were spot-checked against the fixtures; no contradiction was found. Decisions recorded here, not left as blockers:
+
+- No `--help` option. Usage diagnostics serve as help text (AC-001).
+- Blank lines are skipped by `encoding/csv`, which is the narrowest reading of "record".
+- Invalid UTF-8 is not a rejection condition (AC-003).
+- A directory path exits 1 (AC-002).
+- Frequency ties are ordered by byte value of the value, as the source states.
+
+## Analysis Notes
+generated: 2026-10-24
+blueprint: /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.011759/workspace/targets/CsvStat/blueprint
+
+Quality: Ready
+  blockers: 0
+  questions: 0
+  features: 9
+  stories: 19
+  stack: Go 1.22 or newer, standard library only
+  display_name: not proposed
+  short_description: not proposed
+
+- `discovery-identity.json` omitted: DISPLAY_NAME and SHORT_DESCRIPTION are both set.
+- `COMPASS.md` omitted: COMPASS_EXISTS is true and COMPASS_PENDING_FORMAT is false.
+- `STORY_GUIDANCE.json` omitted: the grader's A, B, C, E, and U sections are check groups, not a build breakdown, and `run.sh` accepts no scope selector.
+- `SEA_TRIALS.md`: st-001 through st-008 keep their IDs and criteria. The prior Policy table and the Testability and Consequence fields are not in the emitted contract. st-002 gains a `Command`. st-009 and st-010 come from the brief's prohibitions.
+- Story points are not carried into the story list; the decomposition is by behavior.

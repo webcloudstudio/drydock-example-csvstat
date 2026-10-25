@@ -1,0 +1,94 @@
+Drydock 0.8.0  Copyright (c) 2026 Web Cloud Studio. All rights reserved.
+2026-10-24 21:20:39 EDT  Calling CLAUDE/sonnet (plan · topology)...
+  Claude session: start id=2b70fb49-1b93-486c-9905-d6bd183eb0cd
+  Completed CLAUDE/claude-sonnet-5-5 (plan · topology)  rc=0
+========================================================================
+PLAN PROGRESS  ·  STAGE 1 · TOPOLOGY
+========================================================================
+Topology Created:  True
+Blueprints Created: 0 / 20
+Manifest Created:  False
+Blueprints Remaining: 20
+Batch Result:       Topology accepted
+========================================================================
+2026-10-24 21:21:24 EDT  Calling CLAUDE/sonnet (plan · blueprint batch 1)...
+  Claude session: start id=ac0b3727-d36b-4b94-a955-2729073ea09c
+  Completed CLAUDE/claude-sonnet-5-5 (plan · blueprint batch 1)  rc=0
+========================================================================
+PLAN PROGRESS  ·  STAGE 2 · BLUEPRINT BATCH 1
+========================================================================
+Topology Created:  True
+Blueprints Created: 5 / 20
+Manifest Created:  False
+Blueprints Remaining: 15
+Batch Result:       Accepted 5 Blueprint(s)
+========================================================================
+2026-10-24 21:22:25 EDT  Calling CLAUDE/sonnet (plan · blueprint batch 2)...
+  Claude session: start id=1ae79bf7-83b4-4719-9f3a-d676a340de61
+  Completed CLAUDE/claude-sonnet-5-5 (plan · blueprint batch 2)  rc=0
+========================================================================
+PLAN PROGRESS  ·  STAGE 2 · BLUEPRINT BATCH 2
+========================================================================
+Topology Created:  True
+Blueprints Created: 10 / 20
+Manifest Created:  False
+Blueprints Remaining: 10
+Batch Result:       Accepted 5 Blueprint(s)
+========================================================================
+2026-10-24 21:23:28 EDT  Calling CLAUDE/sonnet (plan · blueprint batch 3)...
+  Claude session: start id=13570be1-2d97-48d2-a6f0-327a2ca09cf1
+  Completed CLAUDE/claude-sonnet-5-5 (plan · blueprint batch 3)  rc=0
+========================================================================
+PLAN PROGRESS  ·  STAGE 2 · BLUEPRINT BATCH 3
+========================================================================
+Topology Created:  True
+Blueprints Created: 15 / 20
+Manifest Created:  False
+Blueprints Remaining: 5
+Batch Result:       Accepted 5 Blueprint(s)
+========================================================================
+2026-10-24 21:24:24 EDT  Calling CLAUDE/sonnet (plan · blueprint batch 4)...
+  Claude session: start id=5b4de954-0c85-4d46-9b6f-7f7a6cc618dd
+  Completed CLAUDE/claude-sonnet-5-5 (plan · blueprint batch 4)  rc=0
+========================================================================
+PLAN PROGRESS  ·  STAGE 2 · BLUEPRINT BATCH 4
+========================================================================
+Topology Created:  True
+Blueprints Created: 20 / 20
+Manifest Created:  False
+Blueprints Remaining: 0
+Batch Result:       Accepted 5 Blueprint(s)
+========================================================================
+========================================================================
+PLAN PROGRESS  ·  STAGE 3 · MANIFEST
+========================================================================
+Topology Created:  True
+Blueprints Created: 20 / 20
+Manifest Created:  True
+Blueprints Remaining: 0
+Batch Result:       Manifest validated and serialized
+========================================================================
+2026-10-24 21:25:30 EDT  Calling CLAUDE/sonnet (lineage_attribute)...
+  Completed CLAUDE/claude-sonnet-5-5 (lineage_attribute)  rc=0
+2026-10-24 21:25:38 EDT  Calling CLAUDE/sonnet (lineage_attribute)...
+  Completed CLAUDE/claude-sonnet-5-5 (lineage_attribute)  rc=0
+2026-10-24 21:25:43 EDT  Calling CLAUDE/sonnet (lineage_attribute)...
+  Completed CLAUDE/claude-sonnet-5-5 (lineage_attribute)  rc=0
+2026-10-24 21:25:49 EDT  Calling CLAUDE/sonnet (lineage_attribute)...
+  Completed CLAUDE/claude-sonnet-5-5 (lineage_attribute)  rc=0
+2026-10-24 21:25:54 EDT  Calling CLAUDE/sonnet (lineage_attribute)...
+  Completed CLAUDE/claude-sonnet-5-5 (lineage_attribute)  rc=0
+2026-10-24 21:26:02 EDT  Calling CLAUDE/sonnet (lineage_attribute)...
+  Completed CLAUDE/claude-sonnet-5-5 (lineage_attribute)  rc=0
+2026-10-24 21:26:12 EDT  Calling CLAUDE/sonnet (lineage_attribute)...
+  Completed CLAUDE/claude-sonnet-5-5 (lineage_attribute)  rc=0
+
+Mode: OVERWRITE (Blueprint specs regenerated from analysis)
+Provider: claude / sonnet
+Graph: 0 features, 20 stories, 0 spikes, 0 acceptance gates
+Warnings: 3
+Outcome: updated
+Execution: 20261025.012039.494Z-6afe91e8
+Elapsed: 6 minutes 6 seconds
+Review: /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.011759/workspace/targets/CsvStat/QuarterDeck
+Target - committed project workspace git store

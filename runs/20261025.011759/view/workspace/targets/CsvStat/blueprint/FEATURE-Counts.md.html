@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-Counts.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-Counts.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-Counts.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Counts</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261024 V1</td></tr><tr><td>Description</td><td>Count rows, nulls, and distinct non-null values for each column.</td></tr><tr><td>Depends On</td><td>FEATURE-NullValues.md, FEATURE-TypeNumeric.md</td></tr><tr><td>Provides</td><td>rows, nulls, distinct</td></tr><tr><td>Consumes</td><td>internal/profile.IsNull</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>Give every column three counts used by the profile table. The counts are computed from the file examined and never hardcoded.</p>
+<h2>Behavior</h2>
+<ul><li><code>rows</code> is the number of data records, that is, every record after the header. It is the same for every column.</li><li><code>nulls</code> is the number of values in the column for which <code>internal/profile.IsNull</code> is true.</li><li><code>distinct</code> is the number of different non-null values, compared as exact trimmed strings. Case is significant: <code>true</code> and <code>TRUE</code> are two values. Null values are never counted.</li><li>A file with a header and no records yields <code>rows</code> 0, <code>nulls</code> 0, and <code>distinct</code> 0 for every column.</li></ul>
+<h2>Interface</h2>
+<ul><li>Package <code>internal/profile</code> exposes a function that takes a column&#x27;s trimmed values and returns the three counts.</li><li>The project test suite in <code>internal/profile</code> carries tests named <code>TestCountsRows</code>, <code>TestCountsNulls</code>, <code>TestCountsDistinct</code>, and <code>TestCountsHeaderOnly</code>, written by the implementer against real output.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC counts-rows ===<br>Intent: The row count equals the number of data records, including a header-only input.</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestCountsRows&quot;) assert result.passed, (result.status, result.stdout, result.stderr) === END AC counts-rows ===</p>
+<p>=== AC counts-nulls ===<br>Intent: Empty, NA, N/A, and NULL values are counted as nulls and nothing else is.</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestCountsNulls&quot;) assert result.passed, (result.status, result.stdout, result.stderr) === END AC counts-nulls ===</p>
+<p>=== AC counts-distinct ===<br>Intent: Distinct counts different non-null trimmed strings with case significant and nulls excluded.</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestCountsDistinct&quot;) assert result.passed, (result.status, result.stdout, result.stderr) === END AC counts-distinct ===</p>
+<p>=== AC counts-header-only ===<br>Intent: A header-only input yields zero for all three counts.</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestCountsHeaderOnly&quot;) assert result.passed, (result.status, result.stdout, result.stderr) === END AC counts-header-only ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Counts are computed from the file examined; no count is hardcoded.</li><li>Distinct comparison uses exact trimmed strings, never case folding or numeric equality.</li><li>Null values are never counted as distinct values.</li></ul></article>
+</main>
+</body>
+</html>

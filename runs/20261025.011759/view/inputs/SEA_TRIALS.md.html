@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>inputs/SEA_TRIALS.md</title>
+<link rel="stylesheet" href="../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>inputs/SEA_TRIALS.md</h1><div class="filenav"><a href="../../index.html">&larr; Report</a><a href="../../inputs/SEA_TRIALS.md">Raw file</a></div></header>
+<article class="doc"><h1>Sea Trials: CsvStat</h1>
+<h2>Policy</h2>
+<div class="scroll"><table><thead><tr><th>Consequence</th><th>On FAIL</th><th>On INCONCLUSIVE</th></tr></thead><tbody><tr><td>blocks</td><td>fail</td><td>attest</td></tr><tr><td>scores</td><td>score</td><td>score</td></tr><tr><td>attests</td><td>report</td><td>report</td></tr></tbody></table></div>
+<h2>st-001: The supplied grader passes</h2>
+<p>Type: technical<br>Required: yes<br>Criterion: The completed csvstat shall make sh sources/run.sh exit zero; that script&#x27;s exit status is the sole acceptance verdict.<br>Testability: deterministic<br>Consequence: blocks<br>Verification: proof<br>Command: [&quot;sh&quot;, &quot;sources/run.sh&quot;]<br>Pattern: ubiquitous</p>
+<h2>st-002: Test suite passes</h2>
+<p>Type: technical<br>Required: yes<br>Criterion: The application shall provide a POSIX-compatible bin/test.sh that exits zero when go vet and every automated test pass.<br>Testability: deterministic<br>Consequence: blocks<br>Verification: proof<br>Pattern: ubiquitous</p>
+<h2>st-003: The executable builds with go build</h2>
+<p>Type: technical<br>Required: yes<br>Criterion: The application root shall be a Go module from which go build ./cmd/csvstat produces the csvstat executable using only the standard library.<br>Testability: deterministic<br>Consequence: blocks<br>Verification: proof<br>Pattern: ubiquitous</p>
+<h2>st-004: Column types are inferred</h2>
+<p>Type: behavioral<br>Required: yes<br>Criterion: The application shall assign each column the first of integer, number, date, boolean, and text that every non-null value satisfies, and empty when it has no non-null value.<br>Testability: deterministic<br>Consequence: blocks<br>Verification: proof<br>Pattern: ubiquitous</p>
+<h2>st-005: Profiles match the known answers</h2>
+<p>Type: behavioral<br>Required: yes<br>Criterion: The application shall compute rows, nulls, distinct, min, max, sum, mean, and median for every column of the supplied data files, matching the known answers in sources/run.sh byte for byte.<br>Testability: deterministic<br>Consequence: blocks<br>Verification: proof<br>Pattern: ubiquitous</p>
+<h2>st-006: Frequencies are ordered and limited</h2>
+<p>Type: behavioral<br>Required: yes<br>Criterion: When --freq is given, the application shall list the column&#x27;s non-null values by count descending then value ascending, at most --top rows.<br>Testability: deterministic<br>Consequence: blocks<br>Verification: proof<br>Pattern: event</p>
+<h2>st-007: Malformed input is rejected</h2>
+<p>Type: behavioral<br>Required: yes<br>Criterion: If the file is empty, has an empty or repeated header name, has a ragged record, or a named column is absent, then the application shall exit 3 and write nothing to standard output.<br>Testability: deterministic<br>Consequence: blocks<br>Verification: proof<br>Pattern: unwanted</p>
+<h2>st-008: Errors map to exit codes</h2>
+<p>Type: behavioral<br>Required: yes<br>Criterion: If the file cannot be read, then the application shall exit 1; if the arguments are malformed, then the application shall exit 2; in both cases it shall write nothing to standard output.<br>Testability: deterministic<br>Consequence: blocks<br>Verification: proof<br>Pattern: unwanted</p></article>
+</main>
+</body>
+</html>

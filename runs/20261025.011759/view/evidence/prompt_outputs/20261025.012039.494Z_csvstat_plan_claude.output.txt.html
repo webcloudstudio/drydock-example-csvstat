@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/prompt_outputs/20261025.012039.494Z_csvstat_plan_claude.output.txt</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/prompt_outputs/20261025.012039.494Z_csvstat_plan_claude.output.txt</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/prompt_outputs/20261025.012039.494Z_csvstat_plan_claude.output.txt">Raw file</a></div></header>
+<article class="doc"><pre>=== BEGIN ARTIFACT TOPOLOGY.md ===
+## Declarations
+
+## story foundation
+summary:      Stand up the Go module, the csvstat entry point, and the testable CLI package.
+type:         foundational
+kind:         capability
+phase:        1
+implements:   ARCHITECTURE.md
+stack:        common.md, go.md
+provides:     go.mod, cmd/csvstat, internal/cli.Run
+acceptance:   yes
+instructions: |
+  Create the root go.mod (Go 1.22 or newer, standard library only), cmd/csvstat/main.go, and the
+  internal/cli package exposing Run(args []string, stdout, stderr io.Writer) int. Only main calls
+  os.Exit. Define the package layout under internal/ for reading, typing, statistics, and output.
+  Run is a minimal stub at this step; later stories fill it in. Record the module ownership table
+  and the technology stack in ARCHITECTURE.md.
+
+## story build-executable
+summary:      Build the csvstat executable with go build using only the standard library.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-Build.md
+covers:       BLD-001
+accepts:      st-003
+stack:        go.md
+provides:     csvstat executable
+depends:      foundation
+acceptance:   yes
+instructions: |
+  Make go build -o &lt;path&gt; ./cmd/csvstat succeed from the application root with no third-party
+  modules. main wires os.Args, os.Stdout, and os.Stderr into cli.Run and exits with its result.
+
+## story csv-reader
+summary:      Read the CSV file with encoding/csv and trim the header and every value.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-CsvReader.md
+covers:       INP-001
+stack:        go.md
+provides:     internal/csvio.Read
+depends:      foundation
+acceptance:   yes
+instructions: |
+  Read RFC 4180 CSV with encoding/csv. The first record is the header. Trim leading and trailing
+  spaces from every header name and every value. Do not reject invalid UTF-8. Blank lines are
+  skipped by encoding/csv. Keep record line numbers available for diagnostics.
+
+## story input-rejection
+summary:      Reject empty, malformed, or ragged files with exit 3 and a diagnostic on standard error.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-InputRejection.md
+covers:       INP-002
+accepts:      st-007
+stack:        go.md
+provides:     exit code 3 for rejected input
+consumes:     internal/csvio.Read
+depends:      csv-reader
+acceptance:   yes
+instructions: |
+  Reject an empty file, an empty or repeated header name, and any record whose field count differs
+  from the header. Exit 3, write nothing to standard output, and write one standard error line
+  naming the file and, for a record, its line number. A csv.ParseError is also a rejection.
+
+## story read-failure
+summary:      Report an unopenable or unreadable file, including a directory, with exit 1.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-ReadFailure.md
+covers:       INP-003
+accepts:      st-008
+stack:        go.md
+provides:     exit code 1 for operational failure
+consumes:     internal/csvio.Read
+depends:      csv-reader
+acceptance:   yes
+instructions: |
+  A path that cannot be opened or read, including a missing file and a directory, exits 1 with
+  nothing on standard output and one diagnostic line on standard error. It must not panic.
+
+## story null-values
+summary:      Classify empty, NA, N/A, and NULL values as null after trimming.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-NullValues.md
+covers:       INP-004
+stack:        go.md
+provides:     internal/profile.IsNull
+consumes:     internal/csvio.Read
+depends:      csv-reader
+acceptance:   yes
+instructions: |
+  A trimmed value is null when it is empty or equals NA, N/A, or NULL ignoring case. Every other
+  value is non-null. Expose the predicate for typing, counts, statistics, and frequencies.
+
+## story arguments
+summary:      Parse arguments and reject malformed usage with exit 2 and a usage line.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-Arguments.md
+covers:       ARG-001
+accepts:      st-008
+stack:        go.md
+provides:     --column, --freq, --top, exit code 2
+depends:      build-executable
+acceptance:   yes
+instructions: |
+  Use a local flag.FlagSet with flag.ContinueOnError and discarded flag output. Options precede
+  the file. Exit 2 with nothing on standard output for a missing or extra file, an unknown option,
+  an option without its value, --column with --freq, and --top without --freq. Write one standard
+  error line naming the profile and frequency command forms. No --help option.
+
+## story type-numeric
+summary:      Infer the integer and number column types.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-TypeNumeric.md
+covers:       TYP-001
+accepts:      st-004
+stack:        go.md
+provides:     internal/profile.InferType
+consumes:     internal/profile.IsNull
+depends:      null-values
+acceptance:   yes
+instructions: |
+  A column is integer when every non-null value matches -?[0-9]+ and number when every non-null
+  value matches -?[0-9]+(\.[0-9]+)?. Typing considers only non-null values and picks the first
+  type in order integer, number, date, boolean, text that all of them satisfy.
+
+## story type-date
+summary:      Infer the date column type with real calendar validation.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-TypeDate.md
+covers:       TYP-002
+accepts:      st-004
+stack:        go.md
+provides:     date type
+consumes:     internal/profile.InferType
+depends:      type-numeric
+acceptance:   yes
+instructions: |
+  A column is date when every non-null value matches YYYY-MM-DD and is a real calendar date, so
+  2025-02-30 is not a date. Use time.Parse with the 2006-01-02 layout plus a strict shape check.
+
+## story type-other
+summary:      Infer the boolean, text, and empty column types.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-TypeOther.md
+covers:       TYP-003
+accepts:      st-004
+stack:        go.md
+provides:     boolean, text, empty types
+consumes:     internal/profile.InferType
+depends:      type-numeric
+acceptance:   yes
+instructions: |
+  A column is boolean when every non-null value is true or false ignoring case, text otherwise,
+  and empty when it has no non-null value.
+
+## story counts
+summary:      Count rows, nulls, and distinct non-null values for each column.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-Counts.md
+covers:       PRO-001
+accepts:      st-005
+stack:        go.md
+provides:     rows, nulls, distinct
+consumes:     internal/profile.IsNull
+depends:      type-numeric
+acceptance:   yes
+instructions: |
+  rows counts data records, nulls counts null values, and distinct counts different non-null
+  values compared as exact trimmed strings.
+
+## story min-max
+summary:      Report min and max for every column type.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-MinMax.md
+covers:       PRO-002
+accepts:      st-005
+stack:        go.md
+provides:     min, max
+consumes:     internal/profile.InferType
+depends:      type-date, type-other
+acceptance:   yes
+instructions: |
+  integer and number compare numerically using exact math/big values and are written as plain
+  integers or two-decimal numbers. date gives earliest and latest. boolean gives false if any
+  value is false else true for min, and true if any value is true else false for max. text
+  compares by byte value. empty is blank.
+
+## story sum-mean
+summary:      Compute exact sum and mean for numeric columns, rounded once half away from zero.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-SumMean.md
+covers:       PRO-003
+accepts:      st-005
+stack:        go.md
+provides:     sum, mean
+consumes:     internal/profile.InferType
+depends:      type-numeric
+acceptance:   yes
+instructions: |
+  Use math/big (big.Rat) for exact arithmetic. integer sum is a plain integer. number sum and
+  mean are written with two decimals, rounded once half away from zero from the exact value,
+  with a leading - when negative and no thousands separator. mean is the total divided by the
+  non-null count; integer mean is also two decimals. Other types are blank.
+
+## story median
+summary:      Compute the exact median for numeric columns.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-Median.md
+covers:       PRO-004
+accepts:      st-005
+stack:        go.md
+provides:     median
+consumes:     internal/profile.InferType
+depends:      type-numeric
+acceptance:   yes
+instructions: |
+  Sort the non-null numeric values exactly. The median is the middle value, or the mean of the
+  two middle values when the count is even, written with two decimals rounded half away from
+  zero. Other types are blank.
+
+## story profile-output
+summary:      Write the profile table for every column in file order.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-ProfileOutput.md
+covers:       OUT-001
+accepts:      st-005
+stack:        go.md
+provides:     profile table on standard output
+consumes:     internal/profile
+depends:      counts, min-max, sum-mean, median, type-date, type-other
+acceptance:   yes
+instructions: |
+  Write the header column,type,rows,nulls,distinct,min,max,sum,mean,median and one row per
+  column in file order using encoding/csv&#x27;s writer with \n line endings. Quoting follows the
+  writer. Nothing is written to standard output on failure.
+
+## story column-select
+summary:      Profile only the column named by --column and exit 3 when it is absent.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-ColumnSelect.md
+covers:       SEL-001
+accepts:      st-007
+stack:        go.md
+provides:     --column behavior
+consumes:     profile table
+depends:      profile-output, arguments, input-rejection
+acceptance:   yes
+instructions: |
+  With --column, output the header and the single named column row. A name absent from the
+  header exits 3 with nothing on standard output.
+
+## story frequency
+summary:      List the most frequent values of a column ordered by count then value.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-Frequency.md
+covers:       FRQ-001
+accepts:      st-006, st-007
+stack:        go.md
+provides:     --freq behavior
+consumes:     internal/profile.IsNull
+depends:      null-values, profile-output, arguments, input-rejection
+acceptance:   yes
+instructions: |
+  With --freq, write the header value,count and one row per distinct non-null value ordered by
+  count descending, then value ascending by bytes. Nulls are not listed. An all-null column
+  writes only the header. An absent column name exits 3. The default limit is 5 rows.
+
+## story frequency-top
+summary:      Limit frequency rows with --top and reject non-positive values with exit 2.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-FrequencyTop.md
+covers:       FRQ-002
+accepts:      st-006, st-008
+stack:        go.md
+provides:     --top behavior
+consumes:     --freq behavior
+depends:      frequency
+acceptance:   yes
+instructions: |
+  --top n lists at most n frequency rows, default 5. A value that is not a positive integer
+  exits 2 with nothing on standard output.
+
+## story test-runner
+summary:      Provide the POSIX bin/test.sh that runs go vet and go test.
+type:         service
+kind:         test harness
+phase:        1
+implements:   FEATURE-TestRunner.md
+covers:       BLD-002
+accepts:      st-002
+stack:        common.md, go.md
+provides:     bin/test.sh
+depends:      frequency-top, column-select, read-failure, build-executable
+acceptance:   yes
+instructions: |
+  Write bin/test.sh in POSIX sh. From the application root it runs go vet ./... and then
+  go test ./..., exiting zero only when both pass. The project test suite covers each type, each
+  statistic, null handling, rounding, each output form, and each exit code, using files the tests
+  write themselves. Tests call cli.Run with bytes.Buffer writers.
+
+## story conformance
+summary:      Pass the supplied conformance grader sh sources/run.sh.
+type:         feature
+kind:         integration
+phase:        1
+implements:   FEATURE-Conformance.md
+covers:       CNF-001
+accepts:      st-001
+stack:        common.md, go.md
+provides:     conformance with sources/run.sh
+depends:      test-runner, frequency-top, column-select, read-failure
+acceptance:   yes
+instructions: |
+  Assembly story. Once every implementation story has closed, run the supplied grader unfiltered
+  and make it exit zero. Declare Suite: full on its single assertion and assert only the exit
+  status. Fix defects in the member stories&#x27; code, never in sources/.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT DECISIONS.json ===
+[
+  {
+    &quot;id&quot;: &quot;Q-001&quot;,
+    &quot;type&quot;: &quot;choice&quot;,
+    &quot;severity&quot;: &quot;low&quot;,
+    &quot;blueprint&quot;: &quot;FEATURE-Arguments.md&quot;,
+    &quot;story&quot;: &quot;arguments&quot;,
+    &quot;title&quot;: &quot;Help option&quot;,
+    &quot;description&quot;: &quot;The sources define no --help option. Usage errors exit 2 with a usage line on standard error that names both command forms.&quot;,
+    &quot;options&quot;: [
+      { &quot;value&quot;: &quot;no-help&quot;, &quot;label&quot;: &quot;No --help; usage line on error only&quot; },
+      { &quot;value&quot;: &quot;help&quot;, &quot;label&quot;: &quot;Add --help exiting 0&quot; }
+    ],
+    &quot;system_choice&quot;: &quot;no-help&quot;
+  },
+  {
+    &quot;id&quot;: &quot;Q-002&quot;,
+    &quot;type&quot;: &quot;choice&quot;,
+    &quot;severity&quot;: &quot;low&quot;,
+    &quot;blueprint&quot;: &quot;FEATURE-CsvReader.md&quot;,
+    &quot;story&quot;: &quot;csv-reader&quot;,
+    &quot;title&quot;: &quot;Blank lines and invalid UTF-8&quot;,
+    &quot;description&quot;: &quot;encoding/csv skips blank lines, which is taken as the narrowest meaning of record. Invalid UTF-8 is not a rejection condition because the rejection list is exhaustive.&quot;,
+    &quot;options&quot;: [
+      { &quot;value&quot;: &quot;csv-default&quot;, &quot;label&quot;: &quot;Skip blank lines; accept invalid UTF-8&quot; },
+      { &quot;value&quot;: &quot;strict&quot;, &quot;label&quot;: &quot;Reject invalid UTF-8&quot; }
+    ],
+    &quot;system_choice&quot;: &quot;csv-default&quot;
+  },
+  {
+    &quot;id&quot;: &quot;Q-003&quot;,
+    &quot;type&quot;: &quot;choice&quot;,
+    &quot;severity&quot;: &quot;low&quot;,
+    &quot;blueprint&quot;: &quot;FEATURE-ReadFailure.md&quot;,
+    &quot;story&quot;: &quot;read-failure&quot;,
+    &quot;title&quot;: &quot;Directory as input path&quot;,
+    &quot;description&quot;: &quot;A path naming a directory cannot be read as a file, so it is an operational failure.&quot;,
+    &quot;options&quot;: [
+      { &quot;value&quot;: &quot;exit-1&quot;, &quot;label&quot;: &quot;Exit 1&quot; },
+      { &quot;value&quot;: &quot;exit-3&quot;, &quot;label&quot;: &quot;Exit 3&quot; }
+    ],
+    &quot;system_choice&quot;: &quot;exit-1&quot;
+  }
+]
+=== END ARTIFACT ===</pre></article>
+</main>
+</body>
+</html>

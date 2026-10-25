@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>build/CsvStat/bin/test.sh</title>
+<link rel="stylesheet" href="../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>build/CsvStat/bin/test.sh</h1><div class="filenav"><a href="../../../../index.html">&larr; Report</a><a href="../../../../build/CsvStat/bin/test.sh">Raw file</a></div></header>
+<article class="doc"><pre>#!/bin/sh
+# CommandCenter Operation
+# Name: Run Test Suite
+# Type: batch
+
+# Gates the project: formatting, vet, then the Go test suite. Exits non-zero on any failure.
+set -eu
+
+SCRIPT_DIR=$(cd &quot;$(dirname &quot;$0&quot;)&quot; &amp;&amp; pwd)
+APP_DIR=$(cd &quot;$SCRIPT_DIR/..&quot; &amp;&amp; pwd)
+cd &quot;$APP_DIR&quot;
+
+unformatted=$(gofmt -l .)
+if [ -n &quot;$unformatted&quot; ]; then
+    echo &quot;gofmt needed for:&quot; &gt;&amp;2
+    echo &quot;$unformatted&quot; &gt;&amp;2
+    exit 1
+fi
+
+go vet ./...
+go test -race -count=1 ./...
+</pre></article>
+</main>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-MinMax.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-MinMax.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-MinMax.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: MinMax</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261024 V1</td></tr><tr><td>Description</td><td>Report the minimum and maximum for every column type.</td></tr><tr><td>Depends On</td><td>FEATURE-TypeDate.md, FEATURE-TypeOther.md</td></tr><tr><td>Provides</td><td>min, max</td></tr><tr><td>Consumes</td><td>internal/profile.InferType</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>Give every column a <code>min</code> and <code>max</code> appropriate to its inferred type.</p>
+<h2>Behavior</h2>
+<p>Statistics consider non-null values only.</p>
+<div class="scroll"><table><thead><tr><th>Type</th><th>min</th><th>max</th></tr></thead><tbody><tr><td><code>integer</code></td><td>smallest value, written as a plain integer</td><td>largest value, written as a plain integer</td></tr><tr><td><code>number</code></td><td>smallest value, exactly two decimals</td><td>largest value, exactly two decimals</td></tr><tr><td><code>date</code></td><td>earliest date</td><td>latest date</td></tr><tr><td><code>boolean</code></td><td><code>false</code> if any value is false, else <code>true</code></td><td><code>true</code> if any value is true, else <code>false</code></td></tr><tr><td><code>text</code></td><td>smallest by byte value</td><td>largest by byte value</td></tr><tr><td><code>empty</code></td><td>empty string</td><td>empty string</td></tr></tbody></table></div>
+<ul><li>Integer and number comparison is numeric and exact, using <code>math/big</code>. Values such as <code>-3</code> and <code>12</code> compare as numbers, not strings.</li><li>Boolean values compare ignoring case, and the written result is lowercase.</li><li>Number output has a leading <code>-</code> when negative, no thousands separator, and is rounded once half away from zero from the exact value.</li></ul>
+<h2>Interface</h2>
+<ul><li>Package <code>internal/profile</code> computes <code>min</code> and <code>max</code> strings for a column given its type and values.</li><li>The project test suite in <code>internal/profile</code> carries tests named <code>TestMinMaxInteger</code>, <code>TestMinMaxNumber</code>, <code>TestMinMaxDate</code>, <code>TestMinMaxBoolean</code>, <code>TestMinMaxText</code>, and <code>TestMinMaxEmpty</code>.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC minmax-integer ===<br>Intent: Integer min and max compare numerically and are written as plain integers.</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestMinMaxInteger&quot;) assert result.passed, (result.status, result.stdout, result.stderr) === END AC minmax-integer ===</p>
+<p>=== AC minmax-number ===<br>Intent: Number min and max compare numerically and are written with two decimals.</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestMinMaxNumber&quot;) assert result.passed, (result.status, result.stdout, result.stderr) === END AC minmax-number ===</p>
+<p>=== AC minmax-date ===<br>Intent: Date min and max give the earliest and latest date.</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestMinMaxDate&quot;) assert result.passed, (result.status, result.stdout, result.stderr) === END AC minmax-date ===</p>
+<p>=== AC minmax-boolean ===<br>Intent: Boolean min is false if any value is false and max is true if any value is true, ignoring case.</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestMinMaxBoolean&quot;) assert result.passed, (result.status, result.stdout, result.stderr) === END AC minmax-boolean ===</p>
+<p>=== AC minmax-text ===<br>Intent: Text min and max compare by byte value.</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestMinMaxText&quot;) assert result.passed, (result.status, result.stdout, result.stderr) === END AC minmax-text ===</p>
+<p>=== AC minmax-empty ===<br>Intent: An empty column has blank min and max.</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestMinMaxEmpty&quot;) assert result.passed, (result.status, result.stdout, result.stderr) === END AC minmax-empty ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Numeric comparison never uses string order or floating point.</li><li>No min or max value is hardcoded; every value comes from the file examined.</li></ul></article>
+</main>
+</body>
+</html>

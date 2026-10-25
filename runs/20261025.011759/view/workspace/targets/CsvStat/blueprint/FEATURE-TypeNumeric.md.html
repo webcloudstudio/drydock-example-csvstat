@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-TypeNumeric.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-TypeNumeric.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-TypeNumeric.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Type Numeric</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Infers the integer and number column types from a column&#x27;s non-null values.</td></tr><tr><td>Depends On</td><td>FEATURE-NullValues.md</td></tr><tr><td>Provides</td><td>internal/profile.InferType</td></tr><tr><td>Consumes</td><td>internal/profile.IsNull</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>A column&#x27;s type is the first of <code>integer</code>, <code>number</code>, <code>date</code>, <code>boolean</code>, <code>text</code> that every non-null value satisfies, or <code>empty</code> when there is no non-null value. This feature creates the typing function and implements its first two rungs; later features add the remaining rungs to the same function.</p>
+<h2>Behavior</h2>
+<ul><li>Package <code>internal/profile</code> exports <code>InferType(values []string) string</code>. Values are already trimmed; null values are skipped using <code>IsNull</code>.</li><li>Returns <code>&quot;integer&quot;</code> when every non-null value matches <code>^-?[0-9]+$</code>.</li><li>Returns <code>&quot;number&quot;</code> when every non-null value matches <code>^-?[0-9]+(\.[0-9]+)?$</code> and at least one value is not an integer.</li><li>Integer text with leading zeros or a leading <code>-</code> and digits is still an integer; <code>+5</code>, <code>.5</code>, <code>5.</code>, <code>1e3</code>, <code>1,000</code>, and a bare <code>-</code> are not numeric.</li><li>Typing considers only non-null values: a column of integers and nulls is <code>integer</code>.</li><li>The ladder order is integer, number, date, boolean, text; a column that satisfies an earlier rung never takes a later one.</li><li>Non-numeric columns fall through to later rungs, implemented by FEATURE-TypeDate.md and FEATURE-TypeOther.md. Until they exist, a non-numeric column returns <code>&quot;text&quot;</code>.</li></ul>
+<h2>Required project tests</h2>
+<p>The builder writes these tests in <code>internal/profile</code> with exactly these names:</p>
+<ul><li><code>TestInferTypeInteger</code>: integer columns, negative values, leading zeros, and integers mixed with nulls.</li><li><code>TestInferTypeNumber</code>: decimals, negative decimals, decimals mixed with integers, and decimals mixed with nulls.</li><li><code>TestInferTypeNotNumeric</code>: forms such as <code>+5</code>, <code>.5</code>, <code>5.</code>, <code>1e3</code>, <code>1,000</code>, and <code>-</code> are not integer or number.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC typenumeric-integer ===<br>Intent: Integer columns, including negatives and nulls, are typed integer by the delivered function.<br>Suite: scoped<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestInferTypeInteger&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC typenumeric-integer ===</p>
+<p>=== AC typenumeric-number ===<br>Intent: Columns with at least one decimal value and otherwise numeric values are typed number.<br>Suite: scoped<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestInferTypeNumber&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC typenumeric-number ===</p>
+<p>=== AC typenumeric-not-numeric ===<br>Intent: Malformed numeric spellings never type a column as integer or number.<br>Suite: scoped<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestInferTypeNotNumeric&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC typenumeric-not-numeric ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Type names are exactly <code>integer</code>, <code>number</code>, <code>date</code>, <code>boolean</code>, <code>text</code>, and <code>empty</code>.</li><li>Typing never reads a data file and never hardcodes a column name or a type for a column.</li><li>Standard library only.</li></ul></article>
+</main>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-CsvReader.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-CsvReader.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-CsvReader.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: CSV Reader</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Read a CSV file with encoding/csv, taking the first record as the header and trimming every header name and value.</td></tr><tr><td>Depends On</td><td>ARCHITECTURE.md</td></tr><tr><td>Provides</td><td>internal/csvio.Read</td></tr><tr><td>Consumes</td><td>None</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p><code>internal/csvio</code> reads the file as RFC 4180 CSV with <code>encoding/csv</code>. The first record is the header. Every header name and every value is trimmed of leading and trailing spaces before any other rule applies. Structural rejection (empty file, bad header, ragged record) belongs to the InputRejection feature; this feature supplies the parsed, trimmed records and their line numbers.</p>
+<h2>Interface</h2>
+<p><code>csvio.Read(path string) (*Table, error)</code> where <code>Table</code> carries:</p>
+<ul><li><code>Header []string</code>: trimmed header names.</li><li><code>Rows [][]string</code>: trimmed data records in file order.</li><li><code>Lines []int</code>: the 1-based starting line of each data record (from <code>csv.Reader.FieldPos</code>), kept for diagnostics.</li></ul>
+<p>The reader sets <code>FieldsPerRecord = -1</code> so that a field-count mismatch is detected by the application and not by <code>encoding/csv</code>, which lets the caller name the offending line. <code>LazyQuotes</code> stays false. A quoted field containing a comma, a quote, or a newline is returned as one field.</p>
+<h2>Behavior</h2>
+<ul><li>Trim spaces from header names and values, for example a value <code>Globex</code> becomes <code>Globex</code>.</li><li>A quoted field that contains a comma stays one field.</li><li>Blank lines are skipped by <code>encoding/csv</code>.</li><li>Invalid UTF-8 bytes are read and not rejected.</li><li>Failure to open or read the file is returned as an error distinguishable from a CSV syntax error, so the caller can map it to exit 1 or exit 3.</li></ul>
+<h2>Required Project Tests</h2>
+<p>The build writes these tests in <code>internal/csvio</code> using files the tests create. Acceptance runs them by exact name.</p>
+<ul><li><code>TestReadTrimsHeaderAndValues</code>: padded header names and padded values come back trimmed.</li><li><code>TestReadKeepsQuotedCommaInOneField</code>: a quoted field containing a comma is one field.</li><li><code>TestReadReturnsRecordLines</code>: <code>Lines</code> has one entry per data record and reflects the file line.</li><li><code>TestReadAcceptsInvalidUTF8</code>: a file with a byte that is not valid UTF-8 is read without error.</li><li><code>TestReadMissingFileIsOpenError</code>: a missing path returns an error that is not a CSV parse error.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC reader-trims ===<br>Intent: Header names and values are trimmed of leading and trailing spaces.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/csvio&quot;, &quot;TestReadTrimsHeaderAndValues&quot;) assert result.passed, (result.status, result.stdout, result.stderr) === END AC reader-trims ===</p>
+<p>=== AC reader-quoted-comma ===<br>Intent: A quoted field containing a comma is read as a single field.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/csvio&quot;, &quot;TestReadKeepsQuotedCommaInOneField&quot;) assert result.passed, (result.status, result.stdout, result.stderr) === END AC reader-quoted-comma ===</p>
+<p>=== AC reader-record-lines ===<br>Intent: Each data record keeps its line number for diagnostics.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/csvio&quot;, &quot;TestReadReturnsRecordLines&quot;) assert result.passed, (result.status, result.stdout, result.stderr) === END AC reader-record-lines ===</p>
+<p>=== AC reader-invalid-utf8 ===<br>Intent: A file containing bytes that are not valid UTF-8 is read and not rejected.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/csvio&quot;, &quot;TestReadAcceptsInvalidUTF8&quot;) assert result.passed, (result.status, result.stdout, result.stderr) === END AC reader-invalid-utf8 ===</p>
+<p>=== AC reader-open-error ===<br>Intent: A missing file produces an open error that is distinct from a CSV parse error.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/csvio&quot;, &quot;TestReadMissingFileIsOpenError&quot;) assert result.passed, (result.status, result.stdout, result.stderr) === END AC reader-open-error ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Use <code>encoding/csv</code> from the standard library only.</li><li>Application code never reads <code>sources/run.sh</code> or any supplied data file.</li><li>Invalid UTF-8 is not a rejection condition.</li><li>Do not modify any file under <code>sources/</code>.</li></ul></article>
+</main>
+</body>
+</html>

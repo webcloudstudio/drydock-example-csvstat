@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/prompt_outputs/20261025.012424.656Z_csvstat_plan_claude.output.txt</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/prompt_outputs/20261025.012424.656Z_csvstat_plan_claude.output.txt</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/prompt_outputs/20261025.012424.656Z_csvstat_plan_claude.output.txt">Raw file</a></div></header>
+<article class="doc"><pre>=== BEGIN ARTIFACT FEATURE-ColumnSelect.md ===
+# FEATURE: Column Select
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Profile only the column named by --column and reject an absent name with exit 3. |
+| Depends On  | FEATURE-ProfileOutput.md, FEATURE-Arguments.md, FEATURE-InputRejection.md |
+| Provides    | --column behavior |
+| Consumes    | profile table on standard output |
+
+## Questions
+
+- None.
+
+## Purpose
+
+`csvstat --column &lt;name&gt; &lt;file&gt;` writes the profile header followed by the single row for the named
+column. The row is identical to the row the full profile writes for that column. A name that is not
+in the header is a rejected input.
+
+## Behavior
+
+- Output is the header `column,type,rows,nulls,distinct,min,max,sum,mean,median` and exactly one
+  row, for the named column, written with the same `encoding/csv` writer as the full profile.
+- The name is compared to the trimmed header names as an exact string.
+- A name absent from the header exits 3, writes nothing to standard output, and writes one
+  diagnostic line naming the file to standard error.
+- The whole file is still read and validated first, so a ragged file exits 3 regardless of the
+  column named.
+
+## Programmatic Acceptance
+
+=== AC column-select-matches-full-profile ===
+Intent: A named column yields the profile header plus exactly the row the full profile gives that column.
+Requires: executable=go; scope=test
+
+import csv
+import io
+from drydock_go import cli_runner
+
+data = &quot;sources/employees.csv&quot;
+code, out, err = cli_runner(data)
+assert code == 0, (code, out, err)
+full = list(csv.reader(io.StringIO(out)))
+header = full[0]
+by_name = {row[0]: row for row in full[1:]}
+
+for name in (&quot;salary&quot;, &quot;id&quot;, &quot;remote&quot;, &quot;hire_date&quot;):
+    code, out, err = cli_runner(&quot;--column&quot;, name, data)
+    assert code == 0, (name, code, out, err)
+    rows = list(csv.reader(io.StringIO(out)))
+    assert len(rows) == 2, (name, rows)
+    assert rows[0] == header, (name, rows[0], header)
+    assert rows[1] == by_name[name], (name, rows[1], by_name[name])
+=== END AC column-select-matches-full-profile ===
+
+=== AC column-select-quoted-field ===
+Intent: A column whose value contains a comma is quoted by the writer and parses back to the same row as the full profile.
+Requires: executable=go; scope=test
+
+import csv
+import io
+from drydock_go import cli_runner
+
+data = &quot;sources/employees.csv&quot;
+code, out, err = cli_runner(data)
+assert code == 0, (code, out, err)
+full = list(csv.reader(io.StringIO(out)))
+by_name = {row[0]: row for row in full[1:]}
+
+name = &quot;notes&quot;
+code, out, err = cli_runner(&quot;--column&quot;, name, data)
+assert code == 0, (code, out, err)
+rows = list(csv.reader(io.StringIO(out)))
+assert len(rows) == 2, rows
+assert rows[1] == by_name[name], (rows[1], by_name[name])
+assert any(&quot;,&quot; in field for field in rows[1]), rows[1]
+=== END AC column-select-quoted-field ===
+
+=== AC column-select-absent-name ===
+Intent: A column name missing from the header exits 3 and writes nothing to standard output.
+Requires: executable=go; scope=test
+
+from drydock_go import cli_runner
+
+code, out, err = cli_runner(&quot;--column&quot;, &quot;nosuch&quot;, &quot;sources/orders.csv&quot;)
+assert code == 3, (code, out, err)
+assert out == &quot;&quot;, out
+=== END AC column-select-absent-name ===
+
+=== AC column-select-trimmed-header-name ===
+Intent: The column name is matched against trimmed header names, so a padded header still resolves.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+name = &quot;price&quot;
+with tempfile.TemporaryDirectory() as tmp:
+    path = os.path.join(tmp, &quot;padded.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;) as handle:
+        handle.write(f&quot;id,  {name}  \n1,2.50\n2,3.50\n&quot;)
+    code, out, err = cli_runner(&quot;--column&quot;, name, path)
+    assert code == 0, (code, out, err)
+    rows = list(csv.reader(io.StringIO(out)))
+    assert len(rows) == 2, rows
+    assert rows[1][0] == name, rows
+=== END AC column-select-trimmed-header-name ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- The row for a named column is computed from the file, never hardcoded.
+- Nothing is written to standard output when the command fails.
+- Only the exact-string, trimmed header name selects a column; no prefix or case-insensitive match.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-Frequency.md ===
+# FEATURE: Frequency
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | List the most frequent non-null values of one column ordered by count descending then value ascending. |
+| Depends On  | FEATURE-NullValues.md, FEATURE-ProfileOutput.md, FEATURE-Arguments.md, FEATURE-InputRejection.md |
+| Provides    | --freq behavior |
+| Consumes    | internal/profile.IsNull |
+
+## Questions
+
+- None.
+
+## Purpose
+
+`csvstat --freq &lt;name&gt; &lt;file&gt;` replaces the profile with a frequency listing of one column.
+
+## Behavior
+
+- Output header is `value,count`, written with the `encoding/csv` writer and `\n` line endings.
+- One row per distinct non-null value of the named column, values compared as exact trimmed
+  strings.
+- Rows are ordered by count descending, then by value ascending by byte value.
+- Null values (empty, `NA`, `N/A`, `NULL` ignoring case, after trimming) are not listed.
+- A column with no non-null values writes only the header and exits 0.
+- At most 5 rows are written when `--top` is not given. `--top` itself is specified in
+  FEATURE-FrequencyTop.md.
+- A name absent from the header exits 3 with nothing on standard output.
+
+## Programmatic Acceptance
+
+=== AC frequency-ordering ===
+Intent: Frequencies list non-null trimmed values by count descending then byte-ordered value, matching counts computed from the input file.
+Requires: executable=go; scope=test
+
+import csv
+import io
+from collections import Counter
+from drydock_go import cli_runner
+
+data = &quot;sources/orders.csv&quot;
+column = &quot;customer&quot;
+with open(data, newline=&quot;&quot;) as handle:
+    records = list(csv.reader(handle))
+index = [name.strip() for name in records[0]].index(column)
+nulls = {&quot;&quot;, &quot;na&quot;, &quot;n/a&quot;, &quot;null&quot;}
+values = [row[index].strip() for row in records[1:]]
+counts = Counter(v for v in values if v.lower() not in nulls)
+ordered = sorted(counts.items(), key=lambda item: (-item[1], item[0].encode()))
+expected = [[value, str(count)] for value, count in ordered][:5]
+
+code, out, err = cli_runner(&quot;--freq&quot;, column, data)
+assert code == 0, (code, out, err)
+rows = list(csv.reader(io.StringIO(out)))
+assert rows[0] == [&quot;value&quot;, &quot;count&quot;], rows[0]
+assert rows[1:] == expected, (rows[1:], expected)
+=== END AC frequency-ordering ===
+
+=== AC frequency-tie-order-by-bytes ===
+Intent: Values with equal counts are ordered ascending by byte value.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+values = [&quot;b&quot;, &quot;a&quot;, &quot;B&quot;, &quot;c&quot;, &quot;a&quot;, &quot;b&quot;]
+with tempfile.TemporaryDirectory() as tmp:
+    path = os.path.join(tmp, &quot;ties.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;) as handle:
+        handle.write(&quot;v\n&quot; + &quot;\n&quot;.join(values) + &quot;\n&quot;)
+    code, out, err = cli_runner(&quot;--freq&quot;, &quot;v&quot;, path)
+    assert code == 0, (code, out, err)
+    rows = list(csv.reader(io.StringIO(out)))[1:]
+    expected_order = sorted(set(values), key=lambda v: (-values.count(v), v.encode()))
+    assert [row[0] for row in rows] == expected_order, (rows, expected_order)
+    assert [int(row[1]) for row in rows] == [values.count(v) for v in expected_order], rows
+=== END AC frequency-tie-order-by-bytes ===
+
+=== AC frequency-excludes-nulls ===
+Intent: Null values are not listed, and counts equal the non-null occurrences in the file.
+Requires: executable=go; scope=test
+
+import csv
+import io
+from collections import Counter
+from drydock_go import cli_runner
+
+data = &quot;sources/employees.csv&quot;
+column = &quot;manager_id&quot;
+with open(data, newline=&quot;&quot;) as handle:
+    records = list(csv.reader(handle))
+index = [name.strip() for name in records[0]].index(column)
+nulls = {&quot;&quot;, &quot;na&quot;, &quot;n/a&quot;, &quot;null&quot;}
+values = [row[index].strip() for row in records[1:]]
+counts = Counter(v for v in values if v.lower() not in nulls)
+
+code, out, err = cli_runner(&quot;--freq&quot;, column, &quot;--top&quot;, str(len(values)), data)
+assert code == 0, (code, out, err)
+rows = list(csv.reader(io.StringIO(out)))[1:]
+listed = {row[0]: int(row[1]) for row in rows}
+assert listed == dict(counts), (listed, dict(counts))
+assert not any(row[0].lower() in nulls for row in rows), rows
+=== END AC frequency-excludes-nulls ===
+
+=== AC frequency-default-limit ===
+Intent: Without --top at most five rows are written, even when more distinct values exist.
+Requires: executable=go; scope=test
+
+import csv
+import io
+from drydock_go import cli_runner
+
+data = &quot;sources/employees.csv&quot;
+column = &quot;name&quot;
+with open(data, newline=&quot;&quot;) as handle:
+    records = list(csv.reader(handle))
+index = [name.strip() for name in records[0]].index(column)
+distinct = {row[index].strip() for row in records[1:]}
+assert len(distinct) &gt; 5
+
+code, out, err = cli_runner(&quot;--freq&quot;, column, data)
+assert code == 0, (code, out, err)
+rows = list(csv.reader(io.StringIO(out)))[1:]
+assert len(rows) == 5, rows
+=== END AC frequency-default-limit ===
+
+=== AC frequency-all-null-column ===
+Intent: A column with no non-null values writes only the header and exits 0.
+Requires: executable=go; scope=test
+
+import csv
+import io
+from drydock_go import cli_runner
+
+code, out, err = cli_runner(&quot;--freq&quot;, &quot;battery&quot;, &quot;sources/sensors.csv&quot;)
+assert code == 0, (code, out, err)
+rows = list(csv.reader(io.StringIO(out)))
+assert rows == [[&quot;value&quot;, &quot;count&quot;]], rows
+=== END AC frequency-all-null-column ===
+
+=== AC frequency-absent-column ===
+Intent: An absent column name exits 3 with nothing on standard output.
+Requires: executable=go; scope=test
+
+from drydock_go import cli_runner
+
+code, out, err = cli_runner(&quot;--freq&quot;, &quot;nosuch&quot;, &quot;sources/orders.csv&quot;)
+assert code == 3, (code, out, err)
+assert out == &quot;&quot;, out
+=== END AC frequency-absent-column ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Frequencies are computed from the file examined; no value list is hardcoded.
+- Values are compared as exact strings after trimming; no case folding.
+- Nothing is written to standard output when the command fails.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-FrequencyTop.md ===
+# FEATURE: Frequency Top
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Limit frequency rows with --top and reject a non-positive or non-integer value with exit 2. |
+| Depends On  | FEATURE-Frequency.md |
+| Provides    | --top behavior |
+| Consumes    | --freq behavior |
+
+## Questions
+
+- None.
+
+## Purpose
+
+`--top &lt;n&gt;` bounds the number of rows `--freq` writes.
+
+## Behavior
+
+- `--top n` writes at most `n` frequency rows; the default is 5.
+- `n` must be a positive integer. Zero, a negative number, a non-numeric value, or a decimal exits
+  2 with nothing on standard output.
+- `--top` without `--freq` exits 2 with nothing on standard output.
+- When `n` exceeds the number of distinct non-null values, all of them are listed.
+- The limit applies after ordering, so the rows kept are the most frequent.
+
+## Programmatic Acceptance
+
+=== AC top-limits-rows ===
+Intent: --top n lists the first n rows of the full ordering, and a larger n lists every distinct value.
+Requires: executable=go; scope=test
+
+import csv
+import io
+from drydock_go import cli_runner
+
+data = &quot;sources/employees.csv&quot;
+column = &quot;department&quot;
+with open(data, newline=&quot;&quot;) as handle:
+    records = list(csv.reader(handle))
+index = [name.strip() for name in records[0]].index(column)
+distinct = {row[index].strip() for row in records[1:]}
+
+code, out, err = cli_runner(&quot;--freq&quot;, column, &quot;--top&quot;, str(len(distinct) + 10), data)
+assert code == 0, (code, out, err)
+full = list(csv.reader(io.StringIO(out)))[1:]
+assert len(full) == len(distinct), (full, distinct)
+
+limit = 2
+code, out, err = cli_runner(&quot;--freq&quot;, column, &quot;--top&quot;, str(limit), data)
+assert code == 0, (code, out, err)
+rows = list(csv.reader(io.StringIO(out)))
+assert rows[0] == [&quot;value&quot;, &quot;count&quot;], rows[0]
+assert rows[1:] == full[:limit], (rows[1:], full[:limit])
+=== END AC top-limits-rows ===
+
+=== AC top-with-column-order ===
+Intent: --top may precede --freq and still limits the listing.
+Requires: executable=go; scope=test
+
+import csv
+import io
+from drydock_go import cli_runner
+
+data = &quot;sources/sensors.csv&quot;
+limit = 3
+code, out, err = cli_runner(&quot;--top&quot;, str(limit), &quot;--freq&quot;, &quot;sensor&quot;, data)
+assert code == 0, (code, out, err)
+rows = list(csv.reader(io.StringIO(out)))[1:]
+assert len(rows) == limit, rows
+=== END AC top-with-column-order ===
+
+=== AC top-rejects-non-positive ===
+Intent: A --top value that is not a positive integer exits 2 and writes nothing to standard output.
+Requires: executable=go; scope=test
+
+from drydock_go import cli_runner
+
+data = &quot;sources/sensors.csv&quot;
+for bad in (&quot;0&quot;, &quot;-1&quot;, &quot;abc&quot;, &quot;2.5&quot;, &quot;&quot;):
+    code, out, err = cli_runner(&quot;--freq&quot;, &quot;sensor&quot;, &quot;--top&quot;, bad, data)
+    assert code == 2, (bad, code, out, err)
+    assert out == &quot;&quot;, (bad, out)
+=== END AC top-rejects-non-positive ===
+
+=== AC top-without-freq ===
+Intent: --top without --freq exits 2 and writes nothing to standard output.
+Requires: executable=go; scope=test
+
+from drydock_go import cli_runner
+
+code, out, err = cli_runner(&quot;--top&quot;, &quot;3&quot;, &quot;sources/sensors.csv&quot;)
+assert code == 2, (code, out, err)
+assert out == &quot;&quot;, out
+=== END AC top-without-freq ===
+
+=== AC top-missing-value ===
+Intent: --top given as the last option without a value exits 2.
+Requires: executable=go; scope=test
+
+from drydock_go import cli_runner
+
+code, out, err = cli_runner(&quot;--freq&quot;, &quot;sensor&quot;, &quot;--top&quot;)
+assert code == 2, (code, out, err)
+assert out == &quot;&quot;, out
+=== END AC top-missing-value ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Usage errors never write to standard output.
+- The default of 5 is applied only when `--top` is absent.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-TestRunner.md ===
+# FEATURE: Test Runner
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Provide the POSIX bin/test.sh that runs go vet and go test and exits zero only when both pass. |
+| Depends On  | FEATURE-FrequencyTop.md, FEATURE-ColumnSelect.md, FEATURE-ReadFailure.md, FEATURE-Build.md |
+| Provides    | bin/test.sh |
+| Consumes    | go vet, go test |
+
+## Questions
+
+- None.
+
+## Purpose
+
+`bin/test.sh` is the single command that gates every behavioral story. The project&#x27;s own Go test
+suite is written beside the code and covers each type, each statistic, null handling, rounding,
+each output form, and each exit code, using files the tests write themselves.
+
+## Behavior
+
+- POSIX sh only; no bashisms. It changes to the application root (the directory above `bin/`) so it
+  works from any current directory.
+- It runs `go vet ./...` and then `go test ./...`, and exits zero only when both succeed. A failure
+  of `go vet` stops the script with a non-zero status.
+- Tests call `cli.Run(args, &amp;stdout, &amp;stderr)` with `bytes.Buffer` writers and write their fixture
+  files under `t.TempDir()`. They never read `sources/run.sh`.
+- The suite covers: each of the five types, min/max per type, sum/mean/median, half-away-from-zero
+  rounding including negatives, null classification, quoting of fields with commas, frequency
+  ordering and `--top`, and exit codes 1, 2, and 3.
+
+## Programmatic Acceptance
+
+=== AC test-script-passes ===
+Intent: bin/test.sh runs go vet and go test over the application and exits zero.
+Requires: executable=go; scope=test
+
+import subprocess
+
+result = subprocess.run([&quot;sh&quot;, &quot;bin/test.sh&quot;], capture_output=True, text=True)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0, result.returncode
+=== END AC test-script-passes ===
+
+=== AC test-script-is-posix-sh ===
+Intent: bin/test.sh parses under a POSIX shell without executing it.
+Requires: executable=sh; scope=test
+
+import subprocess
+
+result = subprocess.run([&quot;sh&quot;, &quot;-n&quot;, &quot;bin/test.sh&quot;], capture_output=True, text=True)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0, result.returncode
+=== END AC test-script-is-posix-sh ===
+
+=== AC test-script-works-from-other-directory ===
+Intent: bin/test.sh succeeds when invoked from a directory other than the application root.
+Requires: executable=go; scope=test
+
+import os
+import subprocess
+import tempfile
+
+script = os.path.abspath(&quot;bin/test.sh&quot;)
+with tempfile.TemporaryDirectory() as elsewhere:
+    result = subprocess.run([&quot;sh&quot;, script], cwd=elsewhere, capture_output=True, text=True)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0, result.returncode
+=== END AC test-script-works-from-other-directory ===
+
+=== AC test-suite-exists ===
+Intent: The module contains automated Go tests that go test discovers and runs successfully.
+Requires: executable=go; scope=test
+
+import subprocess
+
+listed = subprocess.run([&quot;go&quot;, &quot;test&quot;, &quot;-list&quot;, &quot;.&quot;, &quot;./...&quot;], capture_output=True, text=True)
+print(listed.stdout)
+print(listed.stderr)
+assert listed.returncode == 0, listed.returncode
+names = [line for line in listed.stdout.splitlines() if line.startswith(&quot;Test&quot;)]
+assert len(names) &gt; 0, names
+=== END AC test-suite-exists ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- The script uses only POSIX sh constructs and the Go toolchain; no vendored toolchain.
+- Tests never read `sources/run.sh` or the supplied data files, and embed no answers from them.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-Conformance.md ===
+# FEATURE: Conformance
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Assemble every csvstat story and pass the supplied conformance grader sh sources/run.sh. |
+| Depends On  | FEATURE-TestRunner.md, FEATURE-FrequencyTop.md, FEATURE-ColumnSelect.md, FEATURE-ReadFailure.md |
+| Provides    | conformance with sources/run.sh |
+| Consumes    | csvstat executable, bin/test.sh |
+
+## Questions
+
+- None.
+
+## Purpose
+
+This assembly story runs once every implementation story has closed. The supplied grader builds
+`./cmd/csvstat` with `go build` and makes 22 checks of exit code and standard output against the
+five supplied CSV files. The grader&#x27;s exit status is the verdict.
+
+## Behavior
+
+- `sh sources/run.sh` is run from the application root, unfiltered, and exits zero.
+- A failing check is repaired in the member stories&#x27; code. Files under `sources/` are never
+  modified, rewritten, regenerated, or substituted, and application code never reads
+  `sources/run.sh` or the supplied data files or embeds any answer.
+
+## Programmatic Acceptance
+
+=== AC grader-passes ===
+Intent: The complete csvstat passes every check of the supplied grader.
+Suite: full
+Requires: executable=go; scope=test
+
+import subprocess
+
+result = subprocess.run([&quot;sh&quot;, &quot;sources/run.sh&quot;], capture_output=True, text=True)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0, result.returncode
+=== END AC grader-passes ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Do not modify, rewrite, regenerate, or substitute any file under `sources/`.
+- Do not read `sources/run.sh` or any supplied data file from application code, and do not
+  hardcode a statistic, a type, or a value list.
+- The grader is run unfiltered; no check is skipped or reinterpreted.
+=== END ARTIFACT ===</pre></article>
+</main>
+</body>
+</html>

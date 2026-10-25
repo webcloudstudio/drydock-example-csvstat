@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-ProfileOutput.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-ProfileOutput.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-ProfileOutput.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: ProfileOutput</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261024 V1</td></tr><tr><td>Description</td><td>Write the profile table with one row per column in file order.</td></tr><tr><td>Depends On</td><td>FEATURE-Counts.md, FEATURE-MinMax.md, FEATURE-SumMean.md, FEATURE-Median.md, FEATURE-TypeDate.md, FEATURE-TypeOther.md</td></tr><tr><td>Provides</td><td>profile table on standard output</td></tr><tr><td>Consumes</td><td>internal/profile</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>Assemble the per-column type and statistics into the CSV table the command writes when profiling a file.</p>
+<h2>Behavior</h2>
+<ul><li>With a file argument and no <code>--freq</code>, write the header <code>column,type,rows,nulls,distinct,min,max,sum,mean,median</code>.</li><li>Then write one row per column in file order, using the trimmed header name.</li><li>Output uses <code>encoding/csv</code>&#x27;s writer with <code>\n</code> line endings, so a field containing a comma, a double quote, or a newline is quoted per RFC 4180.</li><li>The command exits 0 on success.</li><li>On any failure nothing is written to standard output; the table is built fully before the first byte is written.</li></ul>
+<h2>Interface</h2>
+<ul><li><code>internal/cli.Run</code> calls the reader, null classifier, type inference, and the statistics, then writes the table to its <code>stdout</code> writer.</li><li>The project test suite carries <code>TestProfileHeader</code>, <code>TestProfileRowOrder</code>, and <code>TestProfileQuoting</code> in <code>internal/cli</code>.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC profile-columns-and-stats ===<br>Intent: Profiling a generated file yields one row per column in file order with counts, types, and statistics matching values computed from that file&#x27;s own inputs.</p>
+<p>import csv import io import math import os import tempfile from fractions import Fraction</p>
+<p>from drydock_go import cli_runner</p>
+<p>def fmt(fr): n = math.floor(abs(fr) * 100 + Fraction(1, 2)) s = f&quot;{n // 100}.{n % 100:02d}&quot; return &quot;-&quot; + s if fr &lt; 0 and n != 0 else s</p>
+<p>header = [&quot;id&quot;, &quot;amt&quot;, &quot;when&quot;, &quot;flag&quot;, &quot;word&quot;, &quot;gone&quot;] records = [ [&quot;3&quot;, &quot;1.50&quot;, &quot;2025-01-05&quot;, &quot;true&quot;, &quot;pear&quot;, &quot;NA&quot;], [&quot;1&quot;, &quot;-2.25&quot;, &quot;2024-12-31&quot;, &quot;FALSE&quot;, &quot;apple&quot;, &quot;&quot;], [&quot;2&quot;, &quot;10.00&quot;, &quot;2025-03-01&quot;, &quot;true&quot;, &quot;pear&quot;, &quot;null&quot;], [&quot;10&quot;, &quot;N/A&quot;, &quot;2025-02-14&quot;, &quot;true&quot;, &quot;fig&quot;, &quot;NULL&quot;], [&quot;7&quot;, &quot;4.75&quot;, &quot;NA&quot;, &quot;false&quot;, &quot;apple&quot;, &quot;N/A&quot;], ] cols = list(zip(*records))</p>
+<p>with tempfile.TemporaryDirectory() as tmp: path = os.path.join(tmp, &quot;data.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as fh: w = csv.writer(fh) w.writerow(header) w.writerows(records) code, out, err = cli_runner(path)</p>
+<p>print(out) print(err) assert code == 0, (code, out, err) rows = list(csv.reader(io.StringIO(out))) assert rows[0][0] == &quot;column&quot; assert [r[0] for r in rows[1:]] == header</p>
+<p>nulls = {&quot;&quot;, &quot;na&quot;, &quot;n/a&quot;, &quot;null&quot;}</p>
+<p>def nonnull(col): return [v for v in col if v.strip().lower() not in nulls]</p>
+<p>by = {r[0]: r for r in rows[1:]}</p>
+<p>ids = [Fraction(int(v)) for v in nonnull(cols[0])] r = by[&quot;id&quot;] assert r[1] == &quot;integer&quot; assert r[2] == str(len(records)) assert r[3] == str(len(cols[0]) - len(ids)) assert r[4] == str(len(set(nonnull(cols[0])))) assert r[5] == str(int(min(ids))) assert r[6] == str(int(max(ids))) assert r[7] == str(int(sum(ids))) assert r[8] == fmt(sum(ids) / len(ids)) s = sorted(ids) mid = len(s) // 2 med = s[mid] if len(s) % 2 else (s[mid - 1] + s[mid]) / 2 assert r[9] == fmt(med)</p>
+<p>amts = [Fraction(v) for v in nonnull(cols[1])] r = by[&quot;amt&quot;] assert r[1] == &quot;number&quot; assert r[3] == str(len(cols[1]) - len(amts)) assert r[5] == fmt(min(amts)) assert r[6] == fmt(max(amts)) assert r[7] == fmt(sum(amts)) assert r[8] == fmt(sum(amts) / len(amts)) s = sorted(amts) mid = len(s) // 2 med = s[mid] if len(s) % 2 else (s[mid - 1] + s[mid]) / 2 assert r[9] == fmt(med)</p>
+<p>dates = nonnull(cols[2]) r = by[&quot;when&quot;] assert r[1] == &quot;date&quot; assert r[3] == str(len(cols[2]) - len(dates)) assert r[5] == min(dates) assert r[6] == max(dates) assert r[7:10] == [&quot;&quot;, &quot;&quot;, &quot;&quot;]</p>
+<p>r = by[&quot;flag&quot;] assert r[1] == &quot;boolean&quot; assert r[4] == str(len(set(cols[3]))) assert r[5] == &quot;false&quot; assert r[6] == &quot;true&quot; assert r[7:10] == [&quot;&quot;, &quot;&quot;, &quot;&quot;]</p>
+<p>words = nonnull(cols[4]) r = by[&quot;word&quot;] assert r[1] == &quot;text&quot; assert r[5] == min(words, key=lambda v: v.encode()) assert r[6] == max(words, key=lambda v: v.encode()) assert r[7:10] == [&quot;&quot;, &quot;&quot;, &quot;&quot;]</p>
+<p>r = by[&quot;gone&quot;] assert r[1] == &quot;empty&quot; assert r[2] == str(len(records)) assert r[3] == str(len(records)) assert r[4] == &quot;0&quot; assert r[5:10] == [&quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;] === END AC profile-columns-and-stats ===</p>
+<p>=== AC profile-quoting-and-trim ===<br>Intent: A value containing a comma is quoted on output, and padding spaces in header names and values are trimmed.</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>name = &quot;label&quot; value = &quot;red, green&quot; raw = f&quot;  {name}  ,n\n  {value}  ,1\n{value},2\n&quot;</p>
+<p>with tempfile.TemporaryDirectory() as tmp: path = os.path.join(tmp, &quot;data.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as fh: fh.write(raw.replace(value, &#x27;&quot;&#x27; + value + &#x27;&quot;&#x27;)) code, out, err = cli_runner(path)</p>
+<p>print(out) print(err) assert code == 0, (code, out, err) assert out.endswith(&quot;\n&quot;) assert &quot;\r&quot; not in out rows = list(csv.reader(io.StringIO(out))) by = {r[0]: r for r in rows[1:]} assert name in by assert by[name][1] == &quot;text&quot; assert by[name][4] == &quot;1&quot; assert by[name][5] == value assert by[name][6] == value === END AC profile-quoting-and-trim ===</p>
+<p>=== AC profile-header-only ===<br>Intent: A header-only file reports every column as empty with zero counts and exits 0.</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>header = [&quot;sku&quot;, &quot;price&quot;, &quot;in_stock&quot;]</p>
+<p>with tempfile.TemporaryDirectory() as tmp: path = os.path.join(tmp, &quot;data.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as fh: csv.writer(fh).writerow(header) code, out, err = cli_runner(path)</p>
+<p>print(out) print(err) assert code == 0, (code, out, err) rows = list(csv.reader(io.StringIO(out))) assert [r[0] for r in rows[1:]] == header for r in rows[1:]: assert r[1] == &quot;empty&quot; assert r[2:5] == [&quot;0&quot;, &quot;0&quot;, &quot;0&quot;] assert r[5:10] == [&quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;] === END AC profile-header-only ===</p>
+<p>=== AC profile-failure-silent-stdout ===<br>Intent: A rejected file writes nothing to standard output and exits 3.</p>
+<p>import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>with tempfile.TemporaryDirectory() as tmp: path = os.path.join(tmp, &quot;ragged.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as fh: fh.write(&quot;a,b\n1,2\n3,4,5\n&quot;) code, out, err = cli_runner(path)</p>
+<p>print(out) print(err) assert code == 3, (code, out, err) assert out == &quot;&quot; === END AC profile-failure-silent-stdout ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Every value in the table is computed from the file examined; no statistic, type, or value list is hardcoded.</li><li>The application never reads <code>sources/run.sh</code> or any supplied data file.</li><li>Nothing is written to standard output when the command fails.</li></ul></article>
+</main>
+</body>
+</html>

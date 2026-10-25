@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-NullValues.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-NullValues.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-NullValues.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Null Values</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Classifies empty, NA, N/A, and NULL values as null after trimming.</td></tr><tr><td>Depends On</td><td>FEATURE-CsvReader.md</td></tr><tr><td>Provides</td><td>internal/profile.IsNull</td></tr><tr><td>Consumes</td><td>internal/csvio.Read</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>Every statistic, type, and frequency rule applies only to non-null values. This feature supplies the single predicate that decides whether a value is null, so counts, typing, statistics, and frequency lists agree.</p>
+<h2>Behavior</h2>
+<ul><li>Package <code>internal/profile</code> exports <code>IsNull(value string) bool</code>.</li><li>The value is trimmed of leading and trailing spaces before the test, so the predicate gives the same answer for a padded value and its trimmed form.</li><li>A value is null when the trimmed value is empty, or equals <code>NA</code>, <code>N/A</code>, or <code>NULL</code> ignoring case (<code>na</code>, <code>n/a</code>, <code>Null</code>, <code>null</code> are null).</li><li>Every other value is non-null, including near misses such as <code>NAN</code>, <code>N/B</code>, <code>NULLS</code>, <code>none</code>, and <code>0</code>.</li><li>The predicate is pure: no I/O, no package state.</li></ul>
+<h2>Required project tests</h2>
+<p>The builder writes these tests in <code>internal/profile</code> beside the code, with exactly these names:</p>
+<ul><li><code>TestIsNullEmpty</code>: the empty string and whitespace-only strings are null.</li><li><code>TestIsNullSpellings</code>: <code>NA</code>, <code>N/A</code>, <code>NULL</code> in upper, lower, and mixed case are null, including when padded with spaces.</li><li><code>TestIsNullNonNull</code>: near misses and ordinary values are not null.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC nullvalues-empty ===<br>Intent: Empty and whitespace-only values are classified as null by the delivered predicate.<br>Suite: scoped<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestIsNullEmpty&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC nullvalues-empty ===</p>
+<p>=== AC nullvalues-spellings ===<br>Intent: NA, N/A, and NULL are null in any letter case, padded or not.<br>Suite: scoped<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestIsNullSpellings&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC nullvalues-spellings ===</p>
+<p>=== AC nullvalues-nonnull ===<br>Intent: Near misses and ordinary values are not null.<br>Suite: scoped<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestIsNullNonNull&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC nullvalues-nonnull ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Standard library only; no third-party modules.</li><li>The predicate never reads a data file and never embeds a value taken from a supplied data file.</li><li>Null spellings are exactly the empty string, <code>NA</code>, <code>N/A</code>, and <code>NULL</code> ignoring case; no other spelling is added.</li></ul></article>
+</main>
+</body>
+</html>

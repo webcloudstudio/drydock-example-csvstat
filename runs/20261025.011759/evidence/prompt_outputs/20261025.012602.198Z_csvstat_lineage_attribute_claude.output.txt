@@ -1,0 +1,25 @@
+<requirement name="build-csvstat" stories="foundation,build-executable">
+Builds ./cmd/csvstat with `go build`
+</requirement>
+<requirement name="profile-every-column" stories="csv-reader,null-values,type-numeric,type-date,type-other,median,counts,sum-mean,min-max,profile-output">
+A. Every column of each data file
+</requirement>
+<requirement name="profile-one-column" stories="column-select">
+B. One column
+</requirement>
+<requirement name="value-frequencies" stories="frequency,frequency-top">
+C. Frequencies
+</requirement>
+<requirement name="reject-bad-input" stories="input-rejection">
+E. Rejected input and operational failures
+</requirement>
+<requirement name="report-unreadable-file" stories="read-failure">
+check E4 1 "$MISSING" < /dev/null
+</requirement>
+<requirement name="reject-usage-errors" stories="arguments">
+U. Usage errors
+</requirement>
+<requirement name="pass-all-checks" stories="conformance">
+Exit 0 only when the build succeeds and every check passes.
+</requirement>
+<unattached story="test-runner"/>

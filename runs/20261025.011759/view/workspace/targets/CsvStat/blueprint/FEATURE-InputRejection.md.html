@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-InputRejection.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-InputRejection.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-InputRejection.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Input Rejection</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Reject an empty, malformed, or ragged CSV file with exit 3, nothing on standard output, and one diagnostic line on standard error.</td></tr><tr><td>Depends On</td><td>FEATURE-CsvReader.md, ARCHITECTURE.md</td></tr><tr><td>Provides</td><td>exit code 3 for rejected input</td></tr><tr><td>Consumes</td><td>internal/csvio.Read</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>After reading the file, the application rejects it when any of these holds:</p>
+<ul><li>the file is empty (no header record);</li><li>a header name is empty after trimming;</li><li>a header name is repeated;</li><li>any data record has a different number of fields from the header;</li><li><code>encoding/csv</code> reports a syntax error (a <code>csv.ParseError</code>), such as a bare quote.</li></ul>
+<p>A rejected file exits 3, writes nothing to standard output, and writes one line to standard error naming the file and, for a record, its line number. Standard error text is never compared.</p>
+<h2>Behavior</h2>
+<ul><li>Validation completes before anything is written to standard output.</li><li>The ragged record is identified by the line number the reader recorded for it.</li><li>A file with a header and no data records is valid and is not rejected.</li><li>An open or read failure is not a rejection; it is exit 1 (FEATURE-ReadFailure.md).</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC reject-ragged-record ===<br>Intent: A record with more fields than the header exits 3 with nothing on standard output.</p>
+<p>import os from drydock_go import cli_runner</p>
+<p>path = os.path.abspath(os.path.join(&quot;sources&quot;, &quot;ragged.csv&quot;)) assert os.path.isfile(path) code, out, err = cli_runner(path) print(out) print(err) assert code == 3 assert out == &quot;&quot; === END AC reject-ragged-record ===</p>
+<p>=== AC reject-short-record ===<br>Intent: A record with fewer fields than the header exits 3 with nothing on standard output.</p>
+<p>import os import tempfile from drydock_go import cli_runner</p>
+<p>with tempfile.TemporaryDirectory() as work: path = os.path.join(work, &quot;short.csv&quot;) with open(path, &quot;w&quot;, encoding=&quot;utf-8&quot;, newline=&quot;&quot;) as handle: handle.write(&quot;a,b,c\n1,2,3\n4,5\n&quot;) code, out, err = cli_runner(path) print(out) print(err) assert code == 3 assert out == &quot;&quot; === END AC reject-short-record ===</p>
+<p>=== AC reject-empty-file ===<br>Intent: An empty file exits 3 with nothing on standard output.</p>
+<p>import os import tempfile from drydock_go import cli_runner</p>
+<p>with tempfile.TemporaryDirectory() as work: path = os.path.join(work, &quot;empty.csv&quot;) with open(path, &quot;wb&quot;): pass code, out, err = cli_runner(path) print(out) print(err) assert code == 3 assert out == &quot;&quot; === END AC reject-empty-file ===</p>
+<p>=== AC reject-empty-header-name ===<br>Intent: A header with an empty name exits 3 with nothing on standard output.</p>
+<p>import os import tempfile from drydock_go import cli_runner</p>
+<p>with tempfile.TemporaryDirectory() as work: path = os.path.join(work, &quot;emptyname.csv&quot;) with open(path, &quot;w&quot;, encoding=&quot;utf-8&quot;, newline=&quot;&quot;) as handle: handle.write(&quot;a,,c\n1,2,3\n&quot;) code, out, err = cli_runner(path) print(out) print(err) assert code == 3 assert out == &quot;&quot; === END AC reject-empty-header-name ===</p>
+<p>=== AC reject-repeated-header-name ===<br>Intent: A header with a repeated name, including one that differs only by padding, exits 3 with nothing on standard output.</p>
+<p>import os import tempfile from drydock_go import cli_runner</p>
+<p>with tempfile.TemporaryDirectory() as work: path = os.path.join(work, &quot;repeated.csv&quot;) with open(path, &quot;w&quot;, encoding=&quot;utf-8&quot;, newline=&quot;&quot;) as handle: handle.write(&quot;a, a ,c\n1,2,3\n&quot;) code, out, err = cli_runner(path) print(out) print(err) assert code == 3 assert out == &quot;&quot; === END AC reject-repeated-header-name ===</p>
+<p>=== AC reject-valid-file-not-rejected ===<br>Intent: A well-formed file is not rejected, so the rejection path is not taken for every input.</p>
+<p>import os from drydock_go import cli_runner</p>
+<p>path = os.path.abspath(os.path.join(&quot;sources&quot;, &quot;employees.csv&quot;)) assert os.path.isfile(path) code, out, err = cli_runner(path) print(err) assert code != 3 === END AC reject-valid-file-not-rejected ===</p>
+<p>=== AC reject-header-only-not-rejected ===<br>Intent: A file with a header and no data records is not rejected.</p>
+<p>import os from drydock_go import cli_runner</p>
+<p>path = os.path.abspath(os.path.join(&quot;sources&quot;, &quot;header_only.csv&quot;)) assert os.path.isfile(path) code, out, err = cli_runner(path) print(err) assert code != 3 === END AC reject-header-only-not-rejected ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>A rejected file writes nothing to standard output.</li><li>Diagnostics go to standard error only and are never compared.</li><li>The list of rejection conditions is exhaustive; invalid UTF-8 is not one of them.</li><li>Do not modify any file under <code>sources/</code>.</li></ul></article>
+</main>
+</body>
+</html>

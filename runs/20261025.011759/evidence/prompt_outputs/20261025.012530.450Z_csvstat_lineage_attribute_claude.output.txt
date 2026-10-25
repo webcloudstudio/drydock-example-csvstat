@@ -1,0 +1,55 @@
+<requirement name="profile-csv-columns" stories="profile-output,counts,type-numeric,type-date,type-other,min-max,sum-mean,median,null-values">
+Build a command-line tool that profiles a CSV file. For every column it infers a type and reports
+row, null, and distinct counts, the minimum and maximum, and for numeric columns the sum, mean, and
+median.
+</requirement>
+<requirement name="list-frequent-values" stories="frequency,frequency-top">
+It also lists the most frequent values of one column.
+</requirement>
+<requirement name="go-stdlib-stack" stories="foundation,build-executable">
+Implement in Go 1.22 or newer using only the standard library. The application root is a Go
+module, and its executable is the main package at `./cmd/csvstat`. Tests run under `go test`.
+</requirement>
+<requirement name="pass-run-harness" stories="conformance">
+`sources/run.sh` is the scoring entry point. It is supplied, not authored, and is staged verbatim
+into the application root with the data files. `drydock uat` runs `sh sources/run.sh` from the
+completed application root and takes its exit code and output as the score.
+</requirement>
+<requirement name="parse-command-options" stories="arguments,frequency-top">
+Options precede the file. Exactly one file is required.
+</requirement>
+<requirement name="select-single-column" stories="column-select">
+| `--column <name>` | Profile only the named column. |
+</requirement>
+<requirement name="read-csv-file" stories="csv-reader,null-values">
+1. The file is UTF-8 CSV as RFC 4180 defines it, read with Go's `encoding/csv`. The first record
+   is the header.
+2. Every header name and every value is trimmed of leading and trailing spaces before any other
+   rule applies.
+</requirement>
+<requirement name="reject-bad-files" stories="input-rejection">
+3. The file is **rejected** when it is empty, when a header name is empty or repeated, or when any
+   record has a different number of fields from the header.
+</requirement>
+<requirement name="null-definition" stories="null-values">
+4. **Null.** A value is null when it is empty, or when it equals `NA`, `N/A`, or `NULL` ignoring
+   case. All other values are non-null.
+</requirement>
+<requirement name="infer-column-type" stories="type-numeric,type-date,type-other">
+A column's type is the first of these that every non-null value satisfies:
+</requirement>
+<requirement name="failure-diagnostics" stories="input-rejection,read-failure,arguments">
+A failing command writes nothing to standard output and one diagnostic line to standard error naming
+the file and, for a rejected record, its line number.
+</requirement>
+<requirement name="exit-codes" stories="read-failure,arguments,input-rejection,column-select,frequency-top">
+| `0` | Success. |
+| `1` | Operational failure: the file cannot be opened or read. |
+| `2` | Usage error: missing or extra file, unknown option, missing option value, `--top` not a positive integer, `--top` without `--freq`, `--column` with `--freq`. |
+| `3` | Rejected: empty file, empty or repeated header name, ragged record, or a column name that is not in the header. |
+</requirement>
+<requirement name="test-suite" stories="test-runner">
+The completed application provides a POSIX-compatible `bin/test.sh` that runs `go vet ./...` and
+`go test ./...` from the application root and exits zero only when both pass.
+</requirement>
+<unattached story="foundation"/>

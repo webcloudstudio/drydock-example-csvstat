@@ -1,0 +1,2 @@
+error: build failed for CsvStat: 18 step(s)
+  build-executable — closed/failed: programmatic acceptance failed: profile-quoting-and-trim

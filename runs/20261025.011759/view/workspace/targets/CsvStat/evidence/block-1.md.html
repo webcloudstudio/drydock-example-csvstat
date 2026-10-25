@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/evidence/block-1.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/evidence/block-1.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/evidence/block-1.md">Raw file</a></div></header>
+<article class="doc"><h1>Evidence: Block 1 · Foundational (block-1)</h1>
+<ul><li>block type: block</li><li>date: 2026-10-24</li><li>resulting state: closed/verified</li><li>story points (combined assembled cost): 13440</li><li>execution id: 20261025.012754.773Z-86ba1825</li></ul>
+<h2>Stories built</h2>
+<ul><li>Stand up the Go module, the csvstat entry point, and the testable CLI package. (foundation) [story]</li></ul>
+<h2>Acceptance tooling authorization</h2>
+<ul><li>ARCHITECTURE.md#arch-module-layout: executable=go; scope=test; authorization=existing Target environment</li><li>ARCHITECTURE.md#arch-cli-run-compiles: executable=go; scope=test; authorization=existing Target environment</li></ul>
+<h2>Stacked context</h2>
+<ul><li>implements: go.md (SP 7578)</li><li>compass: COMPASS.md (SP 963)</li><li>implements: ARCHITECTURE.md (SP 1959)</li><li>stack: common.md (SP 2776)</li></ul>
+<h2>Build directory changes</h2>
+<ul><li>bin/test.sh</li><li>cmd/csvstat/main.go</li><li>go.mod</li><li>internal/cli/cli.go</li><li>internal/cli/cli_test.go</li><li>internal/csvio/csvio.go</li><li>internal/output/output.go</li><li>internal/profile/profile.go</li></ul>
+<h2>Pre-build acceptance observation</h2>
+<ul><li>RED: arch-module-layout (ARCHITECTURE.md)</li></ul>
+<p>intent: The application root is a Go module of Go 1.22 or newer with the csvstat main package and the cli package present. return code: 1 stderr: Traceback (most recent call last): File &quot;arch-module-layout.py&quot;, line 4, in &lt;module&gt; assert os.path.isfile(&quot;go.mod&quot;) ^^^^^^^^^^^^^^^^^^^^^^^^ AssertionError</p>
+<ul><li>UNVERIFIED: arch-no-dependencies (ARCHITECTURE.md)</li></ul>
+<p>intent: go.mod declares no third-party requirement, so the standard library is the only dependency. return code: 1 error: unverified acceptance: the assertion raised FileNotFoundError ([Errno 2] No such file or directory: &#x27;go.mod&#x27;) in its own frame, before reaching the code under test. This is a fault in the acceptance kit or its environment, not a defect in the build. stderr: Traceback (most recent call last): File &quot;arch-no-dependencies.py&quot;, line 3, in &lt;module&gt; with open(&quot;go.mod&quot;, encoding=&quot;utf-8&quot;) as handle: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^<br>FileNotFoundError: [Errno 2] No such file or directory: &#x27;go.mod&#x27;</p>
+<ul><li>RED: arch-cli-run-compiles (ARCHITECTURE.md)</li></ul>
+<p>intent: The module builds and vets cleanly, so cli.Run and the main package compile together. return code: 1 stderr: pattern ./...: directory prefix . does not contain main module or its selected dependencies</p>
+<p>--- drydock: values at failure --- build = CompletedProcess(args=[&#x27;go&#x27;, &#x27;build&#x27;, &#x27;./...&#x27;], returncode=1, stdout=&#x27;&#x27;, stderr=&#x27;pattern ./...: directory prefix . does not contain main module or its selected dependencies\n&#x27;) --- drydock: end values --- Traceback (most recent call last): File &quot;arch-cli-run-compiles.py&quot;, line 7, in &lt;module&gt; assert build.returncode == 0 ^^^^^^^^^^^^^^^^^^^^^ AssertionError</p>
+<h2>Post-build programmatic acceptance</h2>
+<ul><li>PASS: arch-module-layout (ARCHITECTURE.md)</li></ul>
+<p>intent: The application root is a Go module of Go 1.22 or newer with the csvstat main package and the cli package present. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0</p>
+<ul><li>PASS: arch-no-dependencies (ARCHITECTURE.md)</li></ul>
+<p>intent: go.mod declares no third-party requirement, so the standard library is the only dependency. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0</p>
+<ul><li>PASS: arch-cli-run-compiles (ARCHITECTURE.md)</li></ul>
+<p>intent: The module builds and vets cleanly, so cli.Run and the main package compile together. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0</p>
+<h2>Build summary</h2>
+<p>Files are written. Now I&#x27;ll run the declared acceptance checks: the build, vet, the test script, and the module assertions.RESULT: SUCCESS</p>
+<p>FILES CHANGED:</p>
+<ul><li>go.mod</li><li>cmd/csvstat/main.go</li><li>internal/cli/cli.go</li><li>internal/cli/cli_test.go</li><li>internal/csvio/csvio.go</li><li>internal/profile/profile.go</li><li>internal/output/output.go</li><li>bin/test.sh</li></ul>
+<p>SUMMARY:</p>
+<ul><li><strong>Module:</strong> <code>go.mod</code> declares <code>module csvstat</code> with <code>go 1.22</code>, and has no <code>require</code> lines. The toolchain is go1.24.6, which meets the 1.22 floor.</li><li><strong>Entry point:</strong> <code>cmd/csvstat/main.go</code> is the only caller of <code>os.Exit</code>. It passes <code>os.Args[1:]</code>, stdout and stderr to <code>cli.Run</code>.</li><li><strong>CLI package:</strong> <code>internal/cli/cli.go</code> exposes <code>Run(args []string, stdout, stderr io.Writer) int</code>. It uses a local <code>flag.FlagSet</code> with <code>ContinueOnError</code>. A bad flag returns 2, <code>-h</code> returns 0, and anything else returns 0. This is a stub; later stories fill it in.</li><li><strong>Package layout:</strong> <code>internal/csvio</code>, <code>internal/profile</code>, and <code>internal/output</code> exist as package-only stubs with doc comments, so the layout in ARCHITECTURE.md is in place.</li><li><strong>Tests:</strong> <code>internal/cli/cli_test.go</code> covers the unknown-flag exit code 2 with empty stdout, <code>-h</code> exit 0, and no-args exit 0. Each test checks the return value and stdout, not message wording.</li><li><strong>Test runner:</strong> <code>bin/test.sh</code> is POSIX sh. It checks gofmt, runs <code>go vet ./...</code>, then <code>go test -race -count=1 ./...</code>. I did not add the tee logging from the common stack guidance, because the script has to return a plain exit status and <code>pipefail</code> is not POSIX.</li></ul>
+<p>Checks run:</p>
+<ul><li><code>sh bin/test.sh</code>: exit 0. The <code>internal/cli</code> tests pass under <code>-race</code>.</li><li><code>go build ./...</code> and <code>go vet ./...</code>: both exit 0.</li><li><code>gofmt -l .</code>: no output.</li><li>Built binary: <code>-bogus</code> exits 2 and no args exits 0.</li><li>The arch-module-layout, arch-no-dependencies, and arch-cli-run-compiles assertions are satisfied by the files above. I did not run the Python AC snippets themselves.</li><li><code>sources/</code> is unchanged. Nothing was staged or committed.</li></ul>
+<p>Not done:</p>
+<ul><li>ARCHITECTURE.md&#x27;s module ownership table and technology stack are already recorded in the protected Target <code>blueprint/</code> directory. I did not touch it, because the build guardrail protects it.</li><li>The terminal grader <code>sources/run.sh</code> belongs to a later step, so I did not run it.</li></ul>
+<p>BLOCKERS:</p>
+<ul><li>None.</li></ul></article>
+</main>
+</body>
+</html>

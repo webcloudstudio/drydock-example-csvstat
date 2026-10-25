@@ -1,0 +1,606 @@
+=== BEGIN ARTIFACT FEATURE-Counts.md ===
+# FEATURE: Counts
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261024 V1 |
+| Description | Count rows, nulls, and distinct non-null values for each column. |
+| Depends On  | FEATURE-NullValues.md, FEATURE-TypeNumeric.md |
+| Provides    | rows, nulls, distinct |
+| Consumes    | internal/profile.IsNull |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Give every column three counts used by the profile table. The counts are computed from the file examined and never hardcoded.
+
+## Behavior
+
+- `rows` is the number of data records, that is, every record after the header. It is the same for every column.
+- `nulls` is the number of values in the column for which `internal/profile.IsNull` is true.
+- `distinct` is the number of different non-null values, compared as exact trimmed strings. Case is significant: `true` and `TRUE` are two values. Null values are never counted.
+- A file with a header and no records yields `rows` 0, `nulls` 0, and `distinct` 0 for every column.
+
+## Interface
+
+- Package `internal/profile` exposes a function that takes a column's trimmed values and returns the three counts.
+- The project test suite in `internal/profile` carries tests named `TestCountsRows`, `TestCountsNulls`, `TestCountsDistinct`, and `TestCountsHeaderOnly`, written by the implementer against real output.
+
+## Programmatic Acceptance
+
+=== AC counts-rows ===
+Intent: The row count equals the number of data records, including a header-only input.
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestCountsRows")
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC counts-rows ===
+
+=== AC counts-nulls ===
+Intent: Empty, NA, N/A, and NULL values are counted as nulls and nothing else is.
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestCountsNulls")
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC counts-nulls ===
+
+=== AC counts-distinct ===
+Intent: Distinct counts different non-null trimmed strings with case significant and nulls excluded.
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestCountsDistinct")
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC counts-distinct ===
+
+=== AC counts-header-only ===
+Intent: A header-only input yields zero for all three counts.
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestCountsHeaderOnly")
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC counts-header-only ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Counts are computed from the file examined; no count is hardcoded.
+- Distinct comparison uses exact trimmed strings, never case folding or numeric equality.
+- Null values are never counted as distinct values.
+
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-MinMax.md ===
+# FEATURE: MinMax
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261024 V1 |
+| Description | Report the minimum and maximum for every column type. |
+| Depends On  | FEATURE-TypeDate.md, FEATURE-TypeOther.md |
+| Provides    | min, max |
+| Consumes    | internal/profile.InferType |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Give every column a `min` and `max` appropriate to its inferred type.
+
+## Behavior
+
+Statistics consider non-null values only.
+
+| Type | min | max |
+|---|---|---|
+| `integer` | smallest value, written as a plain integer | largest value, written as a plain integer |
+| `number` | smallest value, exactly two decimals | largest value, exactly two decimals |
+| `date` | earliest date | latest date |
+| `boolean` | `false` if any value is false, else `true` | `true` if any value is true, else `false` |
+| `text` | smallest by byte value | largest by byte value |
+| `empty` | empty string | empty string |
+
+- Integer and number comparison is numeric and exact, using `math/big`. Values such as `-3` and `12` compare as numbers, not strings.
+- Boolean values compare ignoring case, and the written result is lowercase.
+- Number output has a leading `-` when negative, no thousands separator, and is rounded once half away from zero from the exact value.
+
+## Interface
+
+- Package `internal/profile` computes `min` and `max` strings for a column given its type and values.
+- The project test suite in `internal/profile` carries tests named `TestMinMaxInteger`, `TestMinMaxNumber`, `TestMinMaxDate`, `TestMinMaxBoolean`, `TestMinMaxText`, and `TestMinMaxEmpty`.
+
+## Programmatic Acceptance
+
+=== AC minmax-integer ===
+Intent: Integer min and max compare numerically and are written as plain integers.
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestMinMaxInteger")
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC minmax-integer ===
+
+=== AC minmax-number ===
+Intent: Number min and max compare numerically and are written with two decimals.
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestMinMaxNumber")
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC minmax-number ===
+
+=== AC minmax-date ===
+Intent: Date min and max give the earliest and latest date.
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestMinMaxDate")
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC minmax-date ===
+
+=== AC minmax-boolean ===
+Intent: Boolean min is false if any value is false and max is true if any value is true, ignoring case.
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestMinMaxBoolean")
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC minmax-boolean ===
+
+=== AC minmax-text ===
+Intent: Text min and max compare by byte value.
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestMinMaxText")
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC minmax-text ===
+
+=== AC minmax-empty ===
+Intent: An empty column has blank min and max.
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestMinMaxEmpty")
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC minmax-empty ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Numeric comparison never uses string order or floating point.
+- No min or max value is hardcoded; every value comes from the file examined.
+
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-SumMean.md ===
+# FEATURE: SumMean
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261024 V1 |
+| Description | Compute the exact sum and mean of numeric columns, rounded once half away from zero. |
+| Depends On  | FEATURE-TypeNumeric.md |
+| Provides    | sum, mean |
+| Consumes    | internal/profile.InferType |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Give `integer` and `number` columns an exact `sum` and `mean`, free of floating point error.
+
+## Behavior
+
+- Arithmetic uses `math/big` (`big.Rat`) over non-null values. Rounding happens once, when writing.
+- `integer` sum is the integer total written as a plain integer.
+- `number` sum is written with exactly two decimal places.
+- `mean` for `integer` and `number` is the total divided by the non-null count, written with exactly two decimals.
+- Rounding is half away from zero from the exact value. A negative result has a leading `-`; there is no thousands separator.
+- A numeric column with no non-null values is typed `empty`, so it never reaches sum or mean.
+- For every other type `sum` and `mean` are empty strings.
+
+## Interface
+
+- Package `internal/profile` exposes a formatter that renders a `big.Rat` with two decimals, rounded half away from zero, and computes sum and mean strings for a typed column.
+- The project test suite in `internal/profile` carries tests named `TestSumInteger`, `TestSumNumber`, `TestMeanRounding`, `TestMeanNegative`, and `TestSumMeanNonNumeric`.
+
+## Programmatic Acceptance
+
+=== AC sum-integer ===
+Intent: Integer sum is the exact total written as a plain integer.
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestSumInteger")
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC sum-integer ===
+
+=== AC sum-number ===
+Intent: Number sum is exact and written with two decimals.
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestSumNumber")
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC sum-number ===
+
+=== AC mean-rounding ===
+Intent: Mean is total over non-null count, rounded once half away from zero to two decimals.
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestMeanRounding")
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC mean-rounding ===
+
+=== AC mean-negative ===
+Intent: A negative mean keeps its sign and rounds half away from zero.
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestMeanNegative")
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC mean-negative ===
+
+=== AC summean-non-numeric ===
+Intent: Sum and mean are blank for date, boolean, text, and empty columns.
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestSumMeanNonNumeric")
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC summean-non-numeric ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- No floating point arithmetic is used for sums, means, or rounding.
+- Rounding happens exactly once, at write time.
+- No statistic is hardcoded; every value is computed from the file examined.
+
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-Median.md ===
+# FEATURE: Median
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261024 V1 |
+| Description | Compute the exact median of numeric columns. |
+| Depends On  | FEATURE-TypeNumeric.md |
+| Provides    | median |
+| Consumes    | internal/profile.InferType |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Give `integer` and `number` columns an exact `median`.
+
+## Behavior
+
+- Sort the non-null values exactly (`big.Rat`), then take the middle value; when the count is even, take the exact mean of the two middle values.
+- The result is written with exactly two decimal places, rounded once half away from zero, with a leading `-` when negative and no thousands separator. This applies to `integer` columns too.
+- For every non-numeric type `median` is an empty string.
+
+## Interface
+
+- Package `internal/profile` computes the median string for a typed column.
+- The project test suite in `internal/profile` carries tests named `TestMedianOdd`, `TestMedianEven`, `TestMedianUnsorted`, `TestMedianNumber`, and `TestMedianNonNumeric`.
+
+## Programmatic Acceptance
+
+=== AC median-odd ===
+Intent: With an odd count the median is the middle sorted value.
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestMedianOdd")
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC median-odd ===
+
+=== AC median-even ===
+Intent: With an even count the median is the exact mean of the two middle values.
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestMedianEven")
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC median-even ===
+
+=== AC median-unsorted ===
+Intent: Input order does not affect the median and the sort is numeric, not lexical.
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestMedianUnsorted")
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC median-unsorted ===
+
+=== AC median-number ===
+Intent: A number median is written with two decimals rounded half away from zero.
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestMedianNumber")
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC median-number ===
+
+=== AC median-non-numeric ===
+Intent: Median is blank for non-numeric columns.
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestMedianNonNumeric")
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC median-non-numeric ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Sorting and averaging are exact; no floating point is used.
+- Null values never take part in the median.
+- No median value is hardcoded.
+
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-ProfileOutput.md ===
+# FEATURE: ProfileOutput
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261024 V1 |
+| Description | Write the profile table with one row per column in file order. |
+| Depends On  | FEATURE-Counts.md, FEATURE-MinMax.md, FEATURE-SumMean.md, FEATURE-Median.md, FEATURE-TypeDate.md, FEATURE-TypeOther.md |
+| Provides    | profile table on standard output |
+| Consumes    | internal/profile |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Assemble the per-column type and statistics into the CSV table the command writes when profiling a file.
+
+## Behavior
+
+- With a file argument and no `--freq`, write the header `column,type,rows,nulls,distinct,min,max,sum,mean,median`.
+- Then write one row per column in file order, using the trimmed header name.
+- Output uses `encoding/csv`'s writer with `\n` line endings, so a field containing a comma, a double quote, or a newline is quoted per RFC 4180.
+- The command exits 0 on success.
+- On any failure nothing is written to standard output; the table is built fully before the first byte is written.
+
+## Interface
+
+- `internal/cli.Run` calls the reader, null classifier, type inference, and the statistics, then writes the table to its `stdout` writer.
+- The project test suite carries `TestProfileHeader`, `TestProfileRowOrder`, and `TestProfileQuoting` in `internal/cli`.
+
+## Programmatic Acceptance
+
+=== AC profile-columns-and-stats ===
+Intent: Profiling a generated file yields one row per column in file order with counts, types, and statistics matching values computed from that file's own inputs.
+
+import csv
+import io
+import math
+import os
+import tempfile
+from fractions import Fraction
+
+from drydock_go import cli_runner
+
+
+def fmt(fr):
+    n = math.floor(abs(fr) * 100 + Fraction(1, 2))
+    s = f"{n // 100}.{n % 100:02d}"
+    return "-" + s if fr < 0 and n != 0 else s
+
+
+header = ["id", "amt", "when", "flag", "word", "gone"]
+records = [
+    ["3", "1.50", "2025-01-05", "true", "pear", "NA"],
+    ["1", "-2.25", "2024-12-31", "FALSE", "apple", ""],
+    ["2", "10.00", "2025-03-01", "true", "pear", "null"],
+    ["10", "N/A", "2025-02-14", "true", "fig", "NULL"],
+    ["7", "4.75", "NA", "false", "apple", "N/A"],
+]
+cols = list(zip(*records))
+
+with tempfile.TemporaryDirectory() as tmp:
+    path = os.path.join(tmp, "data.csv")
+    with open(path, "w", newline="") as fh:
+        w = csv.writer(fh)
+        w.writerow(header)
+        w.writerows(records)
+    code, out, err = cli_runner(path)
+
+print(out)
+print(err)
+assert code == 0, (code, out, err)
+rows = list(csv.reader(io.StringIO(out)))
+assert rows[0][0] == "column"
+assert [r[0] for r in rows[1:]] == header
+
+nulls = {"", "na", "n/a", "null"}
+
+
+def nonnull(col):
+    return [v for v in col if v.strip().lower() not in nulls]
+
+
+by = {r[0]: r for r in rows[1:]}
+
+ids = [Fraction(int(v)) for v in nonnull(cols[0])]
+r = by["id"]
+assert r[1] == "integer"
+assert r[2] == str(len(records))
+assert r[3] == str(len(cols[0]) - len(ids))
+assert r[4] == str(len(set(nonnull(cols[0]))))
+assert r[5] == str(int(min(ids)))
+assert r[6] == str(int(max(ids)))
+assert r[7] == str(int(sum(ids)))
+assert r[8] == fmt(sum(ids) / len(ids))
+s = sorted(ids)
+mid = len(s) // 2
+med = s[mid] if len(s) % 2 else (s[mid - 1] + s[mid]) / 2
+assert r[9] == fmt(med)
+
+amts = [Fraction(v) for v in nonnull(cols[1])]
+r = by["amt"]
+assert r[1] == "number"
+assert r[3] == str(len(cols[1]) - len(amts))
+assert r[5] == fmt(min(amts))
+assert r[6] == fmt(max(amts))
+assert r[7] == fmt(sum(amts))
+assert r[8] == fmt(sum(amts) / len(amts))
+s = sorted(amts)
+mid = len(s) // 2
+med = s[mid] if len(s) % 2 else (s[mid - 1] + s[mid]) / 2
+assert r[9] == fmt(med)
+
+dates = nonnull(cols[2])
+r = by["when"]
+assert r[1] == "date"
+assert r[3] == str(len(cols[2]) - len(dates))
+assert r[5] == min(dates)
+assert r[6] == max(dates)
+assert r[7:10] == ["", "", ""]
+
+r = by["flag"]
+assert r[1] == "boolean"
+assert r[4] == str(len(set(cols[3])))
+assert r[5] == "false"
+assert r[6] == "true"
+assert r[7:10] == ["", "", ""]
+
+words = nonnull(cols[4])
+r = by["word"]
+assert r[1] == "text"
+assert r[5] == min(words, key=lambda v: v.encode())
+assert r[6] == max(words, key=lambda v: v.encode())
+assert r[7:10] == ["", "", ""]
+
+r = by["gone"]
+assert r[1] == "empty"
+assert r[2] == str(len(records))
+assert r[3] == str(len(records))
+assert r[4] == "0"
+assert r[5:10] == ["", "", "", "", ""]
+=== END AC profile-columns-and-stats ===
+
+=== AC profile-quoting-and-trim ===
+Intent: A value containing a comma is quoted on output, and padding spaces in header names and values are trimmed.
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+name = "label"
+value = "red, green"
+raw = f"  {name}  ,n\n  {value}  ,1\n{value},2\n"
+
+with tempfile.TemporaryDirectory() as tmp:
+    path = os.path.join(tmp, "data.csv")
+    with open(path, "w", newline="") as fh:
+        fh.write(raw.replace(value, '"' + value + '"'))
+    code, out, err = cli_runner(path)
+
+print(out)
+print(err)
+assert code == 0, (code, out, err)
+assert out.endswith("\n")
+assert "\r" not in out
+rows = list(csv.reader(io.StringIO(out)))
+by = {r[0]: r for r in rows[1:]}
+assert name in by
+assert by[name][1] == "text"
+assert by[name][4] == "1"
+assert by[name][5] == value
+assert by[name][6] == value
+=== END AC profile-quoting-and-trim ===
+
+=== AC profile-header-only ===
+Intent: A header-only file reports every column as empty with zero counts and exits 0.
+
+import csv
+import io
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+header = ["sku", "price", "in_stock"]
+
+with tempfile.TemporaryDirectory() as tmp:
+    path = os.path.join(tmp, "data.csv")
+    with open(path, "w", newline="") as fh:
+        csv.writer(fh).writerow(header)
+    code, out, err = cli_runner(path)
+
+print(out)
+print(err)
+assert code == 0, (code, out, err)
+rows = list(csv.reader(io.StringIO(out)))
+assert [r[0] for r in rows[1:]] == header
+for r in rows[1:]:
+    assert r[1] == "empty"
+    assert r[2:5] == ["0", "0", "0"]
+    assert r[5:10] == ["", "", "", "", ""]
+=== END AC profile-header-only ===
+
+=== AC profile-failure-silent-stdout ===
+Intent: A rejected file writes nothing to standard output and exits 3.
+
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as tmp:
+    path = os.path.join(tmp, "ragged.csv")
+    with open(path, "w", newline="") as fh:
+        fh.write("a,b\n1,2\n3,4,5\n")
+    code, out, err = cli_runner(path)
+
+print(out)
+print(err)
+assert code == 3, (code, out, err)
+assert out == ""
+=== END AC profile-failure-silent-stdout ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Every value in the table is computed from the file examined; no statistic, type, or value list is hardcoded.
+- The application never reads `sources/run.sh` or any supplied data file.
+- Nothing is written to standard output when the command fails.
+
+=== END ARTIFACT ===

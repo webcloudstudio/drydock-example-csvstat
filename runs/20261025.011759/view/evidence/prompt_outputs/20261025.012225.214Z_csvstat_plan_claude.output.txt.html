@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/prompt_outputs/20261025.012225.214Z_csvstat_plan_claude.output.txt</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/prompt_outputs/20261025.012225.214Z_csvstat_plan_claude.output.txt</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/prompt_outputs/20261025.012225.214Z_csvstat_plan_claude.output.txt">Raw file</a></div></header>
+<article class="doc"><pre>=== BEGIN ARTIFACT FEATURE-NullValues.md ===
+# FEATURE: Null Values
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Classifies empty, NA, N/A, and NULL values as null after trimming. |
+| Depends On  | FEATURE-CsvReader.md |
+| Provides    | internal/profile.IsNull |
+| Consumes    | internal/csvio.Read |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Every statistic, type, and frequency rule applies only to non-null values. This feature supplies the single predicate that decides whether a value is null, so counts, typing, statistics, and frequency lists agree.
+
+## Behavior
+
+- Package `internal/profile` exports `IsNull(value string) bool`.
+- The value is trimmed of leading and trailing spaces before the test, so the predicate gives the same answer for a padded value and its trimmed form.
+- A value is null when the trimmed value is empty, or equals `NA`, `N/A`, or `NULL` ignoring case (`na`, `n/a`, `Null`, `null` are null).
+- Every other value is non-null, including near misses such as `NAN`, `N/B`, `NULLS`, `none`, and `0`.
+- The predicate is pure: no I/O, no package state.
+
+## Required project tests
+
+The builder writes these tests in `internal/profile` beside the code, with exactly these names:
+
+- `TestIsNullEmpty`: the empty string and whitespace-only strings are null.
+- `TestIsNullSpellings`: `NA`, `N/A`, `NULL` in upper, lower, and mixed case are null, including when padded with spaces.
+- `TestIsNullNonNull`: near misses and ordinary values are not null.
+
+## Programmatic Acceptance
+
+=== AC nullvalues-empty ===
+Intent: Empty and whitespace-only values are classified as null by the delivered predicate.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/profile&quot;, &quot;TestIsNullEmpty&quot;)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC nullvalues-empty ===
+
+=== AC nullvalues-spellings ===
+Intent: NA, N/A, and NULL are null in any letter case, padded or not.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/profile&quot;, &quot;TestIsNullSpellings&quot;)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC nullvalues-spellings ===
+
+=== AC nullvalues-nonnull ===
+Intent: Near misses and ordinary values are not null.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/profile&quot;, &quot;TestIsNullNonNull&quot;)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC nullvalues-nonnull ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Standard library only; no third-party modules.
+- The predicate never reads a data file and never embeds a value taken from a supplied data file.
+- Null spellings are exactly the empty string, `NA`, `N/A`, and `NULL` ignoring case; no other spelling is added.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-Arguments.md ===
+# FEATURE: Arguments
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Parses the csvstat command line and rejects malformed usage with exit 2. |
+| Depends On  | FEATURE-Build.md |
+| Provides    | --column, --freq, --top, exit code 2 |
+| Consumes    | internal/cli.Run |
+
+## Questions
+
+- None.
+
+## Purpose
+
+The command forms are `csvstat [--column &lt;name&gt;] &lt;file&gt;` and `csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;`. This feature parses them and turns every usage mistake into exit code 2 with nothing on standard output.
+
+## Behavior
+
+- `internal/cli.Run(args []string, stdout, stderr io.Writer) int` parses `args` with a local `flag.FlagSet` created with `flag.ContinueOnError`, its own output set to `io.Discard`.
+- Options precede the file. Exactly one positional argument, the file, is required. Anything after the first positional argument counts as an extra argument.
+- Recognized options: `--column &lt;name&gt;`, `--freq &lt;name&gt;`, `--top &lt;n&gt;`.
+- Exit 2 with empty standard output for each of:
+  - no file, or more than one file;
+  - an unknown option;
+  - an option given without its value;
+  - `--column` together with `--freq`;
+  - `--top` without `--freq`.
+- On exit 2, write exactly one line to standard error naming both command forms. There is no `--help` option.
+- A well-formed command line is accepted and handed to the later behavior; it never exits 2.
+- A `--top` value that is not a positive integer is owned by the `--top` feature (FEATURE-FrequencyTop.md), not this one.
+
+## Required project tests
+
+The builder writes tests calling `cli.Run` with `bytes.Buffer` writers for every case above, asserting the exit code, empty standard output, and a single-line diagnostic.
+
+## Programmatic Acceptance
+
+=== AC arguments-file-count ===
+Intent: A missing file or an extra file exits 2 with nothing on standard output.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as d:
+    first = os.path.join(d, &quot;first.csv&quot;)
+    second = os.path.join(d, &quot;second.csv&quot;)
+    for path in (first, second):
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(&quot;a,b\n1,2\n&quot;)
+
+    code, out, err = cli_runner()
+    print(out)
+    print(err)
+    assert code == 2, (code, out, err)
+    assert out == &quot;&quot;
+
+    code, out, err = cli_runner(first, second)
+    print(out)
+    print(err)
+    assert code == 2, (code, out, err)
+    assert out == &quot;&quot;
+
+    code, out, err = cli_runner(&quot;--column&quot;, &quot;a&quot;)
+    print(out)
+    print(err)
+    assert code == 2, (code, out, err)
+    assert out == &quot;&quot;
+=== END AC arguments-file-count ===
+
+=== AC arguments-bad-options ===
+Intent: An unknown option and an option without its value exit 2 with nothing on standard output.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;data.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+        f.write(&quot;a,b\n1,2\n&quot;)
+
+    cases = [
+        [&quot;--frobnicate&quot;, path],
+        [&quot;--column&quot;],
+        [&quot;--freq&quot;],
+        [&quot;--freq&quot;, &quot;a&quot;, &quot;--top&quot;],
+    ]
+    for args in cases:
+        code, out, err = cli_runner(*args)
+        print(args, code)
+        print(out)
+        print(err)
+        assert code == 2, (args, code, out, err)
+        assert out == &quot;&quot;, (args, out)
+=== END AC arguments-bad-options ===
+
+=== AC arguments-option-combinations ===
+Intent: --column with --freq, and --top without --freq, exit 2 with nothing on standard output.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;data.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+        f.write(&quot;a,b\n1,2\n&quot;)
+
+    cases = [
+        [&quot;--column&quot;, &quot;a&quot;, &quot;--freq&quot;, &quot;a&quot;, path],
+        [&quot;--top&quot;, &quot;3&quot;, path],
+        [&quot;--column&quot;, &quot;a&quot;, &quot;--top&quot;, &quot;3&quot;, path],
+    ]
+    for args in cases:
+        code, out, err = cli_runner(*args)
+        print(args, code)
+        print(out)
+        print(err)
+        assert code == 2, (args, code, out, err)
+        assert out == &quot;&quot;, (args, out)
+=== END AC arguments-option-combinations ===
+
+=== AC arguments-options-precede-file ===
+Intent: An option placed after the file is an extra argument and exits 2.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;data.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+        f.write(&quot;a,b\n1,2\n&quot;)
+
+    code, out, err = cli_runner(path, &quot;--column&quot;, &quot;a&quot;)
+    print(out)
+    print(err)
+    assert code == 2, (code, out, err)
+    assert out == &quot;&quot;
+=== END AC arguments-options-precede-file ===
+
+=== AC arguments-usage-line ===
+Intent: A usage error writes exactly one non-empty diagnostic line to standard error.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import cli_runner
+
+code, out, err = cli_runner()
+print(out)
+print(err)
+assert code == 2, (code, out, err)
+assert out == &quot;&quot;
+lines = [line for line in err.splitlines() if line.strip()]
+assert len(lines) == 1, err
+=== END AC arguments-usage-line ===
+
+=== AC arguments-wellformed-accepted ===
+Intent: Well-formed command lines are never rejected as usage errors.
+Suite: scoped
+Requires: executable=go; scope=test
+
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;data.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+        f.write(&quot;a,b\n1,2\n&quot;)
+
+    cases = [
+        [path],
+        [&quot;--column&quot;, &quot;a&quot;, path],
+        [&quot;--freq&quot;, &quot;a&quot;, path],
+        [&quot;--freq&quot;, &quot;a&quot;, &quot;--top&quot;, &quot;2&quot;, path],
+    ]
+    for args in cases:
+        code, out, err = cli_runner(*args)
+        print(args, code)
+        print(err)
+        assert code != 2, (args, code, out, err)
+=== END AC arguments-wellformed-accepted ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- No `--help` option is added.
+- Only `main` calls `os.Exit`; `Run` returns the exit code.
+- Flag parsing never writes to the process&#x27;s standard output or standard error directly; all output goes through the writers passed to `Run`.
+- Standard library only.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-TypeNumeric.md ===
+# FEATURE: Type Numeric
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Infers the integer and number column types from a column&#x27;s non-null values. |
+| Depends On  | FEATURE-NullValues.md |
+| Provides    | internal/profile.InferType |
+| Consumes    | internal/profile.IsNull |
+
+## Questions
+
+- None.
+
+## Purpose
+
+A column&#x27;s type is the first of `integer`, `number`, `date`, `boolean`, `text` that every non-null value satisfies, or `empty` when there is no non-null value. This feature creates the typing function and implements its first two rungs; later features add the remaining rungs to the same function.
+
+## Behavior
+
+- Package `internal/profile` exports `InferType(values []string) string`. Values are already trimmed; null values are skipped using `IsNull`.
+- Returns `&quot;integer&quot;` when every non-null value matches `^-?[0-9]+$`.
+- Returns `&quot;number&quot;` when every non-null value matches `^-?[0-9]+(\.[0-9]+)?$` and at least one value is not an integer.
+- Integer text with leading zeros or a leading `-` and digits is still an integer; `+5`, `.5`, `5.`, `1e3`, `1,000`, and a bare `-` are not numeric.
+- Typing considers only non-null values: a column of integers and nulls is `integer`.
+- The ladder order is integer, number, date, boolean, text; a column that satisfies an earlier rung never takes a later one.
+- Non-numeric columns fall through to later rungs, implemented by FEATURE-TypeDate.md and FEATURE-TypeOther.md. Until they exist, a non-numeric column returns `&quot;text&quot;`.
+
+## Required project tests
+
+The builder writes these tests in `internal/profile` with exactly these names:
+
+- `TestInferTypeInteger`: integer columns, negative values, leading zeros, and integers mixed with nulls.
+- `TestInferTypeNumber`: decimals, negative decimals, decimals mixed with integers, and decimals mixed with nulls.
+- `TestInferTypeNotNumeric`: forms such as `+5`, `.5`, `5.`, `1e3`, `1,000`, and `-` are not integer or number.
+
+## Programmatic Acceptance
+
+=== AC typenumeric-integer ===
+Intent: Integer columns, including negatives and nulls, are typed integer by the delivered function.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/profile&quot;, &quot;TestInferTypeInteger&quot;)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC typenumeric-integer ===
+
+=== AC typenumeric-number ===
+Intent: Columns with at least one decimal value and otherwise numeric values are typed number.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/profile&quot;, &quot;TestInferTypeNumber&quot;)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC typenumeric-number ===
+
+=== AC typenumeric-not-numeric ===
+Intent: Malformed numeric spellings never type a column as integer or number.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/profile&quot;, &quot;TestInferTypeNotNumeric&quot;)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC typenumeric-not-numeric ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Type names are exactly `integer`, `number`, `date`, `boolean`, `text`, and `empty`.
+- Typing never reads a data file and never hardcodes a column name or a type for a column.
+- Standard library only.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-TypeDate.md ===
+# FEATURE: Type Date
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Infers the date column type with real calendar validation. |
+| Depends On  | FEATURE-TypeNumeric.md |
+| Provides    | date type |
+| Consumes    | internal/profile.InferType |
+
+## Questions
+
+- None.
+
+## Purpose
+
+A column is a `date` column when every non-null value is a real calendar date written `YYYY-MM-DD`. A value such as `2025-02-30` has the right shape but is not a date, so it keeps its column out of this type.
+
+## Behavior
+
+- `InferType` returns `&quot;date&quot;` when the column is not integer or number and every non-null value matches `^[0-9]{4}-[0-9]{2}-[0-9]{2}$` and parses with `time.Parse(&quot;2006-01-02&quot;, value)` without error.
+- The shape check is strict: the value must be exactly ten characters in that form; a single-digit month or day, a time suffix such as `2025-03-01T08:00`, or a slash separator is not a date.
+- Calendar validity includes month length and leap years: `2024-02-29` is a date, `2025-02-29` and `2025-04-31` are not.
+- A single invalid date among valid ones sends the column to the later rungs (boolean, text), so it becomes `text`.
+- Null values are ignored.
+- A column that is entirely integers or numbers keeps that earlier type.
+
+## Required project tests
+
+The builder writes these tests in `internal/profile` with exactly these names:
+
+- `TestInferTypeDate`: valid dates, leap day, and dates mixed with nulls are typed date.
+- `TestInferTypeInvalidDate`: impossible calendar dates, wrong shapes, and time suffixes make the column text.
+
+## Programmatic Acceptance
+
+=== AC typedate-valid ===
+Intent: Columns of real calendar dates, including a leap day and nulls, are typed date.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/profile&quot;, &quot;TestInferTypeDate&quot;)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC typedate-valid ===
+
+=== AC typedate-invalid ===
+Intent: One impossible date or malformed shape keeps a column from being typed date.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/profile&quot;, &quot;TestInferTypeInvalidDate&quot;)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC typedate-invalid ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Calendar validity is decided by the standard library, not by a hand-written month table.
+- Typing never reads a data file and never hardcodes a value.
+- Standard library only.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-TypeOther.md ===
+# FEATURE: Type Other
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Infers the boolean, text, and empty column types. |
+| Depends On  | FEATURE-TypeNumeric.md |
+| Provides    | boolean, text, empty types |
+| Consumes    | internal/profile.InferType |
+
+## Questions
+
+- None.
+
+## Purpose
+
+This feature completes the typing ladder: `boolean` for true/false columns, `text` as the catch-all, and `empty` for columns with no non-null value.
+
+## Behavior
+
+- `InferType` returns `&quot;empty&quot;` when no value in the column is non-null. This includes a column with no rows at all, a column of only empty strings, and a column of only `NA`, `N/A`, or `NULL` spellings.
+- `InferType` returns `&quot;boolean&quot;` when the column is not integer, number, or date, and every non-null value equals `true` or `false` ignoring case (`TRUE`, `False`).
+- `InferType` returns `&quot;text&quot;` for every other column, including a column mixing booleans with other words, or booleans with numbers.
+- Null values are ignored for every rung; a column of booleans and nulls is `boolean`.
+- `yes`, `no`, `1`, `0`, `t`, `f` are not booleans.
+- `empty` takes precedence over every other type because it is decided first, by the absence of non-null values.
+
+## Required project tests
+
+The builder writes these tests in `internal/profile` with exactly these names:
+
+- `TestInferTypeBoolean`: mixed-case true/false columns, with and without nulls.
+- `TestInferTypeText`: ordinary words, mixed booleans and words, padded and punctuated strings.
+- `TestInferTypeEmpty`: no values, only empty strings, only null spellings.
+
+## Programmatic Acceptance
+
+=== AC typeother-boolean ===
+Intent: Columns whose non-null values are all true or false in any case are typed boolean.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/profile&quot;, &quot;TestInferTypeBoolean&quot;)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC typeother-boolean ===
+
+=== AC typeother-text ===
+Intent: Columns that satisfy no earlier rung are typed text.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/profile&quot;, &quot;TestInferTypeText&quot;)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC typeother-text ===
+
+=== AC typeother-empty ===
+Intent: Columns with no non-null value are typed empty.
+Suite: scoped
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/profile&quot;, &quot;TestInferTypeEmpty&quot;)
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC typeother-empty ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Boolean spellings are exactly `true` and `false` ignoring case; no other spelling is added.
+- Typing never reads a data file and never hardcodes a column name or a type for a column.
+- Standard library only.
+=== END ARTIFACT ===</pre></article>
+</main>
+</body>
+</html>

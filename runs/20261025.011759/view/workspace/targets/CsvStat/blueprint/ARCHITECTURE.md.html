@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/ARCHITECTURE.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/ARCHITECTURE.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/ARCHITECTURE.md">Raw file</a></div></header>
+<article class="doc"><h1>ARCHITECTURE: CsvStat</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Module layout, boundaries, and technical decisions for the csvstat command-line CSV column profiler.</td></tr><tr><td>Depends On</td><td>None</td></tr><tr><td>Provides</td><td>go.mod, cmd/csvstat, internal/cli.Run</td></tr><tr><td>Consumes</td><td>None</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p><code>csvstat</code> is a single-binary Go command-line tool. It reads one CSV file, infers a type for each column, and writes either a profile table or a frequency list to standard output as CSV. Diagnostics go to standard error. Exit codes are 0 (success), 1 (operational failure), 2 (usage error), and 3 (rejected input).</p>
+<h2>Technology Stack</h2>
+<p>Derived from <code>TECHNOLOGY_STACK.md</code>, which remains the decision of record.</p>
+<div class="scroll"><table><thead><tr><th>Technology</th><th>Where it applies</th></tr></thead><tbody><tr><td>Go 1.22 or newer, standard library only</td><td>Every package; no third-party modules and no <code>require</code> line in <code>go.mod</code></td></tr><tr><td>go test and go vet</td><td>The project suite behind <code>bin/test.sh</code></td></tr><tr><td>CSV (RFC 4180, <code>encoding/csv</code>)</td><td>Reading input and writing output</td></tr><tr><td>POSIX sh</td><td><code>bin/test.sh</code> and the supplied grader <code>sources/run.sh</code></td></tr></tbody></table></div>
+<p>There is no database and no persistent state, so there is no <code>DATABASE.md</code>.</p>
+<h2>Layout</h2>
+<pre><code>go.mod                    module declaration, Go 1.22 or newer, no dependencies
+cmd/csvstat/main.go       process startup; the only caller of os.Exit
+internal/cli/             Run(args []string, stdout, stderr io.Writer) int
+internal/csvio/           reading, trimming, and rejecting CSV input
+internal/profile/         null rule, type inference, counts, statistics, frequencies
+internal/output/          profile and frequency CSV writers
+bin/test.sh               POSIX test runner</code></pre>
+<h2>Modules and Boundaries</h2>
+<div class="scroll"><table><thead><tr><th>Module</th><th>Owns</th><th>Allowed to use</th></tr></thead><tbody><tr><td><code>cmd/csvstat</code></td><td>Wiring <code>os.Args[1:]</code>, <code>os.Stdout</code>, <code>os.Stderr</code> into <code>cli.Run</code>; calling <code>os.Exit</code></td><td><code>internal/cli</code></td></tr><tr><td><code>internal/cli</code></td><td>Argument parsing with a local <code>flag.FlagSet</code> (<code>flag.ContinueOnError</code>), exit-code mapping, diagnostics, orchestration</td><td><code>csvio</code>, <code>profile</code>, <code>output</code></td></tr><tr><td><code>internal/csvio</code></td><td>Opening and reading the file, trimming, structural rejection</td><td><code>os</code>, <code>encoding/csv</code></td></tr><tr><td><code>internal/profile</code></td><td>Null classification, typing, counts, exact arithmetic with <code>math/big</code>, frequencies</td><td><code>math/big</code>, <code>time</code>, <code>sort</code></td></tr><tr><td><code>internal/output</code></td><td>CSV writing through <code>encoding/csv</code> with <code>\n</code> line endings</td><td><code>encoding/csv</code></td></tr></tbody></table></div>
+<p>Persistence, configuration, file-store, and external-service boundaries: none. The only file access is reading the one input path named on the command line, owned by <code>internal/csvio</code>.</p>
+<h2>Technical Decisions</h2>
+<ul><li>Only <code>main</code> calls <code>os.Exit</code>; <code>Run</code> returns the exit code so tests drive it with <code>bytes.Buffer</code> writers.</li><li>Nothing is written to standard output until the whole input has been read and validated, so a failing command writes nothing to standard output.</li><li>Sums, means, and medians are exact (<code>big.Rat</code>) and rounded once, half away from zero, when written.</li><li>Application code never reads <code>sources/run.sh</code> or any supplied data file and embeds no answer.</li><li>Invalid UTF-8 is accepted; blank lines are skipped by <code>encoding/csv</code>.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC arch-module-layout ===<br>Intent: The application root is a Go module of Go 1.22 or newer with the csvstat main package and the cli package present.<br>Requires: executable=go; scope=test</p>
+<p>import os import re</p>
+<p>assert os.path.isfile(&quot;go.mod&quot;) with open(&quot;go.mod&quot;, encoding=&quot;utf-8&quot;) as handle: gomod = handle.read() match = re.search(r&quot;^go\s+(\d+)\.(\d+)&quot;, gomod, re.MULTILINE) assert match is not None major, minor = int(match.group(1)), int(match.group(2)) assert (major, minor) &gt;= (1, 22) assert os.path.isfile(os.path.join(&quot;cmd&quot;, &quot;csvstat&quot;, &quot;main.go&quot;)) assert os.path.isdir(os.path.join(&quot;internal&quot;, &quot;cli&quot;)) === END AC arch-module-layout ===</p>
+<p>=== AC arch-no-dependencies ===<br>Intent: go.mod declares no third-party requirement, so the standard library is the only dependency.</p>
+<p>import re</p>
+<p>with open(&quot;go.mod&quot;, encoding=&quot;utf-8&quot;) as handle: gomod = handle.read() assert re.search(r&quot;^\s*require\b&quot;, gomod, re.MULTILINE) is None === END AC arch-no-dependencies ===</p>
+<p>=== AC arch-cli-run-compiles ===<br>Intent: The module builds and vets cleanly, so cli.Run and the main package compile together.<br>Requires: executable=go; scope=test</p>
+<p>import subprocess import sys</p>
+<p>build = subprocess.run([&quot;go&quot;, &quot;build&quot;, &quot;./...&quot;], capture_output=True, text=True) print(build.stdout) print(build.stderr, file=sys.stderr) assert build.returncode == 0</p>
+<p>vet = subprocess.run([&quot;go&quot;, &quot;vet&quot;, &quot;./...&quot;], capture_output=True, text=True) print(vet.stdout) print(vet.stderr, file=sys.stderr) assert vet.returncode == 0 === END AC arch-cli-run-compiles ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Standard library only; no third-party modules.</li><li>Only <code>main</code> calls <code>os.Exit</code>.</li><li>Do not modify, rewrite, regenerate, or substitute any file under <code>sources/</code>.</li><li>Do not read <code>sources/run.sh</code> or any supplied data file from application code, and do not hardcode a statistic, a type, or a value list.</li><li>Diagnostics go to standard error and are never part of the output contract.</li></ul></article>
+</main>
+</body>
+</html>

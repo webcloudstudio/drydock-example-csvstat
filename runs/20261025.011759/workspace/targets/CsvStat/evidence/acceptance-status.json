@@ -1,0 +1,571 @@
+{
+  "criteria": {
+    "arch-cli-run-compiles": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "71394a7464aa290e3acd958fbaa1a31b704962d880018110b5d60e28749f29e9",
+      "updated_at": "2026-10-25T01:27:52+00:00",
+      "detail": ""
+    },
+    "arch-module-layout": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "a802cfb81579c75c5c0f09526e34e49dc306721d63999ab7fa0e94b41b219a00",
+      "updated_at": "2026-10-25T01:27:52+00:00",
+      "detail": ""
+    },
+    "arch-no-dependencies": {
+      "status": "VALID",
+      "error_code": "product-missing",
+      "code_sha256": "14f37a5810f4798d23959002910fd1a2384e1ba4fa79fcffc4bfc180694d6390",
+      "updated_at": "2026-10-25T01:27:52+00:00",
+      "detail": ""
+    },
+    "arguments-bad-options": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "f46a86292a92482285bdbd7ed887d83d2a48ed24b0e61ad9c0fd6f6e652e99f8",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "arguments-file-count": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "e00cad83ea978a1952a1f7f4c48aaf38eccb5b46edf76d755cd41d304db53234",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "arguments-option-combinations": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "577b7b9156e6e547ecaed33b55dc47565d53b92e5a9708b244bf1681130ade44",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "arguments-options-precede-file": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "2de45e009e1c9ba7cd62c759bb0f757123d74ce3a1472a84409d557d36ded094",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "arguments-usage-line": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "5f78bc858278b1999e4a8150c5e5b9ca367b352fd24340579f8d121ed1657b6f",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "arguments-wellformed-accepted": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "73618e5503c1517035c18bbfe13480654ba25b656786e9377d9a59ca7496daac",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "build-binary-runs": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "6533398a2eb160aff6b0e609e1986f2c1502b26b7c1391b18859708a45321312",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "build-go-build": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "961e0c51b3bb432f9414d0a18072e76e71809b78e790a7ad86632985c8ebc6dc",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "build-standard-library-only": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "b8d6ea1726896e43cf829248faf4a9b8e147439b9abae23e551f249b24a10136",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "column-select-absent-name": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "e7ed76e228a4455a724111691c3512bf7be95019bbcbbbebae2e4b129c5852c3",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "column-select-matches-full-profile": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "123010a8de3325e1f6767b5dc117bd98a7ab339d2f96a2e20e077c0b896faccf",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "column-select-quoted-field": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "a77130bd8cf19a9886b4bf1a8bc9cf21009f59738c6e66e7d02934c513287377",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "column-select-trimmed-header-name": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "fdee7ea63d8cec7b0e0ded5dead1ba587c173eab9f962e927039fe25b0f5c816",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "counts-distinct": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "ed6fbbf5808afade6907144a364bac6ba5af54e739b4d78c026a651f99348379",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "counts-header-only": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "6af8f75f42cf71269fa3ebf716c6e8cbe3e442d83b3a3365ad3bf5512deda00b",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "counts-nulls": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "d7f6871f0e530748caaffce29cbc27b06976f6f4679cc19e955454df307bd254",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "counts-rows": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "8891bedab3fff9e2915db7e83aa0741d7f49996e2fedf987c9b24501093f69a9",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "frequency-absent-column": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "95b59d21243d34b80e89135e93cb8eb56d67ecd0186833c45ba8a039218d79b2",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "frequency-all-null-column": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "35838bd006ab3ab0f6ecf8d7369d6b5eefea825a29b554cca34108506bd8cc6e",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "frequency-default-limit": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "996707463909d7488763d803fcaf3268de285a2420b33c492498b234f2bb150e",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "frequency-excludes-nulls": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "8b22977a507f0a7aa9c1d58cade9c85973295d92afa5faed92e93567b0e033d8",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "frequency-ordering": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "09ae63a450d6d0df8b6ff77a45de77dac0b39f2904a97014f59faf1b3f7f7c37",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "frequency-tie-order-by-bytes": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "f19b12fb664a7c5b0842c62d573ff9038ff5c0e038c39101fed8c0f8491aafc1",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "mean-negative": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "38d306175789d484bc9cf14cea52bf89531d007bad1398d5e4233910ba62582f",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "mean-rounding": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "64133e65a5f6cc2b9c4bb05661c8d11b30ab7506f5c0cb87d8515cd942387584",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "median-even": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "d9c05694ec668bbf517cd6774928e650e6c4c8c37a5e30921732917d2e797820",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "median-non-numeric": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "1084fa4ec9a41798c3eea31a1518650a19aee8b2e67b06f9ab3e84c1f235a946",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "median-number": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "29a8b83ed3e33fa2cc03fd1c4f94e2adf92eb10456c3250e5ae1f22907e453fc",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "median-odd": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "17e4b829b39b0b6fad0de80e3ca75a259e7ff6de1d56d29b7b17b5667b17f2e4",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "median-unsorted": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "ae61cf0c6043843661c01243ccb20df5ef155a9e02d7f9ca6b120b5b0c8cbc74",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "minmax-boolean": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "acc38b548faad94a2dc8fc89f22b381e3794093948bf4ae6976688499c359328",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "minmax-date": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "7ad7ee074bb7d57bde9e6b830932e5501760782655c34b607fc21d898282fdc5",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "minmax-empty": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "736874e3061562d95fd30bb009bb05276dbd8aaeef2aa2a4c17a1643588e5618",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "minmax-integer": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "71292723176476a193f884de662ddefb2efb7ad3a48cbc5213aeaa8605ce83c7",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "minmax-number": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "8fa75eabdadfe105b76eb759876cff5388a3a9a521bba45c81ed6f1c663b0a6c",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "minmax-text": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "32cac7455728d2f43c89c7b684f9af0d9a3909e633747f09721ecf9cfe0bc070",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "nullvalues-empty": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "69d865ea6ba33574ec3018a1c7ee0153640f80d096a448dd28df610c844c7fe8",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "nullvalues-nonnull": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "c6099747ec99a4596eb80e61dbd407021ddb978ef23b357cb2916c98449357a7",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "nullvalues-spellings": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "08b5adfe5ac9eb32d107f0c2590ccf4276836233811776adc15a43cc551ce2d3",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "profile-columns-and-stats": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "0f10f8005dd09ae0d74b489dbd447882bf2827e3029cede136d3c134af929ee6",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "profile-failure-silent-stdout": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "ea9d46c7ecd6e27484addeac12f35993312ec8734c099a0f539c38bae75c23fe",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "profile-header-only": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "82e236ffebc2232c1f463ef7d7e145f9b76c3da132053287efb64762307ad12c",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "profile-quoting-and-trim": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "98c09b548216a0a778384a7301ccf400d1c331ec9d13f3f5ca66034422e1fafc",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "reader-invalid-utf8": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "cd0e6055a04eb986f29086fb72f8701b9a8787e12e93bf5215891fc06b95edc1",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "reader-open-error": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "3803d2d858e5ec1626c07f739756135051db008e0faec00bf69b36cf8875b5da",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "reader-quoted-comma": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "a1fe15f2724eab1cad209d0d9e89f795f0bf32951030c10b06c8639e446bf4f1",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "reader-record-lines": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "7abe8b8348ce96e5b857d31feb222630ac1a36eea451509826aad3e86a74dfd6",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "reader-trims": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "2a9759f949ff97e2615461a66e71ff2648055cff0ea94f15edab336833f19832",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "readfail-directory": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "e60a097926e7a2c4a1bd408a10029b19e996fcca3dcaef356cb5bda7ece70fd7",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "readfail-distinct-from-rejection": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "9883bd64e00ae920b91d4c356aba0e1614cebbc8c6a31593edc42da69a26f8a3",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "readfail-missing-file": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "498a89e10905c2f141fa94dd9edcf92aa0ccabcedc9cc25d8a36eaa2f86cf300",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "reject-empty-file": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "acd0159b5a4666541ef47f5b4a2748f41731cd97482180b256b9e215ca11acb3",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "reject-empty-header-name": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "483fe2bfbe1adb34c4d19c2869ec8d045d07ee6a3f51c4c3f3d142de104b3546",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "reject-header-only-not-rejected": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "fb4193b61bb8130a0d791a46c1f43054a889856caa097d54d0ac91de3b8672ca",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "reject-ragged-record": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "2d229be512304186118a5a5d86968af76a6ee222780554b2007e4ecd9a310cbf",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "reject-repeated-header-name": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "dd88b4f6eecc1b8ca93feaaacf88bee7d6bd4a44efc640826e425007ad5a9689",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "reject-short-record": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "4d01a3653eca74c0aaf58c8a888af90a5b4b23b6da7a38eb45305692e6fa91d0",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "reject-valid-file-not-rejected": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "23695ce8e95b4b1139ec4a5fa90625cff73d4756bdb8d0e9f1b8b1fbdb84ab44",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "sum-integer": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "0e0891c9d7903108563a7b162d21c704f2f18e6c91f1573494144545c4e22851",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "sum-number": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "b1460ea460765cd642e3e7924ba4f568a115071038779d0da3e36cd776f70c67",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "summean-non-numeric": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "9e8a639de4accdb602a55a8b48b09d18a5110c97f5f3aec4d6b4b47d1e4891dc",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "test-script-is-posix-sh": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "30e8a67dd1d6df9e53fbd8da18ed1d92a3ad0be033d30fad2417d2ddd6e3b1db",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "test-script-passes": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "625c1c36a5c97af8906a64bd221408c68e546cdd2c9956bce47829dac9f6c07c",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "test-script-works-from-other-directory": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "af59ade52b9a163fac8f27196f9bfb7cb5ed065e99e44c935342bd3f8ad5bef1",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "test-suite-exists": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "4de6ccf0562df70479d176215e583126ced77b39c538b3c6e38d7366ef9bb2a7",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "top-limits-rows": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "f2a6bb4339a5ec25a2ba5295c109087484ac6496bbba601438e796fd56bd6a59",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "top-missing-value": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "19ffd5b9129dc019dc8a03a1146d50f46be4aa65b8d7f3d000ff4daa8511a097",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "top-rejects-non-positive": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "0ad503d915f2c52aaac06b757029b202ea6261388537deed96ee5762118f4de6",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "top-with-column-order": {
+      "status": "VALID",
+      "error_code": "baseline-red",
+      "code_sha256": "6111e889d4e3736e99306baf9eb32d32a70a6e73b415d3b2ab9a56a729f090e8",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "top-without-freq": {
+      "status": "VALID",
+      "error_code": "existing-behavior",
+      "code_sha256": "8d4cabc4683cf79ca049dfd0f6ada44b87bc8fe4de4208d2d9e012b2587896e5",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": ""
+    },
+    "typedate-invalid": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "70551309c0ffc6275352203dd1d4a32f40c2e451d867de268cdb86cb0cf95347",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "typedate-valid": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "b0a88c44a3467c7a6f338c62602649eae56052f9b8ccff1ebfe02fc7790d67de",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "typenumeric-integer": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "f63372f63698a42d238ecad57e4cb2773a70986cc9068b620aa975469e94bb8a",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "typenumeric-not-numeric": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "b08a20ea31885829055382af6944366f30c76e969b6245926f6739ed54187ffb",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "typenumeric-number": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "f3d035df3d87e67c816e9e22a69d632eba30ffcda4d0a44e2ad5d6c0b33b15e0",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "typeother-boolean": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "a72e6de03420063285f6197785e10fabf5ca13fdecd638a5ebac976ab8234c70",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "typeother-empty": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "6605f64e910337c527ca83ca24a5c60482b043f242d7be5e83398fa729f4a424",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    },
+    "typeother-text": {
+      "status": "ERROR",
+      "error_code": "environment",
+      "code_sha256": "c71a7b4a35897531c397013ed825324f82d39cdb2dc88d28ea1a54077110c706",
+      "updated_at": "2026-10-25T01:31:35+00:00",
+      "detail": "unverified acceptance: not-run"
+    }
+  }
+}

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-FrequencyTop.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-FrequencyTop.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-FrequencyTop.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Frequency Top</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Limit frequency rows with --top and reject a non-positive or non-integer value with exit 2.</td></tr><tr><td>Depends On</td><td>FEATURE-Frequency.md</td></tr><tr><td>Provides</td><td>--top behavior</td></tr><tr><td>Consumes</td><td>--freq behavior</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p><code>--top &lt;n&gt;</code> bounds the number of rows <code>--freq</code> writes.</p>
+<h2>Behavior</h2>
+<ul><li><code>--top n</code> writes at most <code>n</code> frequency rows; the default is 5.</li><li><code>n</code> must be a positive integer. Zero, a negative number, a non-numeric value, or a decimal exits</li></ul>
+<p>2 with nothing on standard output.</p>
+<ul><li><code>--top</code> without <code>--freq</code> exits 2 with nothing on standard output.</li><li>When <code>n</code> exceeds the number of distinct non-null values, all of them are listed.</li><li>The limit applies after ordering, so the rows kept are the most frequent.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC top-limits-rows ===<br>Intent: --top n lists the first n rows of the full ordering, and a larger n lists every distinct value.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io from drydock_go import cli_runner</p>
+<p>data = &quot;sources/employees.csv&quot; column = &quot;department&quot; with open(data, newline=&quot;&quot;) as handle: records = list(csv.reader(handle)) index = [name.strip() for name in records[0]].index(column) distinct = {row[index].strip() for row in records[1:]}</p>
+<p>code, out, err = cli_runner(&quot;--freq&quot;, column, &quot;--top&quot;, str(len(distinct) + 10), data) assert code == 0, (code, out, err) full = list(csv.reader(io.StringIO(out)))[1:] assert len(full) == len(distinct), (full, distinct)</p>
+<p>limit = 2 code, out, err = cli_runner(&quot;--freq&quot;, column, &quot;--top&quot;, str(limit), data) assert code == 0, (code, out, err) rows = list(csv.reader(io.StringIO(out))) assert rows[0] == [&quot;value&quot;, &quot;count&quot;], rows[0] assert rows[1:] == full[:limit], (rows[1:], full[:limit]) === END AC top-limits-rows ===</p>
+<p>=== AC top-with-column-order ===<br>Intent: --top may precede --freq and still limits the listing.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io from drydock_go import cli_runner</p>
+<p>data = &quot;sources/sensors.csv&quot; limit = 3 code, out, err = cli_runner(&quot;--top&quot;, str(limit), &quot;--freq&quot;, &quot;sensor&quot;, data) assert code == 0, (code, out, err) rows = list(csv.reader(io.StringIO(out)))[1:] assert len(rows) == limit, rows === END AC top-with-column-order ===</p>
+<p>=== AC top-rejects-non-positive ===<br>Intent: A --top value that is not a positive integer exits 2 and writes nothing to standard output.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import cli_runner</p>
+<p>data = &quot;sources/sensors.csv&quot; for bad in (&quot;0&quot;, &quot;-1&quot;, &quot;abc&quot;, &quot;2.5&quot;, &quot;&quot;): code, out, err = cli_runner(&quot;--freq&quot;, &quot;sensor&quot;, &quot;--top&quot;, bad, data) assert code == 2, (bad, code, out, err) assert out == &quot;&quot;, (bad, out) === END AC top-rejects-non-positive ===</p>
+<p>=== AC top-without-freq ===<br>Intent: --top without --freq exits 2 and writes nothing to standard output.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import cli_runner</p>
+<p>code, out, err = cli_runner(&quot;--top&quot;, &quot;3&quot;, &quot;sources/sensors.csv&quot;) assert code == 2, (code, out, err) assert out == &quot;&quot;, out === END AC top-without-freq ===</p>
+<p>=== AC top-missing-value ===<br>Intent: --top given as the last option without a value exits 2.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import cli_runner</p>
+<p>code, out, err = cli_runner(&quot;--freq&quot;, &quot;sensor&quot;, &quot;--top&quot;) assert code == 2, (code, out, err) assert out == &quot;&quot;, out === END AC top-missing-value ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Usage errors never write to standard output.</li><li>The default of 5 is applied only when <code>--top</code> is absent.</li></ul></article>
+</main>
+</body>
+</html>

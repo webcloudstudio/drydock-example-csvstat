@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-ColumnSelect.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-ColumnSelect.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-ColumnSelect.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Column Select</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Profile only the column named by --column and reject an absent name with exit 3.</td></tr><tr><td>Depends On</td><td>FEATURE-ProfileOutput.md, FEATURE-Arguments.md, FEATURE-InputRejection.md</td></tr><tr><td>Provides</td><td>--column behavior</td></tr><tr><td>Consumes</td><td>profile table on standard output</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p><code>csvstat --column &lt;name&gt; &lt;file&gt;</code> writes the profile header followed by the single row for the named column. The row is identical to the row the full profile writes for that column. A name that is not in the header is a rejected input.</p>
+<h2>Behavior</h2>
+<ul><li>Output is the header <code>column,type,rows,nulls,distinct,min,max,sum,mean,median</code> and exactly one</li></ul>
+<p>row, for the named column, written with the same <code>encoding/csv</code> writer as the full profile.</p>
+<ul><li>The name is compared to the trimmed header names as an exact string.</li><li>A name absent from the header exits 3, writes nothing to standard output, and writes one</li></ul>
+<p>diagnostic line naming the file to standard error.</p>
+<ul><li>The whole file is still read and validated first, so a ragged file exits 3 regardless of the</li></ul>
+<p>column named.</p>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC column-select-matches-full-profile ===<br>Intent: A named column yields the profile header plus exactly the row the full profile gives that column.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io from drydock_go import cli_runner</p>
+<p>data = &quot;sources/employees.csv&quot; code, out, err = cli_runner(data) assert code == 0, (code, out, err) full = list(csv.reader(io.StringIO(out))) header = full[0] by_name = {row[0]: row for row in full[1:]}</p>
+<p>for name in (&quot;salary&quot;, &quot;id&quot;, &quot;remote&quot;, &quot;hire_date&quot;): code, out, err = cli_runner(&quot;--column&quot;, name, data) assert code == 0, (name, code, out, err) rows = list(csv.reader(io.StringIO(out))) assert len(rows) == 2, (name, rows) assert rows[0] == header, (name, rows[0], header) assert rows[1] == by_name[name], (name, rows[1], by_name[name]) === END AC column-select-matches-full-profile ===</p>
+<p>=== AC column-select-quoted-field ===<br>Intent: A column whose value contains a comma is quoted by the writer and parses back to the same row as the full profile.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io from drydock_go import cli_runner</p>
+<p>data = &quot;sources/employees.csv&quot; code, out, err = cli_runner(data) assert code == 0, (code, out, err) full = list(csv.reader(io.StringIO(out))) by_name = {row[0]: row for row in full[1:]}</p>
+<p>name = &quot;notes&quot; code, out, err = cli_runner(&quot;--column&quot;, name, data) assert code == 0, (code, out, err) rows = list(csv.reader(io.StringIO(out))) assert len(rows) == 2, rows assert rows[1] == by_name[name], (rows[1], by_name[name]) assert any(&quot;,&quot; in field for field in rows[1]), rows[1] === END AC column-select-quoted-field ===</p>
+<p>=== AC column-select-absent-name ===<br>Intent: A column name missing from the header exits 3 and writes nothing to standard output.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import cli_runner</p>
+<p>code, out, err = cli_runner(&quot;--column&quot;, &quot;nosuch&quot;, &quot;sources/orders.csv&quot;) assert code == 3, (code, out, err) assert out == &quot;&quot;, out === END AC column-select-absent-name ===</p>
+<p>=== AC column-select-trimmed-header-name ===<br>Intent: The column name is matched against trimmed header names, so a padded header still resolves.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile from drydock_go import cli_runner</p>
+<p>name = &quot;price&quot; with tempfile.TemporaryDirectory() as tmp: path = os.path.join(tmp, &quot;padded.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as handle: handle.write(f&quot;id,  {name}  \n1,2.50\n2,3.50\n&quot;) code, out, err = cli_runner(&quot;--column&quot;, name, path) assert code == 0, (code, out, err) rows = list(csv.reader(io.StringIO(out))) assert len(rows) == 2, rows assert rows[1][0] == name, rows === END AC column-select-trimmed-header-name ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>The row for a named column is computed from the file, never hardcoded.</li><li>Nothing is written to standard output when the command fails.</li><li>Only the exact-string, trimmed header name selects a column; no prefix or case-insensitive match.</li></ul></article>
+</main>
+</body>
+</html>
