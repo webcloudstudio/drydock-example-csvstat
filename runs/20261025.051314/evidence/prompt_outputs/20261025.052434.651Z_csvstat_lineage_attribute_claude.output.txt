@@ -1,0 +1,23 @@
+<requirement name="build-csvstat" stories="executable">
+Builds ./cmd/csvstat with `go build` and compares every command's exit code and standard output
+</requirement>
+<requirement name="profile-every-column" stories="csv-reading,value-trimming,null-values,numeric-types,date-type,boolean-text-types,row-counts,sum-mean,median,min-max,decimal-format,profile-output">
+# ── A. Every column of each data file ──────────────────────────────────────────────────
+</requirement>
+<requirement name="profile-one-column" stories="column-profile">
+# ── B. One column ────────────────────────────────────────────────────────────────────────
+</requirement>
+<requirement name="frequencies" stories="freq-count,freq-limit,freq-mode">
+# ── C. Frequencies ───────────────────────────────────────────────────────────────────────
+</requirement>
+<requirement name="reject-input-and-failures" stories="input-rejection,unreadable-file,failure-diagnostics">
+# ── E. Rejected input and operational failures ───────────────────────────────────────────
+</requirement>
+<requirement name="usage-errors" stories="usage-errors,args-parsing">
+# ── U. Usage errors ──────────────────────────────────────────────────────────────────────
+</requirement>
+<requirement name="pass-grader" stories="release-verification">
+Exit 0 only when the build succeeds and every check passes.
+</requirement>
+<unattached story="foundation"/>
+<unattached story="test-gate"/>

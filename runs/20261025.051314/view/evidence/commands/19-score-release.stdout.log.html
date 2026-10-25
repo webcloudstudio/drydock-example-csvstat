@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/commands/19-score-release.stdout.log</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/commands/19-score-release.stdout.log</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/commands/19-score-release.stdout.log">Raw file</a></div></header>
+<article class="doc"><pre>Drydock 0.8.0  Copyright (c) 2026 Web Cloud Studio. All rights reserved.
+2026-10-25 02:08:20 EDT  Calling CLAUDE/claude-haiku-5-5 (score release)...
+-path
+-
+-47
+-3] -&gt; integer;
+-02-30] -&gt; text
+-
+-103
+-null values by count descending then
+-50
+-42
+-33
+-47 open
+-007 cases the gr
+-004 inference edge c
+  Completed CLAUDE/claude-haiku-5-5 (score release)  rc=0
+
+CsvStat: PASSED — 8 of 8
+
+  st-001  MET       [&quot;sh&quot;, &quot;sources/run.sh&quot;] exited 0; governed_gate full: outcome PASS, return_code 0, stdout &#x27;CsvStat: 22 passed, 0 failed (of 22)&#x27;; sources/run.sh:44-50 builds ./cmd/csvstat and exits 1 on build failure; it exits 0 only when every check passes
+  st-002  MET       bin/test.sh:1-6 is a POSIX sh script (set -eu, go vet, go test) and `sh -n` parses it; go vet ./... exited 0; go test ./...: ok csvstat/internal/cli, csvdata, freq, profile; cmd/csvstat has no test files; script exit 0
+  st-003  MET       go.mod:1-3 &#x27;module csvstat&#x27;, &#x27;go 1.22&#x27;, no require directives; go build ./cmd/csvstat exited 0; grep of all Go imports: only stdlib packages and csvstat/internal/*
+  st-004  MET       internal/profile/infer.go:31-47 ordered switch: empty, integer, number, date, boolean, text; nulls filtered via csvdata.IsNull; probe: [1,2,-3] -&gt; integer; [1,2.5] -&gt; number; [1.0,2] -&gt; number; [1,NA,&#x27;&#x27;,2] -&gt; integer; [2025-01-01,NA,2024-02-29] -&gt; date; [2025-01-01,2025-02-30] -&gt; text (invalid calendar date); [true,FALSE,True] -&gt; boolean; [true,1] -&gt; text; [1e3,2] -&gt; text; [&#x27; 7 &#x27;,8] -&gt; integer; [NA,&#x27;&#x27;,N/A] -&gt; empty; grader A1-A4 and B1-B3 also match the expected type column for every column of the supplied files
+  st-005  MET       governed_gate: PASS A1 (employees.csv), A2 (sensors.csv), A3 (orders.csv), A4 (header_only.csv), B1-B3 (single-column runs); sources/run.sh:58-103 expected outputs are cmp-compared against actual stdout, exit codes included
+  st-006  MET       internal/freq/count.go:27-35 sorts by count desc then value asc; null values skipped before counting; internal/freq/top.go:7-16 keeps the first n entries; grader PASS C1-C5 (including --top 2 and --top 3); probe: values b,a,b,a,c,c,c,NA x5,B,&#x27;&#x27; -&gt; c 3, a 2, b 2, B 1 (NA and empty excluded, &#x27;B&#x27; before &#x27;a&#x27; by byte order); --top 2 -&gt; c,a; --top 99 -&gt; all rows
+  st-007  MET       internal/csvdata/validate.go:23-50 rejects nil header, empty name, repeated name, and field count mismatch; internal/cli/cli.go:38-42 returns exitRejected on Validate failure before any output is written; grader PASS E1 (ragged, exit 3), E2 and E3 (absent column, exit 3), with empty expected stdout; probe: empty file, &#x27;\n\n\n&#x27;, &#x27;a,,c&#x27;, &#x27;a,a&#x27;, &#x27;a, a&#x27;, &#x27;a,b / 1,2,3&#x27;, plus absent column and ragged under --freq and --column: all rc=3, stdout empty
+  st-008  MET       internal/cli/cli.go:31-33 usage errors return exitUsage (2); cli.go:44-47 open failures return exitOperational (1); grader PASS E4 (missing file, exit 1) and U1-U6 (usage errors, exit 2), each with empty stdout; probe: nonexistent path -&gt; rc 1, empty stdout; directory path -&gt; rc 1, empty stdout; no args, --column without value, --top abc, --top without --freq, --top 0, --column with --freq, repeated --column, unknown flag, two files -&gt; rc 2, empty stdout
+
+Scorecard: /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/workspace/targets/CsvStat/SCORECARD.md
+Evidence: /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/workspace/targets/CsvStat/evidence/score-release.json
+Target - committed project workspace git store
+</pre></article>
+</main>
+</body>
+</html>

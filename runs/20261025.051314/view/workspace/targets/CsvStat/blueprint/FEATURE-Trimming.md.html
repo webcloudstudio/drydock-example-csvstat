@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-Trimming.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-Trimming.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-Trimming.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Trimming</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Trim leading and trailing spaces from every header name and every value before any other rule applies.</td></tr><tr><td>Depends On</td><td>FEATURE-CsvReading.md</td></tr><tr><td>Provides</td><td>csvdata.Trim</td></tr><tr><td>Consumes</td><td>csvdata.Read</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>Every header name and every value is trimmed of leading and trailing spaces before null recognition, typing, counting, or comparison. Padded text such as <code>Globex</code> and <code>Acme Corp</code> therefore count as <code>Globex</code> and <code>Acme Corp</code>.</p>
+<h2>Behavior</h2>
+<ul><li><code>Trim(t *Table)</code> replaces, in place, each header name and each record field with the same string</li></ul>
+<p>stripped of leading and trailing space characters (U+0020).</p>
+<ul><li>Only U+0020 is trimmed. Tabs and other whitespace are preserved. Interior spaces are preserved.</li><li>Trimming applies after CSV parsing, so spaces inside a quoted field are also trimmed.</li><li>Record line numbers and field counts are unchanged.</li><li>The cli pipeline calls <code>Read</code> then <code>Trim</code> before any other rule; the profile-output and</li></ul>
+<p>frequency-mode stories wire that call.</p>
+<h2>Tests For The Project Suite</h2>
+<p>The builder writes these <code>internal/csvdata</code> tests, named exactly as listed:</p>
+<ul><li><code>TestTrimHeaderNames</code>: padded header names are trimmed.</li><li><code>TestTrimValues</code>: padded values are trimmed on both sides.</li><li><code>TestTrimQuotedPadding</code>: spaces inside a quoted field are trimmed, and the comma inside the quotes is kept.</li><li><code>TestTrimOnlySpaces</code>: tabs are preserved and interior spaces are kept.</li><li><code>TestTrimKeepsLines</code>: line numbers and field counts are unchanged.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC trim-header-names ===<br>Intent: Leading and trailing spaces are removed from header names.<br>Requires: executable=go; scope=test</p>
+<p>import sys from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/csvdata&quot;, &quot;TestTrimHeaderNames&quot;) print(result.stdout) print(result.stderr, file=sys.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC trim-header-names ===</p>
+<p>=== AC trim-values ===<br>Intent: Leading and trailing spaces are removed from every value.<br>Requires: executable=go; scope=test</p>
+<p>import sys from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/csvdata&quot;, &quot;TestTrimValues&quot;) print(result.stdout) print(result.stderr, file=sys.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC trim-values ===</p>
+<p>=== AC trim-quoted-padding ===<br>Intent: Padding inside a quoted field is trimmed while the quoted comma is kept.<br>Requires: executable=go; scope=test</p>
+<p>import sys from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/csvdata&quot;, &quot;TestTrimQuotedPadding&quot;) print(result.stdout) print(result.stderr, file=sys.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC trim-quoted-padding ===</p>
+<p>=== AC trim-scope ===<br>Intent: Only spaces are trimmed, interior spaces remain, and line numbers and field counts are unchanged.<br>Requires: executable=go; scope=test</p>
+<p>import sys from drydock_go import run_test</p>
+<p>for name in (&quot;TestTrimOnlySpaces&quot;, &quot;TestTrimKeepsLines&quot;): result = run_test(&quot;./internal/csvdata&quot;, name) print(name, result.status) print(result.stdout) print(result.stderr, file=sys.stderr) assert result.passed, (name, result.status, result.stdout, result.stderr) === END AC trim-scope ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Trimming happens before null recognition, typing, counting, and comparison.</li><li>Trim leading and trailing spaces only; do not alter interior content.</li><li>Distinctness is compared as exact strings after trimming.</li></ul></article>
+</main>
+</body>
+</html>

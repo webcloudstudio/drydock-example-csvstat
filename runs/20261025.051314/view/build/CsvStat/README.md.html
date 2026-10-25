@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>build/CsvStat/README.md</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>build/CsvStat/README.md</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../build/CsvStat/README.md">Raw file</a></div></header>
+<article class="doc"><h1>drydock CsvStat Uat Case</h1>
+<p>Drydock uat - CsvStat builds a Go CSV column profiler. The source is an original brief: infer each column&#x27;s type (integer, number, date, boolean, text, empty), report rows, nulls, distinct, min, max, sum, mean, and median, and list a column&#x27;s most frequent values. The supplied grader, sources/run.sh, builds ./cmd/csvstat with go build and runs 22 checks of exit code and output against five seeded random CSV files with known answers: quoted commas, null spellings, padded text, an invalid calendar date, a header-only file, and a ragged file. Standard library only, no database. Run with drydock uat CsvStat. Source Repo: none, the brief is original to this kit.</p>
+<h2>Intent</h2>
+<p>Build a command-line CSV column profiler, the Go executable <code>./cmd/csvstat</code>, as described in <code>sources/INSTRUCTIONS.md</code>. It infers each column&#x27;s type, reports counts, extremes, and for numeric columns sum, mean, and median, and lists a column&#x27;s most frequent values.</p>
+<p>Correctness is measured by <code>sources/run.sh</code>: it builds the executable with <code>go build</code> and makes 22 checks of exit code and standard output against five supplied CSV files. The goal is every check passing.</p>
+<h2>What It Does</h2>
+<p>csvstat accepts two command forms:</p>
+<pre><code>csvstat [--column &lt;name&gt;] &lt;file&gt;
+csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</code></pre>
+<p>Options precede the file and exactly one file is required. This story delivers the parser and its wiring into <code>Run</code>. Cross-option validation (<code>--top</code> without <code>--freq</code>, <code>--column</code> with <code>--freq</code>, non-positive <code>--top</code>) belongs to the usage-errors story.</p>
+<p>Complete <code>profile.InferType</code> so every column receives exactly one type: the first of <code>integer</code>, <code>number</code>, <code>date</code>, <code>boolean</code>, <code>text</code> that every non-null value satisfies, or <code>empty</code> when there is no non-null value.</p>
+<p><code>csvstat --column &lt;name&gt; &lt;file&gt;</code> writes the profile header and only the row for the named column.</p>
+<p><code>internal/csvdata</code> turns an input stream into a header and data records. Trimming, null recognition, and rejection of malformed input are separate stories that build on this reader.</p>
+<p>Extend <code>profile.InferType</code> so date columns are recognised and sort chronologically in later statistics.</p>
+<p>Exact values are rounded once, when written. This story provides the formatting functions the profile output story applies to each statistic.</p>
+<p><code>go build ./cmd/csvstat</code> at the application root produces the <code>csvstat</code> executable using only the standard library. This story delivers the entry point and a minimal <code>Run</code> that later stories extend.</p>
+<p>A command that fails reports the failure on standard error as one line and leaves standard output empty. Rejected input exits 3. The diagnostic names the file and, for a rejected record, its line number. Standard error is never compared by the grader, so its wording is free; its shape (one line, nothing on standard output) is the contract.</p>
+<p><code>internal/freq</code> counts the trimmed non-null values of a named column and returns them in listing order. The listing is CSV with header <code>value,count</code>.</p>
+<p>After the frequency listing is ordered, at most <code>--top</code> rows are written. <code>--top</code> is a positive integer and defaults to 5 when not given.</p>
+<p>When <code>--freq &lt;name&gt;</code> is given, <code>cli.Run</code> writes the frequency listing for that column and never the profile. <code>--top &lt;n&gt;</code> limits the rows and defaults to 5. The listing is CSV with header <code>value,count</code>, rows ordered by count descending and then value ascending by byte value, using trimmed non-null values only.</p>
+<p>Malformed input must never produce partial output. Rejection is detected in <code>internal/csvdata</code> and mapped to exit code 3 by <code>internal/cli</code>.</p>
+<p>Numeric columns report a <code>median</code>. It is computed exactly and rounded once at output time by the decimal formatting story.</p>
+<p>The profile reports <code>min</code> and <code>max</code> for every column. The rule depends on the column type. This story implements the extremes computation in <code>internal/profile</code>; two-decimal formatting of <code>number</code> results belongs to the decimal formatting story.</p>
+<p>Statistics, type inference and frequency counting all need one shared definition of &quot;null&quot;. This feature provides it as a function in <code>internal/csvdata</code> so no other package re-implements it.</p>
+<p>Column typing decides which statistics apply. This feature starts <code>profile.InferType</code> in <code>internal/profile</code> with the two numeric types. Later features extend the same function with <code>date</code>, <code>boolean</code>, <code>text</code>, and <code>empty</code>.</p>
+<p><code>csvstat &lt;file&gt;</code> profiles every column of the file. The output is CSV on standard output with the header <code>column,type,rows,nulls,distinct,min,max,sum,mean,median</code>, followed by one row per column in file order. Line endings are <code>\n</code>.</p>
+<p>For each column the profile reports <code>rows</code>, <code>nulls</code>, and <code>distinct</code>. This story implements the counting function in <code>internal/profile</code>. Rendering the counts into the profile CSV belongs to the profile output story.</p>
+<p>Numeric columns report <code>sum</code> and <code>mean</code>. Exactness matters because the output is rounded once, at write time, from the exact value. This story computes the exact values; formatting belongs to the decimal formatting story.</p>
+<p><code>bin/test.sh</code> is the project&#x27;s single test entry point. It is a POSIX <code>sh</code> script that changes to the application root, runs <code>go vet ./...</code>, then <code>go test ./...</code>, and exits non-zero if either fails. The project suite, written beside the code, covers each type, each statistic, null handling, rounding, each output form, and each exit code, using files the tests write to temporary directories.</p>
+<p>Every header name and every value is trimmed of leading and trailing spaces before null recognition, typing, counting, or comparison. Padded text such as <code>Globex</code> and <code>Acme Corp</code> therefore count as <code>Globex</code> and <code>Acme Corp</code>.</p>
+<p>Exit code 1 is the operational-failure code. It is used when the file named on the command line does not exist, is not permitted to be read, or fails while being read. It is distinct from exit 3, which means the file was read but its content was rejected.</p>
+<p>Malformed invocations exit 2, write nothing to standard output, and write one diagnostic line to standard error that shows the two command forms:</p>
+<pre><code>csvstat [--column &lt;name&gt;] &lt;file&gt;
+csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</code></pre>
+<h2>Stack</h2>
+<p>Go</p>
+<h2>Verification</h2>
+<pre><code>bash bin/test.sh</code></pre>
+<h2>Next Steps</h2>
+<ul><li>Complete the first-run checks above.</li><li>Run <code>bash bin/test.sh</code> before making release or deployment changes.</li></ul></article>
+</main>
+</body>
+</html>

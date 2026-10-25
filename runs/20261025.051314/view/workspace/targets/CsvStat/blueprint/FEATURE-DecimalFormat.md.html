@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-DecimalFormat.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-DecimalFormat.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-DecimalFormat.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Decimal Format</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Format exact rational results as two-decimal strings rounded half away from zero, and integers as plain integers.</td></tr><tr><td>Depends On</td><td>FEATURE-MinMax.md, FEATURE-SumMean.md, FEATURE-Median.md</td></tr><tr><td>Provides</td><td>profile.FormatDecimal, profile.FormatInteger</td></tr><tr><td>Consumes</td><td>profile.MinMax, profile.SumMean, profile.Median</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>Exact values are rounded once, when written. This story provides the formatting functions the profile output story applies to each statistic.</p>
+<h2>Interface</h2>
+<pre><code>// FormatDecimal writes r with exactly two decimal places.
+func FormatDecimal(r *big.Rat) string
+
+// FormatInteger writes an integer-valued r as a plain integer.
+func FormatInteger(r *big.Rat) string</code></pre>
+<h2>Behavior</h2>
+<ul><li><code>FormatDecimal</code> rounds the exact value to two places, half away from zero: an exact tie such as</li></ul>
+<p>one thousandth short of a half cent rounds by magnitude upward for both signs (<code>0.005</code> becomes <code>0.01</code>, <code>-0.005</code> becomes <code>-0.01</code>). Rounding is done on the exact rational with integer arithmetic, never through <code>float64</code> or <code>fmt</code> rounding of a float.</p>
+<ul><li>Exactly two decimal places are always written, so a whole value has <code>.00</code>.</li><li>A leading <code>-</code> is written only when the rounded result is non-zero. A value that rounds to zero</li></ul>
+<p>is written <code>0.00</code> with no minus sign.</p>
+<ul><li>No thousands separator is written.</li><li>Very large magnitudes keep every digit.</li><li><code>FormatInteger</code> writes the integer with no decimal point and no separator, with <code>-</code> for negatives</li></ul>
+<p>and no negative zero.</p>
+<ul><li>Which statistics use which function: <code>number</code> min, max, sum, mean, and median, and <code>integer</code></li></ul>
+<p>mean and median use <code>FormatDecimal</code>; <code>integer</code> min, max, and sum use <code>FormatInteger</code>. <code>date</code>, <code>boolean</code>, <code>text</code> extremes are written as given.</p>
+<h2>Required Tests</h2>
+<p>The project suite in <code>internal/profile</code> includes these tests by exact name:</p>
+<ul><li><code>TestFormatDecimalTwoPlaces</code> — whole, one-place, and many-place values all gain exactly two places.</li><li><code>TestFormatDecimalHalfAwayFromZero</code> — positive and negative exact ties round away from zero.</li><li><code>TestFormatDecimalNoNegativeZero</code> — a small negative value that rounds to zero is <code>0.00</code>.</li><li><code>TestFormatDecimalNoSeparator</code> — a value above one thousand has no thousands separator.</li><li><code>TestFormatDecimalLargeExact</code> — a magnitude beyond <code>float64</code> precision keeps all digits.</li><li><code>TestFormatInteger</code> — plain integers, negatives, and zero.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC decfmt-two-places ===<br>Intent: FormatDecimal always writes exactly two decimal places.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestFormatDecimalTwoPlaces&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC decfmt-two-places ===</p>
+<p>=== AC decfmt-half-away ===<br>Intent: Exact ties round half away from zero for both signs.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestFormatDecimalHalfAwayFromZero&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC decfmt-half-away ===</p>
+<p>=== AC decfmt-no-negative-zero ===<br>Intent: A negative value that rounds to zero is written without a minus sign.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestFormatDecimalNoNegativeZero&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC decfmt-no-negative-zero ===</p>
+<p>=== AC decfmt-no-separator ===<br>Intent: Large values are written without a thousands separator.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestFormatDecimalNoSeparator&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC decfmt-no-separator ===</p>
+<p>=== AC decfmt-large-exact ===<br>Intent: Values beyond float64 precision keep every digit.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestFormatDecimalLargeExact&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC decfmt-large-exact ===</p>
+<p>=== AC decfmt-integer ===<br>Intent: FormatInteger writes plain integers with no decimal point.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestFormatInteger&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC decfmt-integer ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Rounding happens once, on the exact rational, never through <code>float64</code>.</li><li>No negative zero in any output.</li><li>No thousands separator.</li><li>No formatted value is embedded in code or read from <code>sources/</code>.</li></ul></article>
+</main>
+</body>
+</html>

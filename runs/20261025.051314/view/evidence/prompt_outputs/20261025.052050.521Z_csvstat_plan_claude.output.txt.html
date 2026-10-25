@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/prompt_outputs/20261025.052050.521Z_csvstat_plan_claude.output.txt</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/prompt_outputs/20261025.052050.521Z_csvstat_plan_claude.output.txt</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/prompt_outputs/20261025.052050.521Z_csvstat_plan_claude.output.txt">Raw file</a></div></header>
+<article class="doc"><pre>=== BEGIN ARTIFACT FEATURE-ProfileOutput.md ===
+# FEATURE: Profile Output
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Write the per-column profile of a CSV file as RFC 4180 CSV when neither --column nor --freq is given. |
+| Depends On  | FEATURE-DecimalFormat.md, FEATURE-RowCounts.md, FEATURE-Arguments.md, FEATURE-CsvReading.md |
+| Provides    | csvstat &lt;file&gt; |
+| Consumes    | csvdata.Read, profile.InferType, profile.Counts, profile.FormatDecimal, cli.ParseArgs |
+
+## Questions
+
+- None.
+
+## Purpose
+
+`csvstat &lt;file&gt;` profiles every column of the file. The output is CSV on standard output with
+the header `column,type,rows,nulls,distinct,min,max,sum,mean,median`, followed by one row per
+column in file order. Line endings are `\n`.
+
+## Behavior
+
+- The command reads the file, trims, rejects malformed input, infers each column&#x27;s type, and
+  computes the counts and statistics defined by the stories it consumes.
+- The output is built in memory and written to standard output only after every column has been
+  computed, so a failing command writes nothing to standard output.
+- Output uses Go&#x27;s `encoding/csv` writer with `UseCRLF` off, so a field containing a comma, a
+  double quote, or a newline is quoted as RFC 4180 specifies.
+- A header-only file produces one row per header column with type `empty`, `rows` 0, and every
+  other field zero or blank.
+- Integer `min`, `max`, and `sum` are plain integers. Number `min`, `max`, and `sum`, and every
+  `mean` and `median`, carry exactly two decimals produced by `profile.FormatDecimal`.
+- Exit status is 0 on success; a rejected file exits 3 with empty standard output.
+
+## Programmatic Acceptance
+
+=== AC profile-output-columns ===
+Intent: The profile has the declared header and one row per column in file order, with types, counts, integer sum, and decimal sum and mean derived from the input.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from decimal import Decimal, ROUND_HALF_UP
+from drydock_go import cli_runner
+
+rows = [[&quot;id&quot;, &quot;label&quot;, &quot;price&quot;], [&quot;1&quot;, &quot;a&quot;, &quot;1.50&quot;], [&quot;2&quot;, &quot;b&quot;, &quot;2.25&quot;], [&quot;4&quot;, &quot;c&quot;, &quot;3.00&quot;]]
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;in.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+        csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows)
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 0, code
+parsed = list(csv.reader(io.StringIO(out)))
+header = [&quot;column&quot;, &quot;type&quot;, &quot;rows&quot;, &quot;nulls&quot;, &quot;distinct&quot;, &quot;min&quot;, &quot;max&quot;, &quot;sum&quot;, &quot;mean&quot;, &quot;median&quot;]
+assert parsed[0] == header
+body = parsed[1:]
+assert [r[0] for r in body] == rows[0]
+data = rows[1:]
+assert all(r[2] == str(len(data)) for r in body)
+assert all(r[3] == str(0) for r in body)
+assert [r[1] for r in body] == [&quot;integer&quot;, &quot;text&quot;, &quot;number&quot;]
+ids = [int(r[0]) for r in data]
+assert body[0][7] == str(sum(ids))
+assert body[0][5] == str(min(ids)) and body[0][6] == str(max(ids))
+q = Decimal(&quot;0.01&quot;)
+mean = (Decimal(sum(ids)) / len(ids)).quantize(q, rounding=ROUND_HALF_UP)
+assert body[0][8] == str(mean)
+prices = [Decimal(r[2]) for r in data]
+assert body[2][7] == str(sum(prices).quantize(q, rounding=ROUND_HALF_UP))
+assert body[1][7] == &quot;&quot; and body[1][8] == &quot;&quot; and body[1][9] == &quot;&quot;
+=== END AC profile-output-columns ===
+
+=== AC profile-output-quoting ===
+Intent: A field containing a comma and a double quote is written quoted so the parsed value equals the trimmed input value.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+value = &#x27;  x, &quot;y&quot;  &#x27;
+rows = [[&quot;note&quot;], [value]]
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;in.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+        csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows)
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 0, code
+parsed = list(csv.reader(io.StringIO(out)))
+assert len(parsed) == 2
+row = parsed[1]
+assert row[0] == &quot;note&quot; and row[1] == &quot;text&quot;
+assert row[5] == value.strip()
+assert row[6] == value.strip()
+assert row[4] == &quot;1&quot;
+=== END AC profile-output-quoting ===
+
+=== AC profile-output-line-endings ===
+Intent: Output uses newline line endings with one line per column plus the header and a trailing newline.
+Requires: executable=go; scope=test
+
+import csv
+import os
+import tempfile
+from drydock_go import cli_runner
+
+rows = [[&quot;a&quot;, &quot;b&quot;, &quot;c&quot;], [&quot;1&quot;, &quot;x&quot;, &quot;true&quot;], [&quot;2&quot;, &quot;y&quot;, &quot;false&quot;]]
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;in.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+        csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows)
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 0, code
+assert &quot;\r&quot; not in out
+assert out.endswith(&quot;\n&quot;)
+assert len(out.splitlines()) == 1 + len(rows[0])
+=== END AC profile-output-line-endings ===
+
+=== AC profile-output-header-only ===
+Intent: A header-only file yields one empty-typed row per column with zero rows.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+rows = [[&quot;sku&quot;, &quot;price&quot;, &quot;in_stock&quot;]]
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;in.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+        csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows)
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 0, code
+body = list(csv.reader(io.StringIO(out)))[1:]
+assert [r[0] for r in body] == rows[0]
+assert all(r[1] == &quot;empty&quot; for r in body)
+assert all(r[2] == str(0) for r in body)
+assert all(r[3] == str(0) and r[4] == str(0) for r in body)
+assert all(r[5:] == [&quot;&quot;] * 5 for r in body)
+=== END AC profile-output-header-only ===
+
+=== AC profile-output-rounding ===
+Intent: Number results round half away from zero once, and a total or mean that rounds to zero carries no minus sign.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from decimal import Decimal, ROUND_HALF_UP
+from drydock_go import cli_runner
+
+rows = [[&quot;pos&quot;, &quot;neg&quot;, &quot;tiny&quot;], [&quot;0.125&quot;, &quot;-0.125&quot;, &quot;0.001&quot;], [&quot;0.125&quot;, &quot;-0.125&quot;, &quot;-0.002&quot;]]
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;in.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+        csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows)
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 0, code
+body = list(csv.reader(io.StringIO(out)))[1:]
+q = Decimal(&quot;0.01&quot;)
+pos_mean = Decimal(&quot;0.125&quot;).quantize(q, rounding=ROUND_HALF_UP)
+neg_mean = Decimal(&quot;-0.125&quot;).quantize(q, rounding=ROUND_HALF_UP)
+assert body[0][8] == str(pos_mean)
+assert body[1][8] == str(neg_mean)
+zero = f&quot;{0:.2f}&quot;
+assert body[2][7] == zero
+assert body[2][8] == zero
+=== END AC profile-output-rounding ===
+
+=== AC profile-output-rejected-input ===
+Intent: A ragged file exits 3 and writes nothing to standard output.
+Requires: executable=go; scope=test
+
+import csv
+import os
+import tempfile
+from drydock_go import cli_runner
+
+rows = [[&quot;a&quot;, &quot;b&quot;], [&quot;1&quot;, &quot;2&quot;], [&quot;3&quot;, &quot;4&quot;, &quot;5&quot;]]
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;ragged.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+        csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows)
+    code, out, err = cli_runner(path)
+print(err)
+assert code == 3, code
+assert out == &quot;&quot;
+=== END AC profile-output-rejected-input ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Standard output is written only on success; a failing command leaves it empty.
+- Application code never reads `sources/run.sh` or embeds a statistic, a type, or a value list.
+- Nothing under `sources/` is modified.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-FreqCount.md ===
+# FEATURE: Frequency Count
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Count and order the distinct non-null values of one column for frequency output. |
+| Depends On  | FEATURE-NullValues.md, FEATURE-InputRejection.md |
+| Provides    | freq.Count |
+| Consumes    | csvdata.Read, csvdata.IsNull |
+
+## Questions
+
+- None.
+
+## Purpose
+
+`internal/freq` counts the trimmed non-null values of a named column and returns them in listing
+order. The listing is CSV with header `value,count`.
+
+## Behavior
+
+- Values are trimmed before counting, so padded spellings count together. Comparison is by exact
+  string after trimming.
+- Null values (empty, `NA`, `N/A`, `NULL` ignoring case) are not listed and not counted.
+- Order is count descending, then value ascending by byte value.
+- A column with no non-null values produces only the header row.
+- A header-only file produces only the header row.
+- Output is written with `encoding/csv`, so a value containing a comma or quote is quoted.
+- Rejected input (ragged, empty, bad header) exits 3 with empty standard output.
+
+## Programmatic Acceptance
+
+=== AC freq-count-ordering ===
+Intent: Values are listed by count descending then by byte value ascending, with counts matching the input.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from collections import Counter
+from drydock_go import cli_runner
+
+values = [&quot;b&quot;, &quot;a&quot;, &quot;b&quot;, &quot;c&quot;, &quot;a&quot;, &quot;b&quot;, &quot;z&quot;, &quot;c&quot;, &quot;B&quot;, &quot;B&quot;]
+rows = [[&quot;v&quot;]] + [[x] for x in values]
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;in.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+        csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows)
+    code, out, err = cli_runner(&quot;--freq&quot;, &quot;v&quot;, path)
+print(out)
+print(err)
+assert code == 0, code
+parsed = list(csv.reader(io.StringIO(out)))
+assert parsed[0] == [&quot;value&quot;, &quot;count&quot;]
+counts = Counter(values)
+ordered = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0].encode(&quot;utf-8&quot;)))
+assert parsed[1:] == [[k, str(n)] for k, n in ordered]
+=== END AC freq-count-ordering ===
+
+=== AC freq-count-nulls-and-trim ===
+Intent: Null spellings are omitted and padded values count with their trimmed form.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from collections import Counter
+from drydock_go import cli_runner
+
+values = [&quot;&quot;, &quot;NA&quot;, &quot;n/a&quot;, &quot;NULL&quot;, &quot;null&quot;, &quot;x&quot;, &quot; x &quot;, &quot;y&quot;]
+rows = [[&quot;v&quot;]] + [[x] for x in values]
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;in.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+        csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows)
+    code, out, err = cli_runner(&quot;--freq&quot;, &quot;v&quot;, path)
+print(out)
+print(err)
+assert code == 0, code
+parsed = list(csv.reader(io.StringIO(out)))
+nulls = {&quot;&quot;, &quot;na&quot;, &quot;n/a&quot;, &quot;null&quot;}
+counts = Counter(v.strip() for v in values if v.strip().lower() not in nulls)
+ordered = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0].encode(&quot;utf-8&quot;)))
+assert parsed[1:] == [[k, str(n)] for k, n in ordered]
+=== END AC freq-count-nulls-and-trim ===
+
+=== AC freq-count-all-null ===
+Intent: A column with no non-null value lists only the header.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+rows = [[&quot;id&quot;, &quot;gap&quot;], [&quot;1&quot;, &quot;&quot;], [&quot;2&quot;, &quot;NA&quot;], [&quot;3&quot;, &quot; &quot;]]
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;in.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+        csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows)
+    code, out, err = cli_runner(&quot;--freq&quot;, &quot;gap&quot;, path)
+print(out)
+print(err)
+assert code == 0, code
+parsed = list(csv.reader(io.StringIO(out)))
+assert parsed == [[&quot;value&quot;, &quot;count&quot;]]
+=== END AC freq-count-all-null ===
+
+=== AC freq-count-header-only ===
+Intent: A header-only file lists only the header for any of its columns.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+rows = [[&quot;sku&quot;, &quot;price&quot;]]
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;in.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+        csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows)
+    code, out, err = cli_runner(&quot;--freq&quot;, &quot;sku&quot;, path)
+print(out)
+print(err)
+assert code == 0, code
+assert list(csv.reader(io.StringIO(out))) == [[&quot;value&quot;, &quot;count&quot;]]
+=== END AC freq-count-header-only ===
+
+=== AC freq-count-quoted-value ===
+Intent: A value containing a comma is written quoted and parses back to the original value.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+value = &quot;relocating, TX&quot;
+rows = [[&quot;notes&quot;], [value], [value], [&quot;other&quot;]]
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;in.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+        csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows)
+    code, out, err = cli_runner(&quot;--freq&quot;, &quot;notes&quot;, path)
+print(out)
+print(err)
+assert code == 0, code
+parsed = list(csv.reader(io.StringIO(out)))
+assert parsed[1] == [value, str(2)]
+assert parsed[2] == [&quot;other&quot;, str(1)]
+=== END AC freq-count-quoted-value ===
+
+=== AC freq-count-rejected-input ===
+Intent: A ragged file in frequency mode exits 3 and writes nothing to standard output.
+Requires: executable=go; scope=test
+
+import csv
+import os
+import tempfile
+from drydock_go import cli_runner
+
+rows = [[&quot;a&quot;, &quot;b&quot;], [&quot;1&quot;, &quot;2&quot;], [&quot;3&quot;]]
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;ragged.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+        csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows)
+    code, out, err = cli_runner(&quot;--freq&quot;, &quot;a&quot;, path)
+print(err)
+assert code == 3, code
+assert out == &quot;&quot;
+=== END AC freq-count-rejected-input ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Null values are never listed.
+- Ordering is by byte value, not locale collation.
+- No frequency value is embedded in application code.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-FreqLimit.md ===
+# FEATURE: Frequency Limit
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Limit the number of frequency rows with --top, defaulting to five. |
+| Depends On  | FEATURE-FreqCount.md |
+| Provides    | freq.Top |
+| Consumes    | freq.Count |
+
+## Questions
+
+- None.
+
+## Purpose
+
+After the frequency listing is ordered, at most `--top` rows are written. `--top` is a positive
+integer and defaults to 5 when not given.
+
+## Behavior
+
+- The limit applies after ordering, so the rows listed are the first N of the full ordered list.
+- A limit larger than the number of distinct values lists every value.
+- The header `value,count` is always written on success.
+- Validation of `--top` (non-positive, non-integer, without `--freq`) belongs to the usage-errors
+  story and exits 2.
+
+## Programmatic Acceptance
+
+=== AC freq-limit-default-five ===
+Intent: Without --top the listing has at most five rows, the first five of the ordered list.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from collections import Counter
+from drydock_go import cli_runner
+
+values = []
+for i in range(7):
+    values += [f&quot;v{i}&quot;] * (8 - i)
+rows = [[&quot;v&quot;]] + [[x] for x in values]
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;in.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+        csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows)
+    code, out, err = cli_runner(&quot;--freq&quot;, &quot;v&quot;, path)
+print(out)
+print(err)
+assert code == 0, code
+parsed = list(csv.reader(io.StringIO(out)))
+counts = Counter(values)
+ordered = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0].encode(&quot;utf-8&quot;)))
+default_top = 5
+assert parsed[0] == [&quot;value&quot;, &quot;count&quot;]
+assert parsed[1:] == [[k, str(n)] for k, n in ordered[:default_top]]
+assert len(ordered) &gt; default_top
+=== END AC freq-limit-default-five ===
+
+=== AC freq-limit-explicit-top ===
+Intent: --top N lists exactly the first N ordered rows.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from collections import Counter
+from drydock_go import cli_runner
+
+values = []
+for i in range(7):
+    values += [f&quot;v{i}&quot;] * (8 - i)
+rows = [[&quot;v&quot;]] + [[x] for x in values]
+counts = Counter(values)
+ordered = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0].encode(&quot;utf-8&quot;)))
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;in.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+        csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows)
+    for n in (1, 2, 3):
+        code, out, err = cli_runner(&quot;--freq&quot;, &quot;v&quot;, &quot;--top&quot;, str(n), path)
+        print(out)
+        print(err)
+        assert code == 0, code
+        parsed = list(csv.reader(io.StringIO(out)))
+        assert parsed[0] == [&quot;value&quot;, &quot;count&quot;]
+        assert parsed[1:] == [[k, str(c)] for k, c in ordered[:n]]
+=== END AC freq-limit-explicit-top ===
+
+=== AC freq-limit-larger-than-distinct ===
+Intent: A --top larger than the distinct count lists every value.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from collections import Counter
+from drydock_go import cli_runner
+
+values = [&quot;a&quot;, &quot;b&quot;, &quot;b&quot;, &quot;c&quot;, &quot;c&quot;, &quot;c&quot;]
+rows = [[&quot;v&quot;]] + [[x] for x in values]
+counts = Counter(values)
+ordered = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0].encode(&quot;utf-8&quot;)))
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;in.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+        csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows)
+    code, out, err = cli_runner(&quot;--freq&quot;, &quot;v&quot;, &quot;--top&quot;, str(len(ordered) + 50), path)
+print(out)
+print(err)
+assert code == 0, code
+parsed = list(csv.reader(io.StringIO(out)))
+assert parsed[1:] == [[k, str(n)] for k, n in ordered]
+=== END AC freq-limit-larger-than-distinct ===
+
+=== AC freq-limit-all-null-column ===
+Intent: A column with no non-null values lists only the header even with --top given.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+rows = [[&quot;gap&quot;], [&quot;&quot;], [&quot;NA&quot;]]
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;in.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+        csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows)
+    code, out, err = cli_runner(&quot;--freq&quot;, &quot;gap&quot;, &quot;--top&quot;, &quot;3&quot;, path)
+print(out)
+print(err)
+assert code == 0, code
+assert list(csv.reader(io.StringIO(out))) == [[&quot;value&quot;, &quot;count&quot;]]
+=== END AC freq-limit-all-null-column ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- The limit is applied after ordering, never before.
+- The default limit is 5.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-UsageErrors.md ===
+# FEATURE: Usage Errors
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Reject malformed command-line arguments with exit status 2 and a single usage line on standard error. |
+| Depends On  | FEATURE-Arguments.md |
+| Provides    | exit code 2 |
+| Consumes    | cli.ParseArgs |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Malformed invocations exit 2, write nothing to standard output, and write one diagnostic line to
+standard error that shows the two command forms:
+
+```text
+csvstat [--column &lt;name&gt;] &lt;file&gt;
+csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;
+```
+
+## Behavior
+
+Exit 2 for each of:
+
+- no file argument
+- more than one file argument
+- an unknown option
+- an option given without its value
+- `--top` that is not a positive integer (zero, negative, or non-numeric)
+- `--top` without `--freq`
+- `--column` together with `--freq`
+- a repeated option
+
+Usage errors are decided from the arguments alone, before the file is opened, and exit 2 even when
+the file exists and is valid.
+
+## Programmatic Acceptance
+
+=== AC usage-errors-exit-two ===
+Intent: Every malformed argument form exits 2 and writes nothing to standard output.
+Requires: executable=go; scope=test
+
+import csv
+import os
+import tempfile
+from drydock_go import cli_runner
+
+rows = [[&quot;qty&quot;, &quot;sensor&quot;], [&quot;1&quot;, &quot;east&quot;], [&quot;2&quot;, &quot;west&quot;]]
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;in.csv&quot;)
+    other = os.path.join(d, &quot;other.csv&quot;)
+    for p in (path, other):
+        with open(p, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+            csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows)
+    cases = [
+        [],
+        [path, other],
+        [&quot;--frobnicate&quot;, path],
+        [&quot;--column&quot;],
+        [&quot;--freq&quot;],
+        [&quot;--freq&quot;, &quot;sensor&quot;, &quot;--top&quot;],
+        [&quot;--freq&quot;, &quot;sensor&quot;, &quot;--top&quot;, &quot;0&quot;, path],
+        [&quot;--freq&quot;, &quot;sensor&quot;, &quot;--top&quot;, &quot;-1&quot;, path],
+        [&quot;--freq&quot;, &quot;sensor&quot;, &quot;--top&quot;, &quot;abc&quot;, path],
+        [&quot;--top&quot;, &quot;3&quot;, path],
+        [&quot;--column&quot;, &quot;qty&quot;, &quot;--freq&quot;, &quot;qty&quot;, path],
+    ]
+    for args in cases:
+        code, out, err = cli_runner(*args)
+        print(args, code)
+        print(err)
+        assert code == 2, (args, code)
+        assert out == &quot;&quot;, (args, out)
+=== END AC usage-errors-exit-two ===
+
+=== AC usage-errors-single-stderr-line ===
+Intent: A usage error writes exactly one non-blank diagnostic line to standard error.
+Requires: executable=go; scope=test
+
+from drydock_go import cli_runner
+
+code, out, err = cli_runner()
+print(err)
+assert code == 2, code
+assert out == &quot;&quot;
+lines = [ln for ln in err.splitlines() if ln.strip()]
+assert len(lines) == 1, lines
+=== END AC usage-errors-single-stderr-line ===
+
+=== AC usage-errors-before-file-open ===
+Intent: A usage error is reported as 2 even when the named file does not exist.
+Requires: executable=go; scope=test
+
+import os
+import tempfile
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as d:
+    missing = os.path.join(d, &quot;no-such-file.csv&quot;)
+    code, out, err = cli_runner(&quot;--top&quot;, &quot;3&quot;, missing)
+print(err)
+assert code == 2, code
+assert out == &quot;&quot;
+=== END AC usage-errors-before-file-open ===
+
+=== AC usage-errors-valid-forms-accepted ===
+Intent: Well-formed invocations are not rejected as usage errors.
+Requires: executable=go; scope=test
+
+import csv
+import os
+import tempfile
+from drydock_go import cli_runner
+
+rows = [[&quot;qty&quot;, &quot;sensor&quot;], [&quot;1&quot;, &quot;east&quot;], [&quot;2&quot;, &quot;west&quot;]]
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;in.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+        csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows)
+    for args in ([path], [&quot;--column&quot;, &quot;qty&quot;, path], [&quot;--freq&quot;, &quot;sensor&quot;, path],
+                 [&quot;--freq&quot;, &quot;sensor&quot;, &quot;--top&quot;, &quot;2&quot;, path]):
+        code, out, err = cli_runner(*args)
+        print(args, code)
+        print(err)
+        assert code == 0, (args, code)
+=== END AC usage-errors-valid-forms-accepted ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- A usage error never writes to standard output.
+- Usage errors never depend on the contents of the file.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-ColumnProfile.md ===
+# FEATURE: Column Profile
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Profile a single named column when --column is given. |
+| Depends On  | FEATURE-ProfileOutput.md, FEATURE-UsageErrors.md |
+| Provides    | csvstat --column |
+| Consumes    | csvstat &lt;file&gt;, exit code 2 |
+
+## Questions
+
+- None.
+
+## Purpose
+
+`csvstat --column &lt;name&gt; &lt;file&gt;` writes the profile header and only the row for the named column.
+
+## Behavior
+
+- The output has the same header and the same row content for that column as the full profile.
+- The name is matched exactly and case-sensitively against the trimmed header.
+- A name not present in the header exits 3 with empty standard output.
+- Rejected input (ragged, empty, bad header) exits 3 with empty standard output.
+- `--column` combined with `--freq` is a usage error (exit 2), owned by the usage-errors story.
+
+## Programmatic Acceptance
+
+=== AC column-profile-single-row ===
+Intent: --column writes the profile header and exactly one row, equal to that column&#x27;s row in the full profile.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+rows = [[&quot;id&quot;, &quot;price&quot;, &quot;label&quot;], [&quot;1&quot;, &quot;1.50&quot;, &quot;a&quot;], [&quot;2&quot;, &quot;2.25&quot;, &quot;b&quot;], [&quot;4&quot;, &quot;3.00&quot;, &quot;c&quot;]]
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;in.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+        csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows)
+    code_all, out_all, err_all = cli_runner(path)
+    assert code_all == 0, code_all
+    full = list(csv.reader(io.StringIO(out_all)))
+    for name in rows[0]:
+        code, out, err = cli_runner(&quot;--column&quot;, name, path)
+        print(out)
+        print(err)
+        assert code == 0, code
+        parsed = list(csv.reader(io.StringIO(out)))
+        assert parsed[0] == full[0]
+        assert len(parsed) == 2
+        assert parsed[1][0] == name
+        assert parsed[1] == [r for r in full[1:] if r[0] == name][0]
+=== END AC column-profile-single-row ===
+
+=== AC column-profile-trimmed-header ===
+Intent: A padded header name is trimmed, so the trimmed name selects the column and is reported.
+Requires: executable=go; scope=test
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+padded = &quot;  qty &quot;
+rows = [[padded, &quot;other&quot;], [&quot;1&quot;, &quot;x&quot;], [&quot;2&quot;, &quot;y&quot;]]
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;in.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+        csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows)
+    code, out, err = cli_runner(&quot;--column&quot;, padded.strip(), path)
+print(out)
+print(err)
+assert code == 0, code
+parsed = list(csv.reader(io.StringIO(out)))
+assert len(parsed) == 2
+assert parsed[1][0] == padded.strip()
+assert parsed[1][1] == &quot;integer&quot;
+=== END AC column-profile-trimmed-header ===
+
+=== AC column-profile-unknown-column ===
+Intent: A column name absent from the header exits 3 with empty standard output.
+Requires: executable=go; scope=test
+
+import csv
+import os
+import tempfile
+from drydock_go import cli_runner
+
+rows = [[&quot;qty&quot;, &quot;price&quot;], [&quot;1&quot;, &quot;1.50&quot;]]
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;in.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+        csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows)
+    code, out, err = cli_runner(&quot;--column&quot;, &quot;nosuch&quot;, path)
+print(err)
+assert code == 3, code
+assert out == &quot;&quot;
+=== END AC column-profile-unknown-column ===
+
+=== AC column-profile-case-sensitive ===
+Intent: Column names match case-sensitively, so a different case is an unknown column.
+Requires: executable=go; scope=test
+
+import csv
+import os
+import tempfile
+from drydock_go import cli_runner
+
+name = &quot;qty&quot;
+rows = [[name, &quot;price&quot;], [&quot;1&quot;, &quot;1.50&quot;]]
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;in.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+        csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows)
+    code, out, err = cli_runner(&quot;--column&quot;, name.upper(), path)
+print(err)
+assert code == 3, code
+assert out == &quot;&quot;
+=== END AC column-profile-case-sensitive ===
+
+=== AC column-profile-rejected-input ===
+Intent: A ragged file with --column exits 3 and writes nothing to standard output.
+Requires: executable=go; scope=test
+
+import csv
+import os
+import tempfile
+from drydock_go import cli_runner
+
+rows = [[&quot;a&quot;, &quot;b&quot;], [&quot;1&quot;, &quot;2&quot;], [&quot;3&quot;, &quot;4&quot;, &quot;5&quot;]]
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;ragged.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f:
+        csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows)
+    code, out, err = cli_runner(&quot;--column&quot;, &quot;a&quot;, path)
+print(err)
+assert code == 3, code
+assert out == &quot;&quot;
+=== END AC column-profile-rejected-input ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Standard output stays empty whenever the command fails.
+- Column names are never matched case-insensitively.
+=== END ARTIFACT ===</pre></article>
+</main>
+</body>
+</html>

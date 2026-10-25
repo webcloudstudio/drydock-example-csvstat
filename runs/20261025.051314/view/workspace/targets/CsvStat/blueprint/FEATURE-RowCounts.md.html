@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-RowCounts.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-RowCounts.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-RowCounts.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Row Counts</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Count data records, null values, and distinct non-null values for one column.</td></tr><tr><td>Depends On</td><td>FEATURE-NullValues.md, FEATURE-InputRejection.md</td></tr><tr><td>Provides</td><td>profile.Counts</td></tr><tr><td>Consumes</td><td>csvdata.IsNull</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>For each column the profile reports <code>rows</code>, <code>nulls</code>, and <code>distinct</code>. This story implements the counting function in <code>internal/profile</code>. Rendering the counts into the profile CSV belongs to the profile output story.</p>
+<h2>Interface</h2>
+<pre><code>// Counts holds the three counts reported for one column.
+type CountResult struct {
+    Rows     int
+    Nulls    int
+    Distinct int
+}
+
+// Counts takes every trimmed value of one column, in file order, and returns its counts.
+func Counts(values []string) CountResult</code></pre>
+<h2>Behavior</h2>
+<ul><li><code>Rows</code> is the number of data records, that is <code>len(values)</code>. A header-only file gives zero values</li></ul>
+<p>and therefore <code>Rows</code> 0.</p>
+<ul><li><code>Nulls</code> is the number of values for which <code>csvdata.IsNull</code> is true (empty, <code>NA</code>, <code>N/A</code>, <code>NULL</code></li></ul>
+<p>ignoring case).</p>
+<ul><li><code>Distinct</code> is the number of different non-null values, compared as exact strings after trimming.</li></ul>
+<p><code>Globex</code> and <code>globex</code> are different values. Null values are never counted as distinct.</p>
+<ul><li>A column whose values are all null has <code>Distinct</code> 0.</li></ul>
+<h2>Required Tests</h2>
+<p>The project suite in <code>internal/profile</code> includes these tests by exact name, each written against real output:</p>
+<ul><li><code>TestCountsRowsNullsDistinct</code> — mixed null and non-null values give the expected three counts.</li><li><code>TestCountsHeaderOnly</code> — no values give all three counts zero.</li><li><code>TestCountsDistinctExactStrings</code> — values differing only in case are distinct; repeated values</li></ul>
+<p>count once.</p>
+<ul><li><code>TestCountsAllNull</code> — a column of only null spellings has <code>Distinct</code> 0 and <code>Nulls</code> equal to <code>Rows</code>.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC rowcounts-rows-nulls-distinct ===<br>Intent: Counts reports rows, nulls, and distinct for a mixed column.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestCountsRowsNullsDistinct&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC rowcounts-rows-nulls-distinct ===</p>
+<p>=== AC rowcounts-header-only ===<br>Intent: A column with no data records reports zero for every count.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestCountsHeaderOnly&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC rowcounts-header-only ===</p>
+<p>=== AC rowcounts-distinct-exact ===<br>Intent: Distinct compares exact strings and counts repeats once.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestCountsDistinctExactStrings&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC rowcounts-distinct-exact ===</p>
+<p>=== AC rowcounts-all-null ===<br>Intent: An all-null column has zero distinct values and every row null.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestCountsAllNull&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC rowcounts-all-null ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Counts are computed from the values given; no count is embedded or read from <code>sources/</code>.</li><li>Distinct never merges values by case folding or further trimming.</li><li>Application code never reads <code>sources/run.sh</code>.</li></ul></article>
+</main>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-ColumnProfile.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-ColumnProfile.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-ColumnProfile.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Column Profile</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Profile a single named column when --column is given.</td></tr><tr><td>Depends On</td><td>FEATURE-ProfileOutput.md, FEATURE-UsageErrors.md</td></tr><tr><td>Provides</td><td>csvstat --column</td></tr><tr><td>Consumes</td><td>csvstat &lt;file&gt;, exit code 2</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p><code>csvstat --column &lt;name&gt; &lt;file&gt;</code> writes the profile header and only the row for the named column.</p>
+<h2>Behavior</h2>
+<ul><li>The output has the same header and the same row content for that column as the full profile.</li><li>The name is matched exactly and case-sensitively against the trimmed header.</li><li>A name not present in the header exits 3 with empty standard output.</li><li>Rejected input (ragged, empty, bad header) exits 3 with empty standard output.</li><li><code>--column</code> combined with <code>--freq</code> is a usage error (exit 2), owned by the usage-errors story.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC column-profile-single-row ===<br>Intent: --column writes the profile header and exactly one row, equal to that column&#x27;s row in the full profile.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile from drydock_go import cli_runner</p>
+<p>rows = [[&quot;id&quot;, &quot;price&quot;, &quot;label&quot;], [&quot;1&quot;, &quot;1.50&quot;, &quot;a&quot;], [&quot;2&quot;, &quot;2.25&quot;, &quot;b&quot;], [&quot;4&quot;, &quot;3.00&quot;, &quot;c&quot;]] with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f: csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows) code_all, out_all, err_all = cli_runner(path) assert code_all == 0, code_all full = list(csv.reader(io.StringIO(out_all))) for name in rows[0]: code, out, err = cli_runner(&quot;--column&quot;, name, path) print(out) print(err) assert code == 0, code parsed = list(csv.reader(io.StringIO(out))) assert parsed[0] == full[0] assert len(parsed) == 2 assert parsed[1][0] == name assert parsed[1] == [r for r in full[1:] if r[0] == name][0] === END AC column-profile-single-row ===</p>
+<p>=== AC column-profile-trimmed-header ===<br>Intent: A padded header name is trimmed, so the trimmed name selects the column and is reported.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile from drydock_go import cli_runner</p>
+<p>padded = &quot;  qty &quot; rows = [[padded, &quot;other&quot;], [&quot;1&quot;, &quot;x&quot;], [&quot;2&quot;, &quot;y&quot;]] with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f: csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows) code, out, err = cli_runner(&quot;--column&quot;, padded.strip(), path) print(out) print(err) assert code == 0, code parsed = list(csv.reader(io.StringIO(out))) assert len(parsed) == 2 assert parsed[1][0] == padded.strip() assert parsed[1][1] == &quot;integer&quot; === END AC column-profile-trimmed-header ===</p>
+<p>=== AC column-profile-unknown-column ===<br>Intent: A column name absent from the header exits 3 with empty standard output.<br>Requires: executable=go; scope=test</p>
+<p>import csv import os import tempfile from drydock_go import cli_runner</p>
+<p>rows = [[&quot;qty&quot;, &quot;price&quot;], [&quot;1&quot;, &quot;1.50&quot;]] with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f: csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows) code, out, err = cli_runner(&quot;--column&quot;, &quot;nosuch&quot;, path) print(err) assert code == 3, code assert out == &quot;&quot; === END AC column-profile-unknown-column ===</p>
+<p>=== AC column-profile-case-sensitive ===<br>Intent: Column names match case-sensitively, so a different case is an unknown column.<br>Requires: executable=go; scope=test</p>
+<p>import csv import os import tempfile from drydock_go import cli_runner</p>
+<p>name = &quot;qty&quot; rows = [[name, &quot;price&quot;], [&quot;1&quot;, &quot;1.50&quot;]] with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f: csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows) code, out, err = cli_runner(&quot;--column&quot;, name.upper(), path) print(err) assert code == 3, code assert out == &quot;&quot; === END AC column-profile-case-sensitive ===</p>
+<p>=== AC column-profile-rejected-input ===<br>Intent: A ragged file with --column exits 3 and writes nothing to standard output.<br>Requires: executable=go; scope=test</p>
+<p>import csv import os import tempfile from drydock_go import cli_runner</p>
+<p>rows = [[&quot;a&quot;, &quot;b&quot;], [&quot;1&quot;, &quot;2&quot;], [&quot;3&quot;, &quot;4&quot;, &quot;5&quot;]] with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;ragged.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f: csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows) code, out, err = cli_runner(&quot;--column&quot;, &quot;a&quot;, path) print(err) assert code == 3, code assert out == &quot;&quot; === END AC column-profile-rejected-input ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Standard output stays empty whenever the command fails.</li><li>Column names are never matched case-insensitively.</li></ul></article>
+</main>
+</body>
+</html>

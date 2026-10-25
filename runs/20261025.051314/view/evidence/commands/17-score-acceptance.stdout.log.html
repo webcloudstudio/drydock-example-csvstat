@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/commands/17-score-acceptance.stdout.log</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/commands/17-score-acceptance.stdout.log</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/commands/17-score-acceptance.stdout.log">Raw file</a></div></header>
+<article class="doc"><pre>Drydock 0.8.0  Copyright (c) 2026 Web Cloud Studio. All rights reserved.
+  ✓ PASS        [1/126]  arch-go-mod                              foundation            ARCHITECTURE.md
+  ✓ PASS        [2/126]  arch-layout                              foundation            ARCHITECTURE.md
+  ✓ PASS        [3/126]  exe-builds                               executable            FEATURE-Executable.md
+  ✓ PASS        [4/126]  exe-stdlib-only                          executable            FEATURE-Executable.md
+  ✓ PASS        [5/126]  exe-main-owns-exit                       executable            FEATURE-Executable.md
+  ✓ PASS        [6/126]  exe-no-grader-read                       executable            FEATURE-Executable.md
+  ✓ PASS        [7/126]  read-header-and-records                  csv-reading           FEATURE-CsvReading.md
+  ✓ PASS        [8/126]  read-quoted-comma                        csv-reading           FEATURE-CsvReading.md
+  ✓ PASS        [9/126]  read-trailing-newline                    csv-reading           FEATURE-CsvReading.md
+  ✓ PASS        [10/126]  read-line-numbers                        csv-reading           FEATURE-CsvReading.md
+  ✓ PASS        [11/126]  read-header-only-and-empty               csv-reading           FEATURE-CsvReading.md
+  ✓ PASS        [12/126]  trim-header-names                        value-trimming        FEATURE-Trimming.md
+  ✓ PASS        [13/126]  trim-values                              value-trimming        FEATURE-Trimming.md
+  ✓ PASS        [14/126]  trim-quoted-padding                      value-trimming        FEATURE-Trimming.md
+  ✓ PASS        [15/126]  trim-scope                               value-trimming        FEATURE-Trimming.md
+  ✓ PASS        [16/126]  null-empty                               null-values           FEATURE-NullValues.md
+  ✓ PASS        [17/126]  null-spellings                           null-values           FEATURE-NullValues.md
+  ✓ PASS        [18/126]  null-non-null-values                     null-values           FEATURE-NullValues.md
+  ✓ PASS        [19/126]  null-quoted-empty                        null-values           FEATURE-NullValues.md
+  ✓ PASS        [20/126]  null-spaces-only                         null-values           FEATURE-NullValues.md
+  ✓ PASS        [21/126]  numeric-integer                          numeric-types         FEATURE-NumericTypes.md
+  ✓ PASS        [22/126]  numeric-number                           numeric-types         FEATURE-NumericTypes.md
+  ✓ PASS        [23/126]  numeric-integer-preferred                numeric-types         FEATURE-NumericTypes.md
+  ✓ PASS        [24/126]  numeric-nulls-ignored                    numeric-types         FEATURE-NumericTypes.md
+  ✓ PASS        [25/126]  numeric-malformed                        numeric-types         FEATURE-NumericTypes.md
+  ✓ PASS        [26/126]  date-column                              date-type             FEATURE-DateType.md
+  ✓ PASS        [27/126]  date-invalid-calendar                    date-type             FEATURE-DateType.md
+  ✓ PASS        [28/126]  date-leap-day                            date-type             FEATURE-DateType.md
+  ✓ PASS        [29/126]  date-shape-strict                        date-type             FEATURE-DateType.md
+  ✓ PASS        [30/126]  date-nulls-ignored                       date-type             FEATURE-DateType.md
+  ✓ PASS        [31/126]  type-boolean-mixed-case                  boolean-text-types    FEATURE-BooleanTextTypes.md
+  ✓ PASS        [32/126]  type-text-fallback                       boolean-text-types    FEATURE-BooleanTextTypes.md
+  ✓ PASS        [33/126]  type-empty-all-null                      boolean-text-types    FEATURE-BooleanTextTypes.md
+  ✓ PASS        [34/126]  type-empty-no-rows                       boolean-text-types    FEATURE-BooleanTextTypes.md
+  ✓ PASS        [35/126]  type-boolean-lookalikes                  boolean-text-types    FEATURE-BooleanTextTypes.md
+  ✓ PASS        [36/126]  type-order-precedence                    boolean-text-types    FEATURE-BooleanTextTypes.md
+  ✓ PASS        [37/126]  args-file-only                           args-parsing          FEATURE-Arguments.md
+  ✓ PASS        [38/126]  args-column                              args-parsing          FEATURE-Arguments.md
+  ✓ PASS        [39/126]  args-freq-top                            args-parsing          FEATURE-Arguments.md
+  ✓ PASS        [40/126]  args-structural-errors                   args-parsing          FEATURE-Arguments.md
+  ✓ PASS        [41/126]  args-valid-forms-not-usage-errors        args-parsing          FEATURE-Arguments.md
+  ✓ PASS        [42/126]  args-options-after-file-exit             args-parsing          FEATURE-Arguments.md
+  ✓ PASS        [43/126]  reject-unit-empty-and-blank              input-rejection       FEATURE-InputRejection.md
+  ✓ PASS        [44/126]  reject-unit-headers                      input-rejection       FEATURE-InputRejection.md
+  ✓ PASS        [45/126]  reject-unit-ragged-and-valid             input-rejection       FEATURE-InputRejection.md
+  ✓ PASS        [46/126]  reject-cli-ragged                        input-rejection       FEATURE-InputRejection.md
+  ✓ PASS        [47/126]  reject-cli-empty-file                    input-rejection       FEATURE-InputRejection.md
+  ✓ PASS        [48/126]  reject-cli-blank-lines-only              input-rejection       FEATURE-InputRejection.md
+  ✓ PASS        [49/126]  reject-cli-repeated-header               input-rejection       FEATURE-InputRejection.md
+  ✓ PASS        [50/126]  reject-cli-empty-header-name             input-rejection       FEATURE-InputRejection.md
+  ✓ PASS        [51/126]  rowcounts-rows-nulls-distinct            row-counts            FEATURE-RowCounts.md
+  ✓ PASS        [52/126]  rowcounts-header-only                    row-counts            FEATURE-RowCounts.md
+  ✓ PASS        [53/126]  rowcounts-distinct-exact                 row-counts            FEATURE-RowCounts.md
+  ✓ PASS        [54/126]  rowcounts-all-null                       row-counts            FEATURE-RowCounts.md
+  ✓ PASS        [55/126]  summean-integer-sum                      sum-mean              FEATURE-SumMean.md
+  ✓ PASS        [56/126]  summean-number-no-drift                  sum-mean              FEATURE-SumMean.md
+  ✓ PASS        [57/126]  summean-mean-exact                       sum-mean              FEATURE-SumMean.md
+  ✓ PASS        [58/126]  summean-ignores-nulls                    sum-mean              FEATURE-SumMean.md
+  ✓ PASS        [59/126]  summean-non-numeric                      sum-mean              FEATURE-SumMean.md
+  ✓ PASS        [60/126]  median-odd                               median                FEATURE-Median.md
+  ✓ PASS        [61/126]  median-even                              median                FEATURE-Median.md
+  ✓ PASS        [62/126]  median-numeric-order                     median                FEATURE-Median.md
+  ✓ PASS        [63/126]  median-ignores-nulls                     median                FEATURE-Median.md
+  ✓ PASS        [64/126]  median-non-numeric                       median                FEATURE-Median.md
+  ✓ PASS        [65/126]  minmax-integer                           min-max               FEATURE-MinMax.md
+  ✓ PASS        [66/126]  minmax-number                            min-max               FEATURE-MinMax.md
+  ✓ PASS        [67/126]  minmax-date                              min-max               FEATURE-MinMax.md
+  ✓ PASS        [68/126]  minmax-boolean                           min-max               FEATURE-MinMax.md
+  ✓ PASS        [69/126]  minmax-text                              min-max               FEATURE-MinMax.md
+  ✓ PASS        [70/126]  minmax-empty                             min-max               FEATURE-MinMax.md
+  ✓ PASS        [71/126]  minmax-single-value                      min-max               FEATURE-MinMax.md
+  ✓ PASS        [72/126]  decfmt-two-places                        decimal-format        FEATURE-DecimalFormat.md
+  ✓ PASS        [73/126]  decfmt-half-away                         decimal-format        FEATURE-DecimalFormat.md
+  ✓ PASS        [74/126]  decfmt-no-negative-zero                  decimal-format        FEATURE-DecimalFormat.md
+  ✓ PASS        [75/126]  decfmt-no-separator                      decimal-format        FEATURE-DecimalFormat.md
+  ✓ PASS        [76/126]  decfmt-large-exact                       decimal-format        FEATURE-DecimalFormat.md
+  ✓ PASS        [77/126]  decfmt-integer                           decimal-format        FEATURE-DecimalFormat.md
+  ✓ PASS        [78/126]  freq-count-ordering                      freq-count            FEATURE-FreqCount.md
+  ✓ PASS        [79/126]  freq-count-nulls-and-trim                freq-count            FEATURE-FreqCount.md
+  ✓ PASS        [80/126]  freq-count-all-null                      freq-count            FEATURE-FreqCount.md
+  ✓ PASS        [81/126]  freq-count-header-only                   freq-count            FEATURE-FreqCount.md
+  ✓ PASS        [82/126]  freq-count-quoted-value                  freq-count            FEATURE-FreqCount.md
+  ✓ PASS        [83/126]  freq-count-rejected-input                freq-count            FEATURE-FreqCount.md
+  ✓ PASS        [84/126]  freq-limit-default-five                  freq-limit            FEATURE-FreqLimit.md
+  ✓ PASS        [85/126]  freq-limit-explicit-top                  freq-limit            FEATURE-FreqLimit.md
+  ✓ PASS        [86/126]  freq-limit-larger-than-distinct          freq-limit            FEATURE-FreqLimit.md
+  ✓ PASS        [87/126]  freq-limit-all-null-column               freq-limit            FEATURE-FreqLimit.md
+  ✓ PASS        [88/126]  profile-output-columns                   profile-output        FEATURE-ProfileOutput.md
+  ✓ PASS        [89/126]  profile-output-quoting                   profile-output        FEATURE-ProfileOutput.md
+  ✓ PASS        [90/126]  profile-output-line-endings              profile-output        FEATURE-ProfileOutput.md
+  ✓ PASS        [91/126]  profile-output-header-only               profile-output        FEATURE-ProfileOutput.md
+  ✓ PASS        [92/126]  profile-output-rounding                  profile-output        FEATURE-ProfileOutput.md
+  ✓ PASS        [93/126]  profile-output-rejected-input            profile-output        FEATURE-ProfileOutput.md
+  ✓ PASS        [94/126]  usage-errors-exit-two                    usage-errors          FEATURE-UsageErrors.md
+  ✓ PASS        [95/126]  usage-errors-single-stderr-line          usage-errors          FEATURE-UsageErrors.md
+  ✓ PASS        [96/126]  usage-errors-before-file-open            usage-errors          FEATURE-UsageErrors.md
+  ✓ PASS        [97/126]  usage-errors-valid-forms-accepted        usage-errors          FEATURE-UsageErrors.md
+  ✓ PASS        [98/126]  column-profile-single-row                column-profile        FEATURE-ColumnProfile.md
+  ✓ PASS        [99/126]  column-profile-trimmed-header            column-profile        FEATURE-ColumnProfile.md
+  ✓ PASS        [100/126]  column-profile-unknown-column            column-profile        FEATURE-ColumnProfile.md
+  ✓ PASS        [101/126]  column-profile-case-sensitive            column-profile        FEATURE-ColumnProfile.md
+  ✓ PASS        [102/126]  column-profile-rejected-input            column-profile        FEATURE-ColumnProfile.md
+  ✓ PASS        [103/126]  diag-ragged-fixture                      failure-diagnostics   FEATURE-FailureDiagnostics.md
+  ✓ PASS        [104/126]  diag-ragged-line-number                  failure-diagnostics   FEATURE-FailureDiagnostics.md
+  ✓ PASS        [105/126]  diag-empty-file                          failure-diagnostics   FEATURE-FailureDiagnostics.md
+  ✓ PASS        [106/126]  diag-blank-lines-only                    failure-diagnostics   FEATURE-FailureDiagnostics.md
+  ✓ PASS        [107/126]  diag-empty-header-name                   failure-diagnostics   FEATURE-FailureDiagnostics.md
+  ✓ PASS        [108/126]  diag-repeated-header-name                failure-diagnostics   FEATURE-FailureDiagnostics.md
+  ✓ PASS        [109/126]  diag-failure-with-column-option          failure-diagnostics   FEATURE-FailureDiagnostics.md
+  ✓ PASS        [110/126]  unreadable-missing-file                  unreadable-file       FEATURE-UnreadableFile.md
+  ✓ PASS        [111/126]  unreadable-missing-file-freq             unreadable-file       FEATURE-UnreadableFile.md
+  ✓ PASS        [112/126]  unreadable-missing-file-column           unreadable-file       FEATURE-UnreadableFile.md
+  ✓ PASS        [113/126]  unreadable-directory-as-file             unreadable-file       FEATURE-UnreadableFile.md
+  ✓ PASS        [114/126]  unreadable-readable-file-still-succeeds  unreadable-file       FEATURE-UnreadableFile.md
+  ✓ PASS        [115/126]  freq-default-matches-fixture             freq-mode             FEATURE-FreqMode.md
+  ✓ PASS        [116/126]  freq-top-limits-rows                     freq-mode             FEATURE-FreqMode.md
+  ✓ PASS        [117/126]  freq-omits-null-spellings                freq-mode             FEATURE-FreqMode.md
+  ✓ PASS        [118/126]  freq-values-are-trimmed                  freq-mode             FEATURE-FreqMode.md
+  ✓ PASS        [119/126]  freq-all-null-column-header-only         freq-mode             FEATURE-FreqMode.md
+  ✓ PASS        [120/126]  freq-unknown-column-rejected             freq-mode             FEATURE-FreqMode.md
+  ✓ PASS        [121/126]  freq-name-is-case-sensitive              freq-mode             FEATURE-FreqMode.md
+  ✓ PASS        [122/126]  testgate-script-exits-zero               test-gate             FEATURE-TestGate.md
+  ✓ PASS        [123/126]  testgate-runs-from-other-directory       test-gate             FEATURE-TestGate.md
+  ✓ PASS        [124/126]  testgate-go-test-and-vet-pass            test-gate             FEATURE-TestGate.md
+  ✓ PASS        [125/126]  testgate-suite-has-tests                 test-gate             FEATURE-TestGate.md
+  ✓ PASS        [126/126]  release-grader-passes                    release-verification  VERIFICATION.md
+
+Acceptance verification: CsvStat  (2026-10-25T06:04:21+00:00)
+  PASS 94   FAIL 0   UNVERIFIED 0   PREPASSED 32   (126 AC)
+
+  ✓ PASS        arch-go-mod                              foundation            ARCHITECTURE.md
+  ✓ PASS        arch-layout                              foundation            ARCHITECTURE.md
+  ~ PREPASSED   exe-builds                               executable            FEATURE-Executable.md
+  ~ PREPASSED   exe-stdlib-only                          executable            FEATURE-Executable.md
+  ~ PREPASSED   exe-main-owns-exit                       executable            FEATURE-Executable.md
+  ~ PREPASSED   exe-no-grader-read                       executable            FEATURE-Executable.md
+  ✓ PASS        read-header-and-records                  csv-reading           FEATURE-CsvReading.md
+  ✓ PASS        read-quoted-comma                        csv-reading           FEATURE-CsvReading.md
+  ✓ PASS        read-trailing-newline                    csv-reading           FEATURE-CsvReading.md
+  ✓ PASS        read-line-numbers                        csv-reading           FEATURE-CsvReading.md
+  ✓ PASS        read-header-only-and-empty               csv-reading           FEATURE-CsvReading.md
+  ✓ PASS        trim-header-names                        value-trimming        FEATURE-Trimming.md
+  ✓ PASS        trim-values                              value-trimming        FEATURE-Trimming.md
+  ✓ PASS        trim-quoted-padding                      value-trimming        FEATURE-Trimming.md
+  ✓ PASS        trim-scope                               value-trimming        FEATURE-Trimming.md
+  ✓ PASS        null-empty                               null-values           FEATURE-NullValues.md
+  ✓ PASS        null-spellings                           null-values           FEATURE-NullValues.md
+  ✓ PASS        null-non-null-values                     null-values           FEATURE-NullValues.md
+  ✓ PASS        null-quoted-empty                        null-values           FEATURE-NullValues.md
+  ✓ PASS        null-spaces-only                         null-values           FEATURE-NullValues.md
+  ✓ PASS        numeric-integer                          numeric-types         FEATURE-NumericTypes.md
+  ✓ PASS        numeric-number                           numeric-types         FEATURE-NumericTypes.md
+  ✓ PASS        numeric-integer-preferred                numeric-types         FEATURE-NumericTypes.md
+  ✓ PASS        numeric-nulls-ignored                    numeric-types         FEATURE-NumericTypes.md
+  ✓ PASS        numeric-malformed                        numeric-types         FEATURE-NumericTypes.md
+  ✓ PASS        date-column                              date-type             FEATURE-DateType.md
+  ✓ PASS        date-invalid-calendar                    date-type             FEATURE-DateType.md
+  ✓ PASS        date-leap-day                            date-type             FEATURE-DateType.md
+  ✓ PASS        date-shape-strict                        date-type             FEATURE-DateType.md
+  ✓ PASS        date-nulls-ignored                       date-type             FEATURE-DateType.md
+  ✓ PASS        type-boolean-mixed-case                  boolean-text-types    FEATURE-BooleanTextTypes.md
+  ✓ PASS        type-text-fallback                       boolean-text-types    FEATURE-BooleanTextTypes.md
+  ✓ PASS        type-empty-all-null                      boolean-text-types    FEATURE-BooleanTextTypes.md
+  ✓ PASS        type-empty-no-rows                       boolean-text-types    FEATURE-BooleanTextTypes.md
+  ✓ PASS        type-boolean-lookalikes                  boolean-text-types    FEATURE-BooleanTextTypes.md
+  ✓ PASS        type-order-precedence                    boolean-text-types    FEATURE-BooleanTextTypes.md
+  ✓ PASS        args-file-only                           args-parsing          FEATURE-Arguments.md
+  ✓ PASS        args-column                              args-parsing          FEATURE-Arguments.md
+  ✓ PASS        args-freq-top                            args-parsing          FEATURE-Arguments.md
+  ✓ PASS        args-structural-errors                   args-parsing          FEATURE-Arguments.md
+  ~ PREPASSED   args-valid-forms-not-usage-errors        args-parsing          FEATURE-Arguments.md
+  ✓ PASS        args-options-after-file-exit             args-parsing          FEATURE-Arguments.md
+  ✓ PASS        reject-unit-empty-and-blank              input-rejection       FEATURE-InputRejection.md
+  ✓ PASS        reject-unit-headers                      input-rejection       FEATURE-InputRejection.md
+  ✓ PASS        reject-unit-ragged-and-valid             input-rejection       FEATURE-InputRejection.md
+  ✓ PASS        reject-cli-ragged                        input-rejection       FEATURE-InputRejection.md
+  ✓ PASS        reject-cli-empty-file                    input-rejection       FEATURE-InputRejection.md
+  ✓ PASS        reject-cli-blank-lines-only              input-rejection       FEATURE-InputRejection.md
+  ✓ PASS        reject-cli-repeated-header               input-rejection       FEATURE-InputRejection.md
+  ✓ PASS        reject-cli-empty-header-name             input-rejection       FEATURE-InputRejection.md
+  ✓ PASS        rowcounts-rows-nulls-distinct            row-counts            FEATURE-RowCounts.md
+  ✓ PASS        rowcounts-header-only                    row-counts            FEATURE-RowCounts.md
+  ✓ PASS        rowcounts-distinct-exact                 row-counts            FEATURE-RowCounts.md
+  ✓ PASS        rowcounts-all-null                       row-counts            FEATURE-RowCounts.md
+  ✓ PASS        summean-integer-sum                      sum-mean              FEATURE-SumMean.md
+  ✓ PASS        summean-number-no-drift                  sum-mean              FEATURE-SumMean.md
+  ✓ PASS        summean-mean-exact                       sum-mean              FEATURE-SumMean.md
+  ✓ PASS        summean-ignores-nulls                    sum-mean              FEATURE-SumMean.md
+  ✓ PASS        summean-non-numeric                      sum-mean              FEATURE-SumMean.md
+  ✓ PASS        median-odd                               median                FEATURE-Median.md
+  ✓ PASS        median-even                              median                FEATURE-Median.md
+  ✓ PASS        median-numeric-order                     median                FEATURE-Median.md
+  ✓ PASS        median-ignores-nulls                     median                FEATURE-Median.md
+  ✓ PASS        median-non-numeric                       median                FEATURE-Median.md
+  ✓ PASS        minmax-integer                           min-max               FEATURE-MinMax.md
+  ✓ PASS        minmax-number                            min-max               FEATURE-MinMax.md
+  ✓ PASS        minmax-date                              min-max               FEATURE-MinMax.md
+  ✓ PASS        minmax-boolean                           min-max               FEATURE-MinMax.md
+  ✓ PASS        minmax-text                              min-max               FEATURE-MinMax.md
+  ✓ PASS        minmax-empty                             min-max               FEATURE-MinMax.md
+  ✓ PASS        minmax-single-value                      min-max               FEATURE-MinMax.md
+  ✓ PASS        decfmt-two-places                        decimal-format        FEATURE-DecimalFormat.md
+  ✓ PASS        decfmt-half-away                         decimal-format        FEATURE-DecimalFormat.md
+  ✓ PASS        decfmt-no-negative-zero                  decimal-format        FEATURE-DecimalFormat.md
+  ✓ PASS        decfmt-no-separator                      decimal-format        FEATURE-DecimalFormat.md
+  ✓ PASS        decfmt-large-exact                       decimal-format        FEATURE-DecimalFormat.md
+  ✓ PASS        decfmt-integer                           decimal-format        FEATURE-DecimalFormat.md
+  ✓ PASS        freq-count-ordering                      freq-count            FEATURE-FreqCount.md
+  ✓ PASS        freq-count-nulls-and-trim                freq-count            FEATURE-FreqCount.md
+  ✓ PASS        freq-count-all-null                      freq-count            FEATURE-FreqCount.md
+  ✓ PASS        freq-count-header-only                   freq-count            FEATURE-FreqCount.md
+  ✓ PASS        freq-count-quoted-value                  freq-count            FEATURE-FreqCount.md
+  ~ PREPASSED   freq-count-rejected-input                freq-count            FEATURE-FreqCount.md
+  ✓ PASS        freq-limit-default-five                  freq-limit            FEATURE-FreqLimit.md
+  ✓ PASS        freq-limit-explicit-top                  freq-limit            FEATURE-FreqLimit.md
+  ✓ PASS        freq-limit-larger-than-distinct          freq-limit            FEATURE-FreqLimit.md
+  ✓ PASS        freq-limit-all-null-column               freq-limit            FEATURE-FreqLimit.md
+  ✓ PASS        profile-output-columns                   profile-output        FEATURE-ProfileOutput.md
+  ✓ PASS        profile-output-quoting                   profile-output        FEATURE-ProfileOutput.md
+  ✓ PASS        profile-output-line-endings              profile-output        FEATURE-ProfileOutput.md
+  ✓ PASS        profile-output-header-only               profile-output        FEATURE-ProfileOutput.md
+  ✓ PASS        profile-output-rounding                  profile-output        FEATURE-ProfileOutput.md
+  ~ PREPASSED   profile-output-rejected-input            profile-output        FEATURE-ProfileOutput.md
+  ✓ PASS        usage-errors-exit-two                    usage-errors          FEATURE-UsageErrors.md
+  ~ PREPASSED   usage-errors-single-stderr-line          usage-errors          FEATURE-UsageErrors.md
+  ✓ PASS        usage-errors-before-file-open            usage-errors          FEATURE-UsageErrors.md
+  ~ PREPASSED   usage-errors-valid-forms-accepted        usage-errors          FEATURE-UsageErrors.md
+  ✓ PASS        column-profile-single-row                column-profile        FEATURE-ColumnProfile.md
+  ✓ PASS        column-profile-trimmed-header            column-profile        FEATURE-ColumnProfile.md
+  ✓ PASS        column-profile-unknown-column            column-profile        FEATURE-ColumnProfile.md
+  ✓ PASS        column-profile-case-sensitive            column-profile        FEATURE-ColumnProfile.md
+  ~ PREPASSED   column-profile-rejected-input            column-profile        FEATURE-ColumnProfile.md
+  ~ PREPASSED   diag-ragged-fixture                      failure-diagnostics   FEATURE-FailureDiagnostics.md
+  ~ PREPASSED   diag-ragged-line-number                  failure-diagnostics   FEATURE-FailureDiagnostics.md
+  ~ PREPASSED   diag-empty-file                          failure-diagnostics   FEATURE-FailureDiagnostics.md
+  ~ PREPASSED   diag-blank-lines-only                    failure-diagnostics   FEATURE-FailureDiagnostics.md
+  ~ PREPASSED   diag-empty-header-name                   failure-diagnostics   FEATURE-FailureDiagnostics.md
+  ~ PREPASSED   diag-repeated-header-name                failure-diagnostics   FEATURE-FailureDiagnostics.md
+  ~ PREPASSED   diag-failure-with-column-option          failure-diagnostics   FEATURE-FailureDiagnostics.md
+  ~ PREPASSED   unreadable-missing-file                  unreadable-file       FEATURE-UnreadableFile.md
+  ~ PREPASSED   unreadable-missing-file-freq             unreadable-file       FEATURE-UnreadableFile.md
+  ~ PREPASSED   unreadable-missing-file-column           unreadable-file       FEATURE-UnreadableFile.md
+  ~ PREPASSED   unreadable-directory-as-file             unreadable-file       FEATURE-UnreadableFile.md
+  ~ PREPASSED   unreadable-readable-file-still-succeeds  unreadable-file       FEATURE-UnreadableFile.md
+  ~ PREPASSED   freq-default-matches-fixture             freq-mode             FEATURE-FreqMode.md
+  ~ PREPASSED   freq-top-limits-rows                     freq-mode             FEATURE-FreqMode.md
+  ~ PREPASSED   freq-omits-null-spellings                freq-mode             FEATURE-FreqMode.md
+  ~ PREPASSED   freq-values-are-trimmed                  freq-mode             FEATURE-FreqMode.md
+  ~ PREPASSED   freq-all-null-column-header-only         freq-mode             FEATURE-FreqMode.md
+  ✓ PASS        freq-unknown-column-rejected             freq-mode             FEATURE-FreqMode.md
+  ✓ PASS        freq-name-is-case-sensitive              freq-mode             FEATURE-FreqMode.md
+  ~ PREPASSED   testgate-script-exits-zero               test-gate             FEATURE-TestGate.md
+  ~ PREPASSED   testgate-runs-from-other-directory       test-gate             FEATURE-TestGate.md
+  ~ PREPASSED   testgate-go-test-and-vet-pass            test-gate             FEATURE-TestGate.md
+  ~ PREPASSED   testgate-suite-has-tests                 test-gate             FEATURE-TestGate.md
+  ~ PREPASSED   release-grader-passes                    release-verification  VERIFICATION.md
+
+  ~ PREPASSED   exe-builds
+        intent: The csvstat executable builds with go build and runs to a defined exit code on a valid file.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   exe-stdlib-only
+        intent: Every import in the module is standard library or module-local, with no third-party path.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   exe-main-owns-exit
+        intent: Only the main package calls os.Exit and main delegates to cli.Run.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   exe-no-grader-read
+        intent: Application code never references the supplied grader script.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   args-valid-forms-not-usage-errors
+        intent: The valid command forms are accepted by the executable and never exit with the usage-error code.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   freq-count-rejected-input
+        intent: A ragged file in frequency mode exits 3 and writes nothing to standard output.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   profile-output-rejected-input
+        intent: A ragged file exits 3 and writes nothing to standard output.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   usage-errors-single-stderr-line
+        intent: A usage error writes exactly one non-blank diagnostic line to standard error.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   usage-errors-valid-forms-accepted
+        intent: Well-formed invocations are not rejected as usage errors.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   column-profile-rejected-input
+        intent: A ragged file with --column exits 3 and writes nothing to standard output.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   diag-ragged-fixture
+        intent: The supplied ragged fixture exits 3, writes nothing to standard output, and writes one diagnostic line.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   diag-ragged-line-number
+        intent: The diagnostic for a ragged record carries the number of the line holding that record.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   diag-empty-file
+        intent: An empty file is rejected with exit 3 and nothing on standard output.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   diag-blank-lines-only
+        intent: A file containing only blank lines is rejected as empty with exit 3.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   diag-empty-header-name
+        intent: An empty header name is rejected with exit 3 and nothing on standard output.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   diag-repeated-header-name
+        intent: A repeated header name, including one repeated only after trimming, is rejected with exit 3.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   diag-failure-with-column-option
+        intent: A rejected file under --column still exits 3 with nothing on standard output.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   unreadable-missing-file
+        intent: A path that does not exist exits 1 and writes nothing to standard output.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   unreadable-missing-file-freq
+        intent: A missing file under --freq also exits 1 with nothing on standard output.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   unreadable-missing-file-column
+        intent: A missing file under --column also exits 1 with nothing on standard output.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   unreadable-directory-as-file
+        intent: A directory named as the file cannot be read and exits 1 with nothing on standard output.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   unreadable-readable-file-still-succeeds
+        intent: A readable fixture is not treated as unreadable and exits 0.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   freq-default-matches-fixture
+        intent: The default frequency listing for a named column equals the top five counts computed independently from the fixture.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   freq-top-limits-rows
+        intent: With --top 2 exactly the first two ordered rows are listed.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   freq-omits-null-spellings
+        intent: Null values (empty, NA, N/A, NULL in any case) are not listed in a frequency listing.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   freq-values-are-trimmed
+        intent: Padded values are trimmed before counting, so padded and unpadded spellings count together.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   freq-all-null-column-header-only
+        intent: A column with no non-null values lists only the header.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   testgate-script-exits-zero
+        intent: Running bin/test.sh from the application root exits zero.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   testgate-runs-from-other-directory
+        intent: bin/test.sh locates the application root itself and exits zero when started from another directory.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   testgate-go-test-and-vet-pass
+        intent: go vet and go test pass directly at the application root, the two commands the script wraps.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   testgate-suite-has-tests
+        intent: The project ships Go test files in more than one internal package, so the gate is not vacuous.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  ~ PREPASSED   release-grader-passes
+        intent: The supplied grader sources/run.sh, run unfiltered, exits zero.
+        green at this block&#x27;s baseline too, before its code existed — confirm the criterion exercises the story&#x27;s work
+
+  Run `drydock score ac CsvStat --full` for untruncated output per failure.
+
+
+  Proof coverage: 94 of 126 criteria are proof — green here, and observed red before the work that turned them green.
+    32 are not. Each names a story whose acceptance did not test it.
+
+    PREPASSED  exe-builds  executable  FEATURE-Executable.md
+               green before its block built
+    PREPASSED  exe-stdlib-only  executable  FEATURE-Executable.md
+               green before its block built
+    PREPASSED  exe-main-owns-exit  executable  FEATURE-Executable.md
+               green before its block built
+    PREPASSED  exe-no-grader-read  executable  FEATURE-Executable.md
+               green before its block built
+    PREPASSED  args-valid-forms-not-usage-errors  args-parsing  FEATURE-Arguments.md
+               green before its block built
+    PREPASSED  freq-count-rejected-input  freq-count  FEATURE-FreqCount.md
+               green before its block built
+    PREPASSED  profile-output-rejected-input  profile-output  FEATURE-ProfileOutput.md
+               green before its block built
+    PREPASSED  usage-errors-single-stderr-line  usage-errors  FEATURE-UsageErrors.md
+               green before its block built
+    PREPASSED  usage-errors-valid-forms-accepted  usage-errors  FEATURE-UsageErrors.md
+               green before its block built
+    PREPASSED  column-profile-rejected-input  column-profile  FEATURE-ColumnProfile.md
+               green before its block built
+    PREPASSED  diag-ragged-fixture  failure-diagnostics  FEATURE-FailureDiagnostics.md
+               green before its block built
+    PREPASSED  diag-ragged-line-number  failure-diagnostics  FEATURE-FailureDiagnostics.md
+               green before its block built
+    PREPASSED  diag-empty-file  failure-diagnostics  FEATURE-FailureDiagnostics.md
+               green before its block built
+    PREPASSED  diag-blank-lines-only  failure-diagnostics  FEATURE-FailureDiagnostics.md
+               green before its block built
+    PREPASSED  diag-empty-header-name  failure-diagnostics  FEATURE-FailureDiagnostics.md
+               green before its block built
+    PREPASSED  diag-repeated-header-name  failure-diagnostics  FEATURE-FailureDiagnostics.md
+               green before its block built
+    PREPASSED  diag-failure-with-column-option  failure-diagnostics  FEATURE-FailureDiagnostics.md
+               green before its block built
+    PREPASSED  unreadable-missing-file  unreadable-file  FEATURE-UnreadableFile.md
+               green before its block built
+    PREPASSED  unreadable-missing-file-freq  unreadable-file  FEATURE-UnreadableFile.md
+               green before its block built
+    PREPASSED  unreadable-missing-file-column  unreadable-file  FEATURE-UnreadableFile.md
+               green before its block built
+    PREPASSED  unreadable-directory-as-file  unreadable-file  FEATURE-UnreadableFile.md
+               green before its block built
+    PREPASSED  unreadable-readable-file-still-succeeds  unreadable-file  FEATURE-UnreadableFile.md
+               green before its block built
+    PREPASSED  freq-default-matches-fixture  freq-mode  FEATURE-FreqMode.md
+               green before its block built
+    PREPASSED  freq-top-limits-rows  freq-mode  FEATURE-FreqMode.md
+               green before its block built
+    PREPASSED  freq-omits-null-spellings  freq-mode  FEATURE-FreqMode.md
+               green before its block built
+    PREPASSED  freq-values-are-trimmed  freq-mode  FEATURE-FreqMode.md
+               green before its block built
+    PREPASSED  freq-all-null-column-header-only  freq-mode  FEATURE-FreqMode.md
+               green before its block built
+    PREPASSED  testgate-script-exits-zero  test-gate  FEATURE-TestGate.md
+               green before its block built
+    PREPASSED  testgate-runs-from-other-directory  test-gate  FEATURE-TestGate.md
+               green before its block built
+    PREPASSED  testgate-go-test-and-vet-pass  test-gate  FEATURE-TestGate.md
+               green before its block built
+    PREPASSED  testgate-suite-has-tests  test-gate  FEATURE-TestGate.md
+               green before its block built
+    PREPASSED  release-grader-passes  release-verification  VERIFICATION.md
+               green before its block built
+
+Soundings: /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/workspace/targets/CsvStat/SOUNDINGS.md
+Target - committed project workspace git store
+</pre></article>
+</main>
+</body>
+</html>

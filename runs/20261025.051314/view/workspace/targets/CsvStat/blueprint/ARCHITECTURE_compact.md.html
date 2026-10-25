@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/ARCHITECTURE_compact.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/ARCHITECTURE_compact.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/ARCHITECTURE_compact.md">Raw file</a></div></header>
+<article class="doc"><p>&lt;!-- Compacted from ARCHITECTURE.md sha256=e12f94e5c90e8e9b4581c3d4e02add14222bb76448d04c486ee6d71e88a43bf6 on 2026-10-25 by drydock build agent --&gt;</p>
+<p>Module: <code>csvstat</code>, <code>go 1.22</code>, no <code>require</code>.<br>Layout: <code>cmd/csvstat</code> (package main), <code>internal/cli</code>, <code>internal/csvdata</code>, <code>internal/profile</code>, <code>internal/freq</code>, <code>bin/test.sh</code> (vet then test).<br>Entry: <code>cli.Run(args []string, stdout, stderr io.Writer) int</code>; <code>args</code> excludes program name; only <code>cmd/csvstat/main.go</code> calls <code>os.Exit</code>.<br>Exit codes: 0 success; 1 operational (open/read failure); 2 usage; 3 rejected input. Stdout written only on success; diagnostics to stderr only.<br>Rules: <code>sources/</code> read-only; no reading <code>sources/run.sh</code> or data files in app code; no embedded answers; stdlib only.</p></article>
+</main>
+</body>
+</html>

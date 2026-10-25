@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-MinMax.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-MinMax.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-MinMax.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Min and Max</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Compute the minimum and maximum of a column according to its inferred type.</td></tr><tr><td>Depends On</td><td>FEATURE-BooleanTextTypes.md</td></tr><tr><td>Provides</td><td>profile.MinMax</td></tr><tr><td>Consumes</td><td>profile.InferType</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>The profile reports <code>min</code> and <code>max</code> for every column. The rule depends on the column type. This story implements the extremes computation in <code>internal/profile</code>; two-decimal formatting of <code>number</code> results belongs to the decimal formatting story.</p>
+<h2>Interface</h2>
+<pre><code>// Extremes holds the minimum and maximum of one column.
+type Extremes struct {
+    Min, Max       string   // text form, see below
+    MinRat, MaxRat *big.Rat // exact values for integer and number columns, else nil
+}
+
+// MinMax takes the column type and the trimmed non-null values of the column.
+func MinMax(typ string, values []string) Extremes</code></pre>
+<p><code>typ</code> is one of <code>integer</code>, <code>number</code>, <code>date</code>, <code>boolean</code>, <code>text</code>, <code>empty</code>.</p>
+<h2>Behavior</h2>
+<ul><li><code>integer</code>: compare exactly with <code>math/big</code>, never as <code>float64</code>. <code>Min</code> and <code>Max</code> are the smallest</li></ul>
+<p>and largest values written as plain integers. <code>MinRat</code> and <code>MaxRat</code> are set.</p>
+<ul><li><code>number</code>: compare exactly as <code>big.Rat</code> (so <code>2.5</code> is less than <code>10.25</code>, and <code>-0.5</code> less than</li></ul>
+<p><code>-0.25</code>). <code>MinRat</code> and <code>MaxRat</code> are set; <code>Min</code> and <code>Max</code> hold the source text of the extreme values, and the decimal formatting story renders them with two places.</p>
+<ul><li><code>date</code>: <code>Min</code> is the earliest and <code>Max</code> the latest. <code>YYYY-MM-DD</code> text orders chronologically.</li><li><code>boolean</code>: <code>Min</code> is <code>false</code> if any value is false (ignoring case), else <code>true</code>. <code>Max</code> is <code>true</code></li></ul>
+<p>if any value is true (ignoring case), else <code>false</code>. Output is lowercase whatever the input case.</p>
+<ul><li><code>text</code>: smallest and largest by byte value, not locale collation. Upper case sorts before lower</li></ul>
+<p>case; a space sorts before letters.</p>
+<ul><li><code>empty</code>: <code>Min</code> and <code>Max</code> are blank and the <code>Rat</code> fields are nil.</li><li>A column with exactly one non-null value reports that value as both minimum and maximum.</li></ul>
+<h2>Required Tests</h2>
+<p>The project suite in <code>internal/profile</code> includes these tests by exact name:</p>
+<ul><li><code>TestMinMaxInteger</code> — signed integers, including a negative, are ordered numerically, not</li></ul>
+<p>lexically (<code>9</code> is less than <code>10</code>).</p>
+<ul><li><code>TestMinMaxNumber</code> — decimals are ordered exactly, including negatives and differing digit counts.</li><li><code>TestMinMaxDate</code> — earliest and latest dates.</li><li><code>TestMinMaxBoolean</code> — mixed case input yields lowercase output; all-true gives <code>true</code> for both;</li></ul>
+<p>all-false gives <code>false</code> for both; mixed gives <code>false</code> and <code>true</code>.</p>
+<ul><li><code>TestMinMaxText</code> — byte-value ordering, including mixed case.</li><li><code>TestMinMaxEmpty</code> — an empty column yields blank extremes.</li><li><code>TestMinMaxSingleValue</code> — one value is both minimum and maximum.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC minmax-integer ===<br>Intent: Integer extremes are ordered numerically with exact arithmetic.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestMinMaxInteger&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC minmax-integer ===</p>
+<p>=== AC minmax-number ===<br>Intent: Number extremes are ordered exactly as decimals.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestMinMaxNumber&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC minmax-number ===</p>
+<p>=== AC minmax-date ===<br>Intent: Date extremes are the earliest and latest dates.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestMinMaxDate&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC minmax-date ===</p>
+<p>=== AC minmax-boolean ===<br>Intent: Boolean extremes follow the false/true rule and are lowercase regardless of input case.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestMinMaxBoolean&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC minmax-boolean ===</p>
+<p>=== AC minmax-text ===<br>Intent: Text extremes are ordered by byte value.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestMinMaxText&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC minmax-text ===</p>
+<p>=== AC minmax-empty ===<br>Intent: An empty column has blank minimum and maximum.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestMinMaxEmpty&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC minmax-empty ===</p>
+<p>=== AC minmax-single-value ===<br>Intent: A single non-null value is both the minimum and the maximum.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestMinMaxSingleValue&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC minmax-single-value ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Numeric comparison never uses <code>float64</code>.</li><li>Text comparison is by byte value only.</li><li>No extreme is embedded in code or read from <code>sources/</code>; every value comes from the input given.</li></ul>
+<p>EOF_NOT_USED</p></article>
+</main>
+</body>
+</html>

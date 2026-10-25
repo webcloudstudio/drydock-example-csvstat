@@ -1,0 +1,40 @@
+Drydock 0.8.0  Copyright (c) 2026 Web Cloud Studio. All rights reserved.
+Next: (no actionable steps — all done or blocked)
+
+Blueprint: CsvStat
+Target: /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/workspace/targets/CsvStat
+Rows: <state> <type>  <Name>  [<id>]   — pass [<id>] to --step
+Block: Build Block 1 · Foundational  [block-1]   — [built] story Stand up the Go module, directory layout, and architecture for csvstat.  [foundation] — complete
+
+Block: Build Block 2 · Service  [block-2]   — 9/9 stories complete
+  [built]   story  Build the csvstat executable from the module root with a thin main over cli.Run.  [executable]
+  [built]   story  Read UTF-8 RFC 4180 CSV with the first record as header.  [csv-reading]
+  [built]   story  Trim leading and trailing spaces from every header name and value.  [value-trimming]
+  [built]   story  Recognise null spellings: empty, NA, N/A, NULL ignoring case.  [null-values]
+  [built]   story  Infer integer and number column types.  [numeric-types]
+  [built]   story  Infer date columns of real YYYY-MM-DD calendar dates.  [date-type]
+  [built]   story  Infer boolean, text, and empty column types.  [boolean-text-types]
+  [built]   story  Parse options and exactly one file argument, with options preceding the file.  [args-parsing]
+  [built]   story  Reject empty files, empty or repeated header names, and ragged records.  [input-rejection]
+
+Block: Build Block 3 · Service  [block-3]   — 8/8 stories complete
+  [built]   story  Report rows, nulls, and distinct counts per column.  [row-counts]
+  [built]   story  Compute exact sum and mean for integer and number columns.  [sum-mean]
+  [built]   story  Compute the median for integer and number columns.  [median]
+  [built]   story  Compute min and max by column type.  [min-max]
+  [built]   story  Format decimal results to two places, rounded half away from zero once.  [decimal-format]
+  [built]   story  Count and order distinct non-null values of a column.  [freq-count]
+  [built]   story  Limit frequency rows with --top, default 5.  [freq-limit]
+  [built]   story  Write the column profile as RFC 4180 CSV for the default invocation.  [profile-output]
+
+Block: Build Block 4 · Service  [block-4]   — 5/5 stories complete
+  [built]   story  Reject malformed arguments with exit 2 and a usage line on standard error.  [usage-errors]
+  [built]   story  Profile a single named column with --column.  [column-profile]
+  [built]   story  Write one stderr diagnostic line and nothing on stdout when a command fails.  [failure-diagnostics]
+  [built]   story  Exit 1 when the file cannot be opened or read.  [unreadable-file]
+  [built]   story  Select frequency mode with --freq.  [freq-mode]
+Block: Build Block 5 · Service  [block-5]   — [built] story Provide bin/test.sh running go vet and go test and the project test suite.  [test-gate] — complete
+Block: Build Block 6 · Feature  [block-6]   — [built] story Pass the supplied grader sources/run.sh with all 22 checks.  [release-verification] — complete
+
+Steps: 25 total — 0 done, 25 built (await verify), 0 in review, 0 pending, 0 blocked by questions, 0 failed (0% complete)
+Buildable now: (none)

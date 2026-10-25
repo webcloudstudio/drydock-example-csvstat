@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/evidence/block-5.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/evidence/block-5.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/evidence/block-5.md">Raw file</a></div></header>
+<article class="doc"><h1>Evidence: Block 5 · Service (block-5)</h1>
+<ul><li>block type: block</li><li>date: 2026-10-25</li><li>resulting state: closed/verified</li><li>story points (combined assembled cost): 6549</li><li>execution id: 20261025.055501.273Z-18678fb5</li></ul>
+<h2>Stories built</h2>
+<ul><li>Provide bin/test.sh running go vet and go test and the project test suite. (test-gate) [story]</li></ul>
+<h2>Acceptance tooling authorization</h2>
+<ul><li>FEATURE-TestGate.md#testgate-script-exits-zero: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-TestGate.md#testgate-runs-from-other-directory: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-TestGate.md#testgate-go-test-and-vet-pass: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-TestGate.md#testgate-suite-has-tests: executable=go; scope=test; authorization=existing Target environment</li></ul>
+<h2>Stacked context</h2>
+<ul><li>stack: go_compact.md (SP 2105)</li><li>compass: COMPASS.md (SP 963)</li><li>implements: FEATURE-TestGate.md (SP 1429)</li><li>context: ARCHITECTURE_compact.md (SP 282)</li><li>stack: common_compact.md (SP 1653)</li></ul>
+<h2>Pre-build acceptance observation</h2>
+<ul><li>GREEN (prepassed): testgate-script-exits-zero (FEATURE-TestGate.md)</li></ul>
+<p>intent: Running bin/test.sh from the application root exits zero. return code: 0 stdout: ?   	csvstat/cmd/csvstat	[no test files] ok  	csvstat/internal/cli	0.018s ok  	csvstat/internal/csvdata	0.006s ok  	csvstat/internal/freq	0.007s ok  	csvstat/internal/profile	0.007s</p>
+<ul><li>GREEN (prepassed): testgate-runs-from-other-directory (FEATURE-TestGate.md)</li></ul>
+<p>intent: bin/test.sh locates the application root itself and exits zero when started from another directory. return code: 0 stdout: ?   	csvstat/cmd/csvstat	[no test files] ok  	csvstat/internal/cli	(cached) ok  	csvstat/internal/csvdata	(cached) ok  	csvstat/internal/freq	(cached) ok  	csvstat/internal/profile	(cached)</p>
+<ul><li>GREEN (prepassed): testgate-go-test-and-vet-pass (FEATURE-TestGate.md)</li></ul>
+<p>intent: go vet and go test pass directly at the application root, the two commands the script wraps. return code: 0 stdout: ?   	csvstat/cmd/csvstat	[no test files] ok  	csvstat/internal/cli	(cached) ok  	csvstat/internal/csvdata	(cached) ok  	csvstat/internal/freq	(cached) ok  	csvstat/internal/profile	(cached)</p>
+<ul><li>GREEN (prepassed): testgate-suite-has-tests (FEATURE-TestGate.md)</li></ul>
+<p>intent: The project ships Go test files in more than one internal package, so the gate is not vacuous. return code: 0 stdout: [&#x27;internal/cli/args_test.go&#x27;, &#x27;internal/cli/cli_test.go&#x27;, &#x27;internal/cli/column_test.go&#x27;, &#x27;internal/cli/freq_test.go&#x27;, &#x27;internal/cli/profile_test.go&#x27;, &#x27;internal/csvdata/null_test.go&#x27;, &#x27;internal/csvdata/read_test.go&#x27;, &#x27;internal/csvdata/trim_test.go&#x27;, &#x27;internal/csvdata/validate_test.go&#x27;, &#x27;internal/freq/count_test.go&#x27;, &#x27;internal/freq/top_test.go&#x27;, &#x27;internal/profile/counts_test.go&#x27;, &#x27;internal/profile/format_test.go&#x27;, &#x27;internal/profile/infer_test.go&#x27;, &#x27;internal/profile/median_test.go&#x27;, &#x27;internal/profile/minmax_test.go&#x27;, &#x27;internal/profile/sum_test.go&#x27;]</p>
+<h2>Post-build programmatic acceptance</h2>
+<ul><li>PASS: testgate-script-exits-zero (FEATURE-TestGate.md)</li></ul>
+<p>intent: Running bin/test.sh from the application root exits zero. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: ?   	csvstat/cmd/csvstat	[no test files] ok  	csvstat/internal/cli	(cached) ok  	csvstat/internal/csvdata	(cached) ok  	csvstat/internal/freq	(cached) ok  	csvstat/internal/profile	(cached)</p>
+<ul><li>PASS: testgate-runs-from-other-directory (FEATURE-TestGate.md)</li></ul>
+<p>intent: bin/test.sh locates the application root itself and exits zero when started from another directory. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: ?   	csvstat/cmd/csvstat	[no test files] ok  	csvstat/internal/cli	(cached) ok  	csvstat/internal/csvdata	(cached) ok  	csvstat/internal/freq	(cached) ok  	csvstat/internal/profile	(cached)</p>
+<ul><li>PASS: testgate-go-test-and-vet-pass (FEATURE-TestGate.md)</li></ul>
+<p>intent: go vet and go test pass directly at the application root, the two commands the script wraps. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: ?   	csvstat/cmd/csvstat	[no test files] ok  	csvstat/internal/cli	(cached) ok  	csvstat/internal/csvdata	(cached) ok  	csvstat/internal/freq	(cached) ok  	csvstat/internal/profile	(cached)</p>
+<ul><li>PASS: testgate-suite-has-tests (FEATURE-TestGate.md)</li></ul>
+<p>intent: The project ships Go test files in more than one internal package, so the gate is not vacuous. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: [&#x27;internal/cli/args_test.go&#x27;, &#x27;internal/cli/cli_test.go&#x27;, &#x27;internal/cli/column_test.go&#x27;, &#x27;internal/cli/freq_test.go&#x27;, &#x27;internal/cli/profile_test.go&#x27;, &#x27;internal/csvdata/null_test.go&#x27;, &#x27;internal/csvdata/read_test.go&#x27;, &#x27;internal/csvdata/trim_test.go&#x27;, &#x27;internal/csvdata/validate_test.go&#x27;, &#x27;internal/freq/count_test.go&#x27;, &#x27;internal/freq/top_test.go&#x27;, &#x27;internal/profile/counts_test.go&#x27;, &#x27;internal/profile/format_test.go&#x27;, &#x27;internal/profile/infer_test.go&#x27;, &#x27;internal/profile/median_test.go&#x27;, &#x27;internal/profile/minmax_test.go&#x27;, &#x27;internal/profile/sum_test.go&#x27;]</p>
+<h2>Build summary</h2>
+<p>The gate script already exists from an earlier block. I&#x27;ll run it and the ACs before changing anything.The gate passes from the root and from another directory. Next I&#x27;ll check the test suite against the spec&#x27;s coverage list.Coverage looks complete against the spec list. Last check: the tests should write their own inputs to temp dirs and never touch <code>sources/</code>.RESULT: SUCCESS</p>
+<p>FILES CHANGED:</p>
+<ul><li>none</li></ul>
+<p>SUMMARY: <code>bin/test.sh</code> already satisfies FEATURE-TestGate, so I made no edits. It was added in block-1 (commit dcb0bc4) and matches the spec: a POSIX <code>sh</code> script with <code>set -eu</code> that changes to the application root from its own path, runs <code>go vet ./...</code>, then <code>go test ./...</code>, and exits non-zero if either fails.</p>
+<p>Checks run:</p>
+<ul><li><code>sh bin/test.sh</code> from the application root: exit 0. <code>go vet</code> passed, and <code>go test</code> passed for <code>internal/cli</code>, <code>csvdata</code>, <code>freq</code>, and <code>profile</code>.</li><li><code>sh &lt;absolute path&gt;/bin/test.sh</code> from <code>/tmp</code>: exit 0.</li><li><code>go vet ./...</code> run directly: exit 0.</li><li><code>go test -count=1 -v ./...</code>: all packages <code>ok</code>. Test counts from this run: 17 <code>*_test.go</code> files, and the <code>go test</code> run reported no failures.</li><li><code>sh -n bin/test.sh</code>: syntax OK.</li></ul>
+<p>Acceptance assertions, all passing:</p>
+<ul><li><code>testgate-script-exits-zero</code></li><li><code>testgate-runs-from-other-directory</code></li><li><code>testgate-go-test-and-vet-pass</code></li><li><code>testgate-suite-has-tests</code>: test files are in four packages, so the <code>len(packages) &gt; 1</code> check holds.</li></ul>
+<p>Coverage against the spec list, by test function name:</p>
+<ul><li>Types: integer, number, date, boolean, text, and empty.</li><li>Statistics: rows, nulls, distinct, min, max, sum, mean, and median.</li><li>Null handling and trimming.</li><li>Rounding: half-away-from-zero, and no negative zero.</li><li>Output forms: profile, <code>--column</code>, and <code>--freq</code>.</li><li>Exit codes 0, 1, 2, and 3.</li></ul>
+<p>The tests do not reference <code>sources/</code>, and the three test files that write inputs use temp directories.</p>
+<p>I did not run <code>sources/run.sh</code>. It is the terminal story, and this block is not the terminal step.</p>
+<p>BLOCKERS:</p>
+<ul><li>none</li></ul></article>
+</main>
+</body>
+</html>

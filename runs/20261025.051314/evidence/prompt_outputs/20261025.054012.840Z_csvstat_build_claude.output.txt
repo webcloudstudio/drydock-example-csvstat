@@ -1,0 +1,47 @@
+I'll start by inspecting the build directory to see what already exists.The build directory already has earlier blocks in place. I'll read the existing packages before adding anything.The earlier blocks give me the parsing, validation, null, trim, and type-inference layers. This block adds the statistics in `internal/profile`, the frequency package, and the CLI output. I'll write the profile statistics first.Next, the profile tests. The named acceptance tests come first, followed by extra coverage for boundaries and the no-reorder rule.Now the frequency package, with its own tests.Now the CLI. The default invocation writes the profile, `--freq` writes the frequency listing, and output goes to stdout only after everything has been computed.Next, the CLI tests. They read the output back through `encoding/csv` instead of matching substrings.I spotted a bug in one of my test inputs. A bare blank line is skipped by `encoding/csv`, so that test needs a quoted empty field to produce a null row. Fixing that, then running `gofmt` and the suite.The `freq_test.go` change is just my own `gofmt` import sort, so that stays. The real failure is my test expectation: `RatString` renders a fraction as `a/b`, so the mean should be `500000000000000000015/2`, and the code is correct. Fixing the expectation.The gate is green: `go vet` and `go test ./...` pass across all packages, and 48 profile tests run. The Go-side acceptance assertions are covered by the named tests. The CLI-side assertions are Python scripts that depend on a `drydock_go` helper that isn't on disk. I'll confirm the named tests really ran rather than skipped, then reproduce those CLI checks with a shim kept outside the build directory.All 28 declared Go assertions pass as named tests. Next I'll check whether the real `drydock_go` helper exists in the Rigging tree before writing a stand-in.The real helper is shipped in Rigging. I'll run the CLI acceptance scripts against it, with the working directory set to the build directory so `cli_runner` builds the real binary. The scripts go in `/tmp`, outside the build tree.All 16 CLI acceptance scripts pass against the real binary, and the 28 named Go assertions pass. I'll confirm the changed-file list from git, without staging or committing anything.All eight stories in this block are implemented, and the declared acceptance checks pass.
+
+- **Go-side assertions:** all 28 named tests in `internal/profile` pass when run individually through the same `-run` pattern the shipped helper uses.
+- **CLI-side assertions:** all 16 `freq-count`, `freq-limit`, and `profile-output` checks pass. I ran them with the shipped `drydock_go.cli_runner` from Rigging, with the working directory set to the build directory. The driver lives in `/tmp/acrun/ac_cli.py`, outside the build tree.
+- **Gate:** `sh bin/test.sh` (vet, then the full test suite) exits 0.
+
+RESULT: SUCCESS
+
+FILES CHANGED:
+- internal/cli/cli.go
+- internal/cli/profile.go
+- internal/cli/profile_test.go
+- internal/cli/freq.go
+- internal/cli/freq_test.go
+- internal/profile/counts.go
+- internal/profile/counts_test.go
+- internal/profile/numeric.go
+- internal/profile/sum.go
+- internal/profile/sum_test.go
+- internal/profile/median.go
+- internal/profile/median_test.go
+- internal/profile/minmax.go
+- internal/profile/minmax_test.go
+- internal/profile/format.go
+- internal/profile/format_test.go
+- internal/freq/count.go
+- internal/freq/count_test.go
+- internal/freq/top.go
+- internal/freq/top_test.go
+
+SUMMARY:
+- **Statistics (`internal/profile`):** `Counts`, `SumMean`, `Median`, `MinMax`, `FormatDecimal`, and `FormatInteger`. Sums, means, and medians use `big.Rat`. Each function ignores null values itself. `FormatDecimal` rounds once, half away from zero, on the exact rational, with no negative zero and no separator.
+- **Frequencies (`internal/freq`):** `Count` lists trimmed non-null values ordered by count descending, then byte value. `Top` applies the limit after ordering.
+- **CLI:** `Run` now takes stdout and builds all output in memory before writing it. `--freq` writes `value,count` and defaults to 5 rows. The default invocation writes the ten-column profile, with integer min, max, and sum as plain integers, and number statistics with two decimals. Output is `encoding/csv` with `\n` line endings. A rejected input still exits 3 with empty stdout.
+- **Tests:** the CLI tests parse stdout with `encoding/csv` and compare cells, rather than matching substrings.
+
+Choices I made where the specs were silent:
+- **Unknown `--freq` column:** exits 2 with empty stdout.
+- **`--top` below zero:** lists no rows. Rejecting it belongs to the usage-errors story, so I did not add validation here.
+- **`--column` alone:** keeps its existing behaviour (exit 0, no output), because column output is outside this block.
+- **`--freq` together with `--column`:** `--freq` takes precedence.
+
+I did not run `sources/run.sh`. The Verification Protocol reserves it for the terminal story, and this block is a service block.
+
+<blueprint-decisions>
+[{"spec":"FEATURE-FreqCount.md","severity":"Low","subject":"Unknown --freq column name","decision":"The specs do not say what happens when the --freq column is not in the header. I exit 2 (usage) with empty stdout and a diagnostic on stderr. Exit 3 would also be defensible as rejected input. Is 2 acceptable, or should this be 3?"},{"spec":"FEATURE-FreqLimit.md","severity":"Low","subject":"Non-positive --top with --freq","decision":"Validation of --top belongs to the usage-errors story, which is not in this block. Until then --top 0 or a negative value lists no rows with exit 0. Confirm that the usage-errors story will reject these with exit 2."},{"spec":"FEATURE-ProfileOutput.md","severity":"Low","subject":"--column without --freq","decision":"Column output is not part of this block, so --column keeps the prior behaviour: exit 0 with no output. The profile is written only when neither --column nor --freq is given, as the spec says. Confirm this is acceptable until the column story lands."}]
+</blueprint-decisions>

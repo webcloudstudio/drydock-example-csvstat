@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/evidence/block-4.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/evidence/block-4.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/evidence/block-4.md">Raw file</a></div></header>
+<article class="doc"><h1>Evidence: Block 4 · Service (block-4)</h1>
+<ul><li>block type: block</li><li>date: 2026-10-25</li><li>resulting state: closed/verified</li><li>story points (combined assembled cost): 13293</li><li>execution id: 20261025.054944.501Z-bdb56842</li></ul>
+<h2>Stories built</h2>
+<ul><li>Reject malformed arguments with exit 2 and a usage line on standard error. (usage-errors) [story]</li><li>Profile a single named column with --column. (column-profile) [story]</li><li>Write one stderr diagnostic line and nothing on stdout when a command fails. (failure-diagnostics) [story]</li><li>Exit 1 when the file cannot be opened or read. (unreadable-file) [story]</li><li>Select frequency mode with --freq. (freq-mode) [story]</li></ul>
+<h2>Acceptance tooling authorization</h2>
+<ul><li>FEATURE-UsageErrors.md#usage-errors-exit-two: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-UsageErrors.md#usage-errors-single-stderr-line: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-UsageErrors.md#usage-errors-before-file-open: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-UsageErrors.md#usage-errors-valid-forms-accepted: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-ColumnProfile.md#column-profile-single-row: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-ColumnProfile.md#column-profile-trimmed-header: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-ColumnProfile.md#column-profile-unknown-column: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-ColumnProfile.md#column-profile-case-sensitive: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-ColumnProfile.md#column-profile-rejected-input: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-FailureDiagnostics.md#diag-ragged-fixture: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-FailureDiagnostics.md#diag-ragged-line-number: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-FailureDiagnostics.md#diag-empty-file: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-FailureDiagnostics.md#diag-blank-lines-only: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-FailureDiagnostics.md#diag-empty-header-name: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-FailureDiagnostics.md#diag-repeated-header-name: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-FailureDiagnostics.md#diag-failure-with-column-option: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-UnreadableFile.md#unreadable-missing-file: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-UnreadableFile.md#unreadable-missing-file-freq: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-UnreadableFile.md#unreadable-missing-file-column: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-UnreadableFile.md#unreadable-directory-as-file: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-UnreadableFile.md#unreadable-readable-file-still-succeeds: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-FreqMode.md#freq-default-matches-fixture: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-FreqMode.md#freq-top-limits-rows: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-FreqMode.md#freq-omits-null-spellings: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-FreqMode.md#freq-values-are-trimmed: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-FreqMode.md#freq-all-null-column-header-only: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-FreqMode.md#freq-unknown-column-rejected: executable=go; scope=test; authorization=existing Target environment</li><li>FEATURE-FreqMode.md#freq-name-is-case-sensitive: executable=go; scope=test; authorization=existing Target environment</li></ul>
+<h2>Stacked context</h2>
+<ul><li>stack: go_compact.md (SP 2105)</li><li>compass: COMPASS.md (SP 963)</li><li>implements: FEATURE-UsageErrors.md (SP 1544)</li><li>context: ARCHITECTURE_compact.md (SP 282)</li><li>implements: FEATURE-ColumnProfile.md (SP 1879)</li><li>implements: FEATURE-FailureDiagnostics.md (SP 2150)</li><li>implements: FEATURE-UnreadableFile.md (SP 1357)</li><li>implements: FEATURE-FreqMode.md (SP 2706)</li></ul>
+<h2>Build directory changes</h2>
+<ul><li>internal/cli/args.go</li><li>internal/cli/args_test.go</li><li>internal/cli/cli.go</li><li>internal/cli/column_test.go</li><li>internal/cli/freq_test.go</li><li>internal/cli/profile.go</li></ul>
+<h2>Pre-build acceptance observation</h2>
+<ul><li>RED: usage-errors-exit-two (FEATURE-UsageErrors.md)</li></ul>
+<p>intent: Every malformed argument form exits 2 and writes nothing to standard output. return code: 1 stdout: [] 2 csvstat: missing file argument</p>
+<p>[&#x27;/tmp/tmpftcd3ltg/in.csv&#x27;, &#x27;/tmp/tmpftcd3ltg/other.csv&#x27;] 2 csvstat: unexpected argument &quot;/tmp/tmpftcd3ltg/other.csv&quot; after file or extra file</p>
+<p>[&#x27;--frobnicate&#x27;, &#x27;/tmp/tmpftcd3ltg/in.csv&#x27;] 2 csvstat: flag provided but not defined: -frobnicate</p>
+<p>[&#x27;--column&#x27;] 2 csvstat: flag needs an argument: -column</p>
+<p>[&#x27;--freq&#x27;] 2 csvstat: flag needs an argument: -freq</p>
+<p>[&#x27;--freq&#x27;, &#x27;sensor&#x27;, &#x27;--top&#x27;] 2 csvstat: flag needs an argument: -top</p>
+<p>[&#x27;--freq&#x27;, &#x27;sensor&#x27;, &#x27;--top&#x27;, &#x27;0&#x27;, &#x27;/tmp/tmpftcd3ltg/in.csv&#x27;] 0 stderr: --- drydock: values at failure --- code = 0 args = [&#x27;--freq&#x27;, &#x27;sensor&#x27;, &#x27;--top&#x27;, &#x27;0&#x27;, &#x27;/tmp/tmpftcd3ltg/in.csv&#x27;] --- drydock: end values --- Traceback (most recent call last): File &quot;usage-errors-exit-two.py&quot;, line 30, in &lt;module&gt; assert code == 2, (args, code) ^^^^^^^^^<br>AssertionError: ([&#x27;--freq&#x27;, &#x27;sensor&#x27;, &#x27;--top&#x27;, &#x27;0&#x27;, &#x27;/tmp/tmpftcd3ltg/in.csv&#x27;], 0)</p>
+<ul><li>GREEN (prepassed): usage-errors-single-stderr-line (FEATURE-UsageErrors.md)</li></ul>
+<p>intent: A usage error writes exactly one non-blank diagnostic line to standard error. return code: 0 stdout: csvstat: missing file argument</p>
+<ul><li>RED: usage-errors-before-file-open (FEATURE-UsageErrors.md)</li></ul>
+<p>intent: A usage error is reported as 2 even when the named file does not exist. return code: 1 stdout: csvstat: open /tmp/tmputn6e6sx/no-such-file.csv: no such file or directory stderr: --- drydock: values at failure --- code = 1 --- drydock: end values --- Traceback (most recent call last): File &quot;usage-errors-before-file-open.py&quot;, line 9, in &lt;module&gt; assert code == 2, code ^^^^^^^^^<br>AssertionError: 1</p>
+<ul><li>GREEN (prepassed): usage-errors-valid-forms-accepted (FEATURE-UsageErrors.md)</li></ul>
+<p>intent: Well-formed invocations are not rejected as usage errors. return code: 0 stdout: [&#x27;/tmp/tmp6ss5r7fo/in.csv&#x27;] 0</p>
+<p>[&#x27;--column&#x27;, &#x27;qty&#x27;, &#x27;/tmp/tmp6ss5r7fo/in.csv&#x27;] 0</p>
+<p>[&#x27;--freq&#x27;, &#x27;sensor&#x27;, &#x27;/tmp/tmp6ss5r7fo/in.csv&#x27;] 0</p>
+<p>[&#x27;--freq&#x27;, &#x27;sensor&#x27;, &#x27;--top&#x27;, &#x27;2&#x27;, &#x27;/tmp/tmp6ss5r7fo/in.csv&#x27;] 0</p>
+<ul><li>RED: column-profile-single-row (FEATURE-ColumnProfile.md)</li></ul>
+<p>intent: --column writes the profile header and exactly one row, equal to that column&#x27;s row in the full profile. return code: 1 stderr: --- drydock: values at failure --- parsed = [] full = [[&#x27;column&#x27;, &#x27;type&#x27;, &#x27;rows&#x27;, &#x27;nulls&#x27;, &#x27;distinct&#x27;, &#x27;min&#x27;, &#x27;max&#x27;, &#x27;sum&#x27;, &#x27;mean&#x27;, &#x27;median&#x27;], [&#x27;id&#x27;, &#x27;integer&#x27;, &#x27;3&#x27;, &#x27;0&#x27;, &#x27;3&#x27;, &#x27;1&#x27;, &#x27;4&#x27;, &#x27;7&#x27;, &#x27;2.33&#x27;, &#x27;2.00&#x27;], [&#x27;price&#x27;, &#x27;number&#x27;, &#x27;3&#x27;, &#x27;0&#x27;, &#x27;3&#x27;, &#x27;1.50&#x27;, &#x27;3.00&#x27;, &#x27;6.75&#x27;, &#x27;2.25&#x27;, &#x27;2.25&#x27;], [&#x27;label&#x27;, &#x27;text&#x27;, &#x27;3&#x27;, &#x27;0&#x27;, &#x27;3&#x27;, &#x27;a&#x27;, &#x27;c&#x27;, &#x27;&#x27;, &#x27;&#x27;, &#x27;&#x27;]] --- drydock: end values --- Traceback (most recent call last): File &quot;column-profile-single-row.py&quot;, line 21, in &lt;module&gt; assert parsed[0] == full[0] <del>~</del>~^^^<br>IndexError: list index out of range</p>
+<ul><li>RED: column-profile-trimmed-header (FEATURE-ColumnProfile.md)</li></ul>
+<p>intent: A padded header name is trimmed, so the trimmed name selects the column and is reported. return code: 1 stderr: --- drydock: values at failure --- parsed = [] --- drydock: end values --- Traceback (most recent call last): File &quot;column-profile-trimmed-header.py&quot;, line 18, in &lt;module&gt; assert len(parsed) == 2 ^^^^^^^^^^^^^^^^ AssertionError</p>
+<ul><li>RED: column-profile-unknown-column (FEATURE-ColumnProfile.md)</li></ul>
+<p>intent: A column name absent from the header exits 3 with empty standard output. return code: 1 stderr: --- drydock: values at failure --- code = 0 --- drydock: end values --- Traceback (most recent call last): File &quot;column-profile-unknown-column.py&quot;, line 13, in &lt;module&gt; assert code == 3, code ^^^^^^^^^<br>AssertionError: 0</p>
+<ul><li>RED: column-profile-case-sensitive (FEATURE-ColumnProfile.md)</li></ul>
+<p>intent: Column names match case-sensitively, so a different case is an unknown column. return code: 1 stderr: --- drydock: values at failure --- code = 0 --- drydock: end values --- Traceback (most recent call last): File &quot;column-profile-case-sensitive.py&quot;, line 14, in &lt;module&gt; assert code == 3, code ^^^^^^^^^<br>AssertionError: 0</p>
+<ul><li>GREEN (prepassed): column-profile-rejected-input (FEATURE-ColumnProfile.md)</li></ul>
+<p>intent: A ragged file with --column exits 3 and writes nothing to standard output. return code: 0 stdout: csvstat: /tmp/tmpeuoy9ipj/ragged.csv: line 3: record has 3 fields, header has 2</p>
+<ul><li>GREEN (prepassed): diag-ragged-fixture (FEATURE-FailureDiagnostics.md)</li></ul>
+<p>intent: The supplied ragged fixture exits 3, writes nothing to standard output, and writes one diagnostic line. return code: 0 stdout: csvstat: sources/ragged.csv: line 4: record has 4 fields, header has 3</p>
+<ul><li>GREEN (prepassed): diag-ragged-line-number (FEATURE-FailureDiagnostics.md)</li></ul>
+<p>intent: The diagnostic for a ragged record carries the number of the line holding that record. return code: 0 stdout: csvstat: /tmp/tmpno0e759c/ragged_case.csv: line 4: record has 3 fields, header has 2</p>
+<ul><li>GREEN (prepassed): diag-empty-file (FEATURE-FailureDiagnostics.md)</li></ul>
+<p>intent: An empty file is rejected with exit 3 and nothing on standard output. return code: 0 stdout: csvstat: /tmp/tmpn8m8f9bu/empty.csv: no header record: input is empty or blank</p>
+<ul><li>GREEN (prepassed): diag-blank-lines-only (FEATURE-FailureDiagnostics.md)</li></ul>
+<p>intent: A file containing only blank lines is rejected as empty with exit 3. return code: 0 stdout: csvstat: /tmp/tmpslhzo9pj/blank.csv: no header record: input is empty or blank</p>
+<ul><li>GREEN (prepassed): diag-empty-header-name (FEATURE-FailureDiagnostics.md)</li></ul>
+<p>intent: An empty header name is rejected with exit 3 and nothing on standard output. return code: 0 stdout: csvstat: /tmp/tmpkoag8lt7/emptyname.csv: header column 2 is empty</p>
+<ul><li>GREEN (prepassed): diag-repeated-header-name (FEATURE-FailureDiagnostics.md)</li></ul>
+<p>intent: A repeated header name, including one repeated only after trimming, is rejected with exit 3. return code: 0 stdout: csvstat: /tmp/tmpfbats8s8/repeated.csv: header name &quot;dup&quot; is repeated</p>
+<ul><li>GREEN (prepassed): diag-failure-with-column-option (FEATURE-FailureDiagnostics.md)</li></ul>
+<p>intent: A rejected file under --column still exits 3 with nothing on standard output. return code: 0 stdout: csvstat: sources/ragged.csv: line 4: record has 4 fields, header has 3</p>
+<ul><li>GREEN (prepassed): unreadable-missing-file (FEATURE-UnreadableFile.md)</li></ul>
+<p>intent: A path that does not exist exits 1 and writes nothing to standard output. return code: 0 stdout: csvstat: open /tmp/tmpd_yhi93b/no-such-file.csv: no such file or directory</p>
+<ul><li>GREEN (prepassed): unreadable-missing-file-freq (FEATURE-UnreadableFile.md)</li></ul>
+<p>intent: A missing file under --freq also exits 1 with nothing on standard output. return code: 0 stdout: csvstat: open /tmp/tmpe1w5vm97/absent.csv: no such file or directory</p>
+<ul><li>GREEN (prepassed): unreadable-missing-file-column (FEATURE-UnreadableFile.md)</li></ul>
+<p>intent: A missing file under --column also exits 1 with nothing on standard output. return code: 0 stdout: csvstat: open /tmp/tmpn988au76/absent.csv: no such file or directory</p>
+<ul><li>GREEN (prepassed): unreadable-directory-as-file (FEATURE-UnreadableFile.md)</li></ul>
+<p>intent: A directory named as the file cannot be read and exits 1 with nothing on standard output. return code: 0 stdout: csvstat: /tmp/tmp9rh9iyrs: read csv: read /tmp/tmp9rh9iyrs: is a directory</p>
+<ul><li>GREEN (prepassed): unreadable-readable-file-still-succeeds (FEATURE-UnreadableFile.md)</li></ul>
+<p>intent: A readable fixture is not treated as unreadable and exits 0. return code: 0 stdout: column,type,rows,nulls,distinct,min,max,sum,mean,median sku,empty,0,0,0,,,,, price,empty,0,0,0,,,,, in_stock,empty,0,0,0,,,,,</p>
+<ul><li>GREEN (prepassed): freq-default-matches-fixture (FEATURE-FreqMode.md)</li></ul>
+<p>intent: The default frequency listing for a named column equals the top five counts computed independently from the fixture. return code: 0 stdout: value,count Sales,8 Engineering,7 Support,7 Finance,2</p>
+<ul><li>GREEN (prepassed): freq-top-limits-rows (FEATURE-FreqMode.md)</li></ul>
+<p>intent: With --top 2 exactly the first two ordered rows are listed. return code: 0 stdout: value,count east,9 north,9</p>
+<ul><li>GREEN (prepassed): freq-omits-null-spellings (FEATURE-FreqMode.md)</li></ul>
+<p>intent: Null values (empty, NA, N/A, NULL in any case) are not listed in a frequency listing. return code: 0 stdout: value,count 4,4 2,3 3,1</p>
+<ul><li>GREEN (prepassed): freq-values-are-trimmed (FEATURE-FreqMode.md)</li></ul>
+<p>intent: Padded values are trimmed before counting, so padded and unpadded spellings count together. return code: 0 stdout: value,count Globex,10 Acme Corp,9 Umbrella,7 Initech,3 Hooli,1</p>
+<ul><li>GREEN (prepassed): freq-all-null-column-header-only (FEATURE-FreqMode.md)</li></ul>
+<p>intent: A column with no non-null values lists only the header. return code: 0 stdout: value,count</p>
+<ul><li>RED: freq-unknown-column-rejected (FEATURE-FreqMode.md)</li></ul>
+<p>intent: A column name absent from the header exits 3 and writes nothing to standard output. return code: 1 stdout: csvstat: no column named &quot;nosuch&quot; stderr: --- drydock: values at failure --- code = 2 --- drydock: end values --- Traceback (most recent call last): File &quot;freq-unknown-column-rejected.py&quot;, line 6, in &lt;module&gt; assert code == 3, code ^^^^^^^^^<br>AssertionError: 2</p>
+<ul><li>RED: freq-name-is-case-sensitive (FEATURE-FreqMode.md)</li></ul>
+<p>intent: A column name differing only in case from a header name is not found and exits 3. return code: 1 stdout: csvstat: no column named &quot;DEPARTMENT&quot; stderr: --- drydock: values at failure --- code = 2 --- drydock: end values --- Traceback (most recent call last): File &quot;freq-name-is-case-sensitive.py&quot;, line 14, in &lt;module&gt; assert code == 3, code ^^^^^^^^^<br>AssertionError: 2</p>
+<h2>Post-build programmatic acceptance</h2>
+<ul><li>PASS: usage-errors-exit-two (FEATURE-UsageErrors.md)</li></ul>
+<p>intent: Every malformed argument form exits 2 and writes nothing to standard output. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: [] 2 csvstat: missing file argument; usage: csvstat [--column &lt;name&gt;] &lt;file&gt; | csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</p>
+<p>[&#x27;/tmp/tmptcxshsru/in.csv&#x27;, &#x27;/tmp/tmptcxshsru/other.csv&#x27;] 2 csvstat: unexpected argument &quot;/tmp/tmptcxshsru/other.csv&quot; after file or extra file; usage: csvstat [--column &lt;name&gt;] &lt;file&gt; | csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</p>
+<p>[&#x27;--frobnicate&#x27;, &#x27;/tmp/tmptcxshsru/in.csv&#x27;] 2 csvstat: flag provided but not defined: -frobnicate; usage: csvstat [--column &lt;name&gt;] &lt;file&gt; | csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</p>
+<p>[&#x27;--column&#x27;] 2 csvstat: flag needs an argument: -column; usage: csvstat [--column &lt;name&gt;] &lt;file&gt; | csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</p>
+<p>[&#x27;--freq&#x27;] 2 csvstat: flag needs an argument: -freq; usage: csvstat [--column &lt;name&gt;] &lt;file&gt; | csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</p>
+<p>[&#x27;--freq&#x27;, &#x27;sensor&#x27;, &#x27;--top&#x27;] 2 csvstat: flag needs an argument: -top; usage: csvstat [--column &lt;name&gt;] &lt;file&gt; | csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</p>
+<p>[&#x27;--freq&#x27;, &#x27;sensor&#x27;, &#x27;--top&#x27;, &#x27;0&#x27;, &#x27;/tmp/tmptcxshsru/in.csv&#x27;] 2 csvstat: --top 0 is not a positive integer; usage: csvstat [--column &lt;name&gt;] &lt;file&gt; | csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</p>
+<p>[&#x27;--freq&#x27;, &#x27;sensor&#x27;, &#x27;--top&#x27;, &#x27;-1&#x27;, &#x27;/tmp/tmptcxshsru/in.csv&#x27;] 2 csvstat: --top -1 is not a positive integer; usage: csvstat [--column &lt;name&gt;] &lt;file&gt; | csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</p>
+<p>[&#x27;--freq&#x27;, &#x27;sensor&#x27;, &#x27;--top&#x27;, &#x27;abc&#x27;, &#x27;/tmp/tmptcxshsru/in.csv&#x27;] 2 csvstat: invalid value &quot;abc&quot; for flag -top: &quot;abc&quot; is not a decimal integer; usage: csvstat [--column &lt;name&gt;] &lt;file&gt; | csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</p>
+<p>[&#x27;--top&#x27;, &#x27;3&#x27;, &#x27;/tmp/tmptcxshsru/in.csv&#x27;] 2 csvstat: --top requires --freq; usage: csvstat [--column &lt;name&gt;] &lt;file&gt; | csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</p>
+<p>[&#x27;--column&#x27;, &#x27;qty&#x27;, &#x27;--freq&#x27;, &#x27;qty&#x27;, &#x27;/tmp/tmptcxshsru/in.csv&#x27;] 2 csvstat: --column cannot be combined with --freq; usage: csvstat [--column &lt;name&gt;] &lt;file&gt; | csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</p>
+<ul><li>PASS: usage-errors-single-stderr-line (FEATURE-UsageErrors.md)</li></ul>
+<p>intent: A usage error writes exactly one non-blank diagnostic line to standard error. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: csvstat: missing file argument; usage: csvstat [--column &lt;name&gt;] &lt;file&gt; | csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</p>
+<ul><li>PASS: usage-errors-before-file-open (FEATURE-UsageErrors.md)</li></ul>
+<p>intent: A usage error is reported as 2 even when the named file does not exist. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: csvstat: --top requires --freq; usage: csvstat [--column &lt;name&gt;] &lt;file&gt; | csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</p>
+<ul><li>PASS: usage-errors-valid-forms-accepted (FEATURE-UsageErrors.md)</li></ul>
+<p>intent: Well-formed invocations are not rejected as usage errors. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: [&#x27;/tmp/tmpsctabn7b/in.csv&#x27;] 0</p>
+<p>[&#x27;--column&#x27;, &#x27;qty&#x27;, &#x27;/tmp/tmpsctabn7b/in.csv&#x27;] 0</p>
+<p>[&#x27;--freq&#x27;, &#x27;sensor&#x27;, &#x27;/tmp/tmpsctabn7b/in.csv&#x27;] 0</p>
+<p>[&#x27;--freq&#x27;, &#x27;sensor&#x27;, &#x27;--top&#x27;, &#x27;2&#x27;, &#x27;/tmp/tmpsctabn7b/in.csv&#x27;] 0</p>
+<ul><li>PASS: column-profile-single-row (FEATURE-ColumnProfile.md)</li></ul>
+<p>intent: --column writes the profile header and exactly one row, equal to that column&#x27;s row in the full profile. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: column,type,rows,nulls,distinct,min,max,sum,mean,median id,integer,3,0,3,1,4,7,2.33,2.00</p>
+<p>column,type,rows,nulls,distinct,min,max,sum,mean,median price,number,3,0,3,1.50,3.00,6.75,2.25,2.25</p>
+<p>column,type,rows,nulls,distinct,min,max,sum,mean,median label,text,3,0,3,a,c,,,</p>
+<ul><li>PASS: column-profile-trimmed-header (FEATURE-ColumnProfile.md)</li></ul>
+<p>intent: A padded header name is trimmed, so the trimmed name selects the column and is reported. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: column,type,rows,nulls,distinct,min,max,sum,mean,median qty,integer,2,0,2,1,2,3,1.50,1.50</p>
+<ul><li>PASS: column-profile-unknown-column (FEATURE-ColumnProfile.md)</li></ul>
+<p>intent: A column name absent from the header exits 3 with empty standard output. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: csvstat: /tmp/tmp6i6ckalr/in.csv: no column named &quot;nosuch&quot;</p>
+<ul><li>PASS: column-profile-case-sensitive (FEATURE-ColumnProfile.md)</li></ul>
+<p>intent: Column names match case-sensitively, so a different case is an unknown column. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: csvstat: /tmp/tmpwp9zjwxb/in.csv: no column named &quot;QTY&quot;</p>
+<ul><li>PASS: column-profile-rejected-input (FEATURE-ColumnProfile.md)</li></ul>
+<p>intent: A ragged file with --column exits 3 and writes nothing to standard output. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: csvstat: /tmp/tmp_51zz7ki/ragged.csv: line 3: record has 3 fields, header has 2</p>
+<ul><li>PASS: diag-ragged-fixture (FEATURE-FailureDiagnostics.md)</li></ul>
+<p>intent: The supplied ragged fixture exits 3, writes nothing to standard output, and writes one diagnostic line. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: csvstat: sources/ragged.csv: line 4: record has 4 fields, header has 3</p>
+<ul><li>PASS: diag-ragged-line-number (FEATURE-FailureDiagnostics.md)</li></ul>
+<p>intent: The diagnostic for a ragged record carries the number of the line holding that record. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: csvstat: /tmp/tmph618i3f8/ragged_case.csv: line 4: record has 3 fields, header has 2</p>
+<ul><li>PASS: diag-empty-file (FEATURE-FailureDiagnostics.md)</li></ul>
+<p>intent: An empty file is rejected with exit 3 and nothing on standard output. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: csvstat: /tmp/tmp0ljanamc/empty.csv: no header record: input is empty or blank</p>
+<ul><li>PASS: diag-blank-lines-only (FEATURE-FailureDiagnostics.md)</li></ul>
+<p>intent: A file containing only blank lines is rejected as empty with exit 3. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: csvstat: /tmp/tmpstrfntbn/blank.csv: no header record: input is empty or blank</p>
+<ul><li>PASS: diag-empty-header-name (FEATURE-FailureDiagnostics.md)</li></ul>
+<p>intent: An empty header name is rejected with exit 3 and nothing on standard output. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: csvstat: /tmp/tmpv4uvv38u/emptyname.csv: header column 2 is empty</p>
+<ul><li>PASS: diag-repeated-header-name (FEATURE-FailureDiagnostics.md)</li></ul>
+<p>intent: A repeated header name, including one repeated only after trimming, is rejected with exit 3. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: csvstat: /tmp/tmpdrugtg3a/repeated.csv: header name &quot;dup&quot; is repeated</p>
+<ul><li>PASS: diag-failure-with-column-option (FEATURE-FailureDiagnostics.md)</li></ul>
+<p>intent: A rejected file under --column still exits 3 with nothing on standard output. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: csvstat: sources/ragged.csv: line 4: record has 4 fields, header has 3</p>
+<ul><li>PASS: unreadable-missing-file (FEATURE-UnreadableFile.md)</li></ul>
+<p>intent: A path that does not exist exits 1 and writes nothing to standard output. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: csvstat: open /tmp/tmply63mrxu/no-such-file.csv: no such file or directory</p>
+<ul><li>PASS: unreadable-missing-file-freq (FEATURE-UnreadableFile.md)</li></ul>
+<p>intent: A missing file under --freq also exits 1 with nothing on standard output. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: csvstat: open /tmp/tmp6nqlag7r/absent.csv: no such file or directory</p>
+<ul><li>PASS: unreadable-missing-file-column (FEATURE-UnreadableFile.md)</li></ul>
+<p>intent: A missing file under --column also exits 1 with nothing on standard output. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: csvstat: open /tmp/tmpgh5gw1hw/absent.csv: no such file or directory</p>
+<ul><li>PASS: unreadable-directory-as-file (FEATURE-UnreadableFile.md)</li></ul>
+<p>intent: A directory named as the file cannot be read and exits 1 with nothing on standard output. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: csvstat: /tmp/tmphq_dcnzw: read csv: read /tmp/tmphq_dcnzw: is a directory</p>
+<ul><li>PASS: unreadable-readable-file-still-succeeds (FEATURE-UnreadableFile.md)</li></ul>
+<p>intent: A readable fixture is not treated as unreadable and exits 0. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: column,type,rows,nulls,distinct,min,max,sum,mean,median sku,empty,0,0,0,,,,, price,empty,0,0,0,,,,, in_stock,empty,0,0,0,,,,,</p>
+<ul><li>PASS: freq-default-matches-fixture (FEATURE-FreqMode.md)</li></ul>
+<p>intent: The default frequency listing for a named column equals the top five counts computed independently from the fixture. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: value,count Sales,8 Engineering,7 Support,7 Finance,2</p>
+<ul><li>PASS: freq-top-limits-rows (FEATURE-FreqMode.md)</li></ul>
+<p>intent: With --top 2 exactly the first two ordered rows are listed. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: value,count east,9 north,9</p>
+<ul><li>PASS: freq-omits-null-spellings (FEATURE-FreqMode.md)</li></ul>
+<p>intent: Null values (empty, NA, N/A, NULL in any case) are not listed in a frequency listing. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: value,count 4,4 2,3 3,1</p>
+<ul><li>PASS: freq-values-are-trimmed (FEATURE-FreqMode.md)</li></ul>
+<p>intent: Padded values are trimmed before counting, so padded and unpadded spellings count together. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: value,count Globex,10 Acme Corp,9 Umbrella,7 Initech,3 Hooli,1</p>
+<ul><li>PASS: freq-all-null-column-header-only (FEATURE-FreqMode.md)</li></ul>
+<p>intent: A column with no non-null values lists only the header. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: value,count</p>
+<ul><li>PASS: freq-unknown-column-rejected (FEATURE-FreqMode.md)</li></ul>
+<p>intent: A column name absent from the header exits 3 and writes nothing to standard output. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: csvstat: sources/orders.csv: no column named &quot;nosuch&quot;</p>
+<ul><li>PASS: freq-name-is-case-sensitive (FEATURE-FreqMode.md)</li></ul>
+<p>intent: A column name differing only in case from a header name is not found and exits 3. target interpreter: /mnt/c/Users/barlo/projects/drydock/.venv/bin/python provisioning: not required return code: 0 stdout: csvstat: sources/employees.csv: no column named &quot;DEPARTMENT&quot;</p>
+<h2>Build summary</h2>
+<p>The baseline gate is green, but several declared behaviors are missing: <code>--column</code> is a stub that writes nothing, <code>--top</code>/<code>--column</code>/<code>--freq</code> combinations aren&#x27;t rejected, and an unknown <code>--freq</code> column exits 2 instead of 3. I&#x27;ll make those changes now.Now I&#x27;ll update the one existing test that encoded the old exit-2 behavior for an unknown <code>--freq</code> column, and add tests for the new paths.I accidentally wrote a near-duplicate freq test; removing it before running the suite.Gate is green. Next I&#x27;ll exercise the built binary against the declared acceptance cases directly, since the Python <code>cli_runner</code> harness isn&#x27;t available here.RESULT: SUCCESS</p>
+<p>The five stories in this block are implemented. <code>sh bin/test.sh</code> (vet, then the full Go test suite) passes. I did not run the Python acceptance criteria through <code>drydock_go.cli_runner</code>, because that helper isn&#x27;t on disk here. I checked the same cases by running the built binary directly, and they match the declared exit codes and stdout/stderr shape.</p>
+<p>FILES CHANGED:</p>
+<ul><li>internal/cli/args.go</li><li>internal/cli/cli.go</li><li>internal/cli/profile.go</li><li>internal/cli/args_test.go</li><li>internal/cli/freq_test.go</li><li>internal/cli/column_test.go (new)</li></ul>
+<p>SUMMARY:</p>
+<ul><li><strong>usage-errors:</strong> <code>ParseArgs</code> now rejects <code>--column</code> with <code>--freq</code>, <code>--top</code> without <code>--freq</code>, and a non-positive <code>--top</code>, in addition to the existing checks. Every usage error prints one stderr line that includes both command forms and exits 2 before the file is opened.</li><li><strong>column-profile:</strong> <code>--column</code> was a stub that exited 0 with no output. It now writes the profile header and only that column&#x27;s row, matched exactly and case-sensitively against the trimmed header. An absent name exits 3.</li><li><strong>freq-mode:</strong> An unknown <code>--freq</code> column now exits 3 instead of 2, as the feature spec requires. I changed the existing test that asserted exit 2 to assert exit 3, and added case-sensitivity coverage.</li><li><strong>failure-diagnostics / unreadable-file:</strong> Already behaving as specified. I verified that rejected input exits 3, unreadable or missing files and directories exit 1, and stdout stays empty on every failure.</li></ul>
+<p>Direct checks on the binary:</p>
+<ul><li>All 11 malformed-argument forms exit 2 with empty stdout.</li><li>Valid forms exit 0.</li><li>Unknown and wrong-case column names exit 3.</li><li>Missing file, directory, <code>--freq</code> on a missing file, and <code>--column</code> on a missing file exit 1.</li><li>The ragged fixture exits 3 with the line number in the diagnostic.</li><li><code>sources/</code> is untouched, and I did not run <code>sources/run.sh</code>.</li></ul>
+<p>Choices I made:</p>
+<ul><li>The usage diagnostic is a single line: <code>csvstat: &lt;reason&gt;; usage: csvstat [--column &lt;name&gt;] &lt;file&gt; | csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</code>.</li><li><code>--column</code> output reuses the profile row builder, so it is guaranteed to equal the full profile&#x27;s row for that column.</li></ul></article>
+</main>
+</body>
+</html>

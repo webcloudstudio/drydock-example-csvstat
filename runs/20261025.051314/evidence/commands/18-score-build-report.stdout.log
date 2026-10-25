@@ -1,0 +1,23 @@
+Drydock 0.8.0  Copyright (c) 2026 Web Cloud Studio. All rights reserved.
+
+Build report: CsvStat
+  evidence: /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/workspace/targets/CsvStat/evidence
+  usage:    /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/workspace/logs/llm.jsonl
+
+  Blueprint acceptance (last `score ac`): PASS 94  FAIL 0  UNVERIFIED 0  PREPASSED 32  (126 AC)
+
+  Block                     Build AC  Calls     Cached  Uncached     Hit   Output    Time
+  ───────────────────────────────────────────────────────────────────────────────────────
+  ✓ Block 1 · Foundational       2/2      1     86,724         8  100.0%    4,957     38s
+  ✓ Block 2 · Service          48/48      1    456,157        18  100.0%   36,222  2m 37s
+  ✓ Block 3 · Service          43/43      1  1,388,768        36  100.0%   50,568  4m 28s
+  ✓ Block 4 · Service          28/28      1    354,465        18  100.0%   12,813  1m 11s
+  ✓ Block 5 · Service            4/4      1    126,718        12  100.0%    3,554     36s
+  ✓ Block 6 · Feature            1/1      1     72,480         8  100.0%    1,285     22s
+  ───────────────────────────────────────────────────────────────────────────────────────
+  TOTAL                      126/126      6  2,485,312       100  100.0%  109,399  9m 55s
+
+  Blocks: 6/6 verified · 6 on first call · 0 repaired
+  Model:  claude-haiku-5-5
+  Tokens: 2,485,312 cached · 100 uncached · 109,399 out
+

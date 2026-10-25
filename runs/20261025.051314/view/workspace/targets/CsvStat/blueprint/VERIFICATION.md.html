@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/VERIFICATION.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/VERIFICATION.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/VERIFICATION.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Release Verification</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Terminal assembly story that passes the supplied grader <code>sources/run.sh</code> with every one of its 22 checks.</td></tr><tr><td>Depends On</td><td>FEATURE-TestGate.md, FEATURE-ColumnProfile.md, FEATURE-FreqMode.md, FEATURE-UnreadableFile.md</td></tr><tr><td>Provides</td><td>sh sources/run.sh</td></tr><tr><td>Consumes</td><td>csvstat command, bin/test.sh</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>This is the terminal story. After every member story has closed, the supplied grader runs unfiltered. The grader builds <code>./cmd/csvstat</code> with <code>go build</code>, makes 22 checks of exit code and standard output against five supplied CSV files, and exits zero only when the build succeeds and every check passes.</p>
+<h2>Behavior</h2>
+<ul><li>The grader is run exactly as supplied: <code>sh sources/run.sh</code> from the application root.</li><li>Its exit status is the whole verdict.</li><li>A failure is repaired in the owning application package, never in <code>sources/</code>.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC release-grader-passes ===<br>Intent: The supplied grader sources/run.sh, run unfiltered, exits zero.<br>Suite: full<br>Requires: executable=go; scope=test</p>
+<p>import subprocess</p>
+<p>result = subprocess.run([&quot;sh&quot;, &quot;sources/run.sh&quot;], capture_output=True, text=True) print(result.stdout) print(result.stderr) assert result.returncode == 0, result.returncode === END AC release-grader-passes ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Do not modify, rewrite, regenerate, or substitute any file under <code>sources/</code>.</li><li>Application code never reads <code>sources/run.sh</code> or any supplied data file, and never hardcodes a statistic, a type, or a value list.</li></ul></article>
+</main>
+</body>
+</html>

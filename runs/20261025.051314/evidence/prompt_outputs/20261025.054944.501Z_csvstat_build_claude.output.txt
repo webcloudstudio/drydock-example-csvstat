@@ -1,0 +1,29 @@
+The baseline gate is green, but several declared behaviors are missing: `--column` is a stub that writes nothing, `--top`/`--column`/`--freq` combinations aren't rejected, and an unknown `--freq` column exits 2 instead of 3. I'll make those changes now.Now I'll update the one existing test that encoded the old exit-2 behavior for an unknown `--freq` column, and add tests for the new paths.I accidentally wrote a near-duplicate freq test; removing it before running the suite.Gate is green. Next I'll exercise the built binary against the declared acceptance cases directly, since the Python `cli_runner` harness isn't available here.RESULT: SUCCESS
+
+The five stories in this block are implemented. `sh bin/test.sh` (vet, then the full Go test suite) passes. I did not run the Python acceptance criteria through `drydock_go.cli_runner`, because that helper isn't on disk here. I checked the same cases by running the built binary directly, and they match the declared exit codes and stdout/stderr shape.
+
+FILES CHANGED:
+- internal/cli/args.go
+- internal/cli/cli.go
+- internal/cli/profile.go
+- internal/cli/args_test.go
+- internal/cli/freq_test.go
+- internal/cli/column_test.go (new)
+
+SUMMARY:
+- **usage-errors:** `ParseArgs` now rejects `--column` with `--freq`, `--top` without `--freq`, and a non-positive `--top`, in addition to the existing checks. Every usage error prints one stderr line that includes both command forms and exits 2 before the file is opened.
+- **column-profile:** `--column` was a stub that exited 0 with no output. It now writes the profile header and only that column's row, matched exactly and case-sensitively against the trimmed header. An absent name exits 3.
+- **freq-mode:** An unknown `--freq` column now exits 3 instead of 2, as the feature spec requires. I changed the existing test that asserted exit 2 to assert exit 3, and added case-sensitivity coverage.
+- **failure-diagnostics / unreadable-file:** Already behaving as specified. I verified that rejected input exits 3, unreadable or missing files and directories exit 1, and stdout stays empty on every failure.
+
+Direct checks on the binary:
+- All 11 malformed-argument forms exit 2 with empty stdout.
+- Valid forms exit 0.
+- Unknown and wrong-case column names exit 3.
+- Missing file, directory, `--freq` on a missing file, and `--column` on a missing file exit 1.
+- The ragged fixture exits 3 with the line number in the diagnostic.
+- `sources/` is untouched, and I did not run `sources/run.sh`.
+
+Choices I made:
+- The usage diagnostic is a single line: `csvstat: <reason>; usage: csvstat [--column <name>] <file> | csvstat --freq <name> [--top <n>] <file>`.
+- `--column` output reuses the profile row builder, so it is guaranteed to equal the full profile's row for that column.

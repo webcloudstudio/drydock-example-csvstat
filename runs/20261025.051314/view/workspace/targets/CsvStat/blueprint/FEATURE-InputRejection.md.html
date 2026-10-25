@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-InputRejection.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-InputRejection.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-InputRejection.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Input Rejection</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Reject empty files, blank-only files, empty or repeated header names, and ragged records with exit 3.</td></tr><tr><td>Depends On</td><td>FEATURE-Trimming.md, FEATURE-CsvReading.md, FEATURE-Arguments.md</td></tr><tr><td>Provides</td><td>csvdata.ErrRejected</td></tr><tr><td>Consumes</td><td>csvdata.Read, cli.ParseArgs</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>Malformed input must never produce partial output. Rejection is detected in <code>internal/csvdata</code> and mapped to exit code 3 by <code>internal/cli</code>.</p>
+<h2>Behavior</h2>
+<ul><li><code>csvdata</code> exposes a rejection error type (sentinel or typed error matched with <code>errors.Is</code> /</li></ul>
+<p><code>errors.As</code>) named <code>ErrRejected</code>. For a ragged record it carries the 1-based line number.</p>
+<ul><li>The file is rejected when:<ul><li>it is empty (zero bytes);</li><li>it contains only blank lines;</li><li>any header name is empty after trimming;</li><li>any header name repeats (compared exactly after trimming);</li><li>any record has a different number of fields from the header.</li></ul></li><li>A header-only file is valid and yields zero data records.</li><li>A trailing line ending after the last record creates no extra record.</li><li><code>cli.Run</code> reads the file named by the parsed arguments. On a rejection error it writes nothing</li></ul>
+<p>to standard output, writes one diagnostic line to standard error naming the file (and the line number for a ragged record), and returns exit code 3.</p>
+<ul><li>A CSV syntax error from <code>encoding/csv</code> (for example a bare quote) is also a rejection, exit 3.</li></ul>
+<h2>Tests the build must write</h2>
+<p>In <code>internal/csvdata</code>:</p>
+<ul><li><code>TestRejectEmptyFile</code></li><li><code>TestRejectBlankLinesOnly</code></li><li><code>TestRejectEmptyHeaderName</code></li><li><code>TestRejectRepeatedHeaderName</code></li><li><code>TestRejectRaggedRecord</code></li><li><code>TestHeaderOnlyFileAccepted</code></li><li><code>TestTrailingNewlineAddsNoRecord</code></li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC reject-unit-empty-and-blank ===<br>Intent: Empty files and files of only blank lines are rejected by the reader.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>for name in (&quot;TestRejectEmptyFile&quot;, &quot;TestRejectBlankLinesOnly&quot;): result = run_test(&quot;./internal/csvdata&quot;, name) print(result.stdout) print(result.stderr) assert result.passed, (name, result.status, result.stdout, result.stderr) === END AC reject-unit-empty-and-blank ===</p>
+<p>=== AC reject-unit-headers ===<br>Intent: Empty and repeated header names are rejected by the reader.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>for name in (&quot;TestRejectEmptyHeaderName&quot;, &quot;TestRejectRepeatedHeaderName&quot;): result = run_test(&quot;./internal/csvdata&quot;, name) print(result.stdout) print(result.stderr) assert result.passed, (name, result.status, result.stdout, result.stderr) === END AC reject-unit-headers ===</p>
+<p>=== AC reject-unit-ragged-and-valid ===<br>Intent: Ragged records are rejected while header-only and newline-terminated files are accepted.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>for name in ( &quot;TestRejectRaggedRecord&quot;, &quot;TestHeaderOnlyFileAccepted&quot;, &quot;TestTrailingNewlineAddsNoRecord&quot;, ): result = run_test(&quot;./internal/csvdata&quot;, name) print(result.stdout) print(result.stderr) assert result.passed, (name, result.status, result.stdout, result.stderr) === END AC reject-unit-ragged-and-valid ===</p>
+<p>=== AC reject-cli-ragged ===<br>Intent: The executable exits 3 with empty standard output for a ragged record.<br>Requires: executable=go; scope=test</p>
+<p>import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>with tempfile.TemporaryDirectory() as tmp: path = os.path.join(tmp, &quot;ragged.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as handle: handle.write(&quot;a,b\n1,2\n3,4,5\n6,7\n&quot;) code, out, err = cli_runner(path) print(out) print(err) assert code == 3, (code, out, err) assert out == &quot;&quot;, out === END AC reject-cli-ragged ===</p>
+<p>=== AC reject-cli-empty-file ===<br>Intent: The executable exits 3 with empty standard output for a zero-byte file.<br>Requires: executable=go; scope=test</p>
+<p>import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>with tempfile.TemporaryDirectory() as tmp: path = os.path.join(tmp, &quot;empty.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as handle: handle.write(&quot;&quot;) code, out, err = cli_runner(path) print(out) print(err) assert code == 3, (code, out, err) assert out == &quot;&quot;, out === END AC reject-cli-empty-file ===</p>
+<p>=== AC reject-cli-blank-lines-only ===<br>Intent: The executable exits 3 with empty standard output for a file holding only blank lines.<br>Requires: executable=go; scope=test</p>
+<p>import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>with tempfile.TemporaryDirectory() as tmp: path = os.path.join(tmp, &quot;blank.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as handle: handle.write(&quot;\n\n\n&quot;) code, out, err = cli_runner(path) print(out) print(err) assert code == 3, (code, out, err) assert out == &quot;&quot;, out === END AC reject-cli-blank-lines-only ===</p>
+<p>=== AC reject-cli-repeated-header ===<br>Intent: The executable exits 3 with empty standard output when a header name repeats.<br>Requires: executable=go; scope=test</p>
+<p>import csv import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>with tempfile.TemporaryDirectory() as tmp: path = os.path.join(tmp, &quot;dup.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as handle: writer = csv.writer(handle, lineterminator=&quot;\n&quot;) writer.writerow([&quot;id&quot;, &quot;name&quot;, &quot;id&quot;]) writer.writerow([&quot;1&quot;, &quot;x&quot;, &quot;2&quot;]) code, out, err = cli_runner(path) print(out) print(err) assert code == 3, (code, out, err) assert out == &quot;&quot;, out === END AC reject-cli-repeated-header ===</p>
+<p>=== AC reject-cli-empty-header-name ===<br>Intent: The executable exits 3 with empty standard output when a header name is empty.<br>Requires: executable=go; scope=test</p>
+<p>import csv import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>with tempfile.TemporaryDirectory() as tmp: path = os.path.join(tmp, &quot;emptyname.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as handle: writer = csv.writer(handle, lineterminator=&quot;\n&quot;) writer.writerow([&quot;id&quot;, &quot;&quot;, &quot;name&quot;]) writer.writerow([&quot;1&quot;, &quot;x&quot;, &quot;y&quot;]) code, out, err = cli_runner(path) print(out) print(err) assert code == 3, (code, out, err) assert out == &quot;&quot;, out === END AC reject-cli-empty-header-name ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>A rejected command never writes anything to standard output.</li><li>The diagnostic goes to standard error only and is never part of any contract.</li><li>Rejection logic lives in <code>internal/csvdata</code>; <code>internal/cli</code> only maps it to exit 3.</li><li>Only the standard library is used; supplied files under <code>sources/</code> are never modified.</li></ul></article>
+</main>
+</body>
+</html>

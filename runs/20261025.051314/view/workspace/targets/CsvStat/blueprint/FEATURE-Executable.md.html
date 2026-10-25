@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-Executable.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-Executable.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-Executable.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Executable</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Build the csvstat executable from the module root with a thin main package over cli.Run.</td></tr><tr><td>Depends On</td><td>ARCHITECTURE.md</td></tr><tr><td>Provides</td><td>csvstat command, cli.Run</td></tr><tr><td>Consumes</td><td>None</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p><code>go build ./cmd/csvstat</code> at the application root produces the <code>csvstat</code> executable using only the standard library. This story delivers the entry point and a minimal <code>Run</code> that later stories extend.</p>
+<h2>Behavior</h2>
+<ul><li><code>cmd/csvstat/main.go</code> is <code>package main</code>. It calls <code>cli.Run(os.Args[1:], os.Stdout, os.Stderr)</code> and</li></ul>
+<p>passes the returned code to <code>os.Exit</code>. It contains no other logic.</p>
+<ul><li><code>internal/cli</code> exports <code>Run(args []string, stdout, stderr io.Writer) int</code>. In this story it returns 0.</li></ul>
+<p>Later stories add parsing, dispatch, and failure mapping.</p>
+<ul><li>The import path of the cli package is <code>&lt;module&gt;/internal/cli</code>, where the module path is the one in</li></ul>
+<p><code>go.mod</code>.</p>
+<ul><li>Every import in the module is either standard library or module-local.</li></ul>
+<h2>Tests For The Project Suite</h2>
+<p>The builder adds <code>internal/cli</code> tests that call <code>Run</code> with <code>bytes.Buffer</code> writers.</p>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC exe-builds ===<br>Intent: The csvstat executable builds with go build and runs to a defined exit code on a valid file.<br>Requires: executable=go; scope=test</p>
+<p>import csv import os import tempfile from drydock_go import cli_runner</p>
+<p>with tempfile.TemporaryDirectory() as workdir: path = os.path.join(workdir, &quot;data.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as handle: writer = csv.writer(handle, lineterminator=&quot;\n&quot;) writer.writerow([&quot;a&quot;, &quot;b&quot;]) writer.writerow([&quot;1&quot;, &quot;2&quot;]) code, out, err = cli_runner(path) print(code, out, err) assert isinstance(code, int) assert 0 &lt;= code &lt;= 3 assert isinstance(out, str) === END AC exe-builds ===</p>
+<p>=== AC exe-stdlib-only ===<br>Intent: Every import in the module is standard library or module-local, with no third-party path.</p>
+<p>import re from pathlib import Path</p>
+<p>files = list(Path(&quot;cmd&quot;).rglob(&quot;<em>.go&quot;)) + list(Path(&quot;internal&quot;).rglob(&quot;</em>.go&quot;)) assert files paths = [] for source in files: text = source.read_text(encoding=&quot;utf-8&quot;) blocks = re.findall(r&quot;import\s*\((.*?)\)&quot;, text, re.S) blocks += re.findall(r&quot;^import\s+(?:\w+\s+)?(\&quot;[^\&quot;]+\&quot;)&quot;, text, re.M) for block in blocks: paths += re.findall(r&quot;\&quot;([^\&quot;]+)\&quot;&quot;, block) assert paths for path in paths: first = path.split(&quot;/&quot;)[0] assert &quot;.&quot; not in first, path === END AC exe-stdlib-only ===</p>
+<p>=== AC exe-main-owns-exit ===<br>Intent: Only the main package calls os.Exit and main delegates to cli.Run.</p>
+<p>from pathlib import Path</p>
+<p>main_source = Path(&quot;cmd/csvstat/main.go&quot;).read_text(encoding=&quot;utf-8&quot;) assert &quot;package main&quot; in main_source assert &quot;os.Exit(&quot; in main_source assert &quot;cli.Run(&quot; in main_source for source in Path(&quot;internal&quot;).rglob(&quot;*.go&quot;): assert &quot;os.Exit(&quot; not in source.read_text(encoding=&quot;utf-8&quot;), source === END AC exe-main-owns-exit ===</p>
+<p>=== AC exe-no-grader-read ===<br>Intent: Application code never references the supplied grader script.</p>
+<p>from pathlib import Path</p>
+<p>files = list(Path(&quot;cmd&quot;).rglob(&quot;<em>.go&quot;)) + list(Path(&quot;internal&quot;).rglob(&quot;</em>.go&quot;)) for source in files: if source.name.endswith(&quot;_test.go&quot;): continue assert &quot;run.sh&quot; not in source.read_text(encoding=&quot;utf-8&quot;), source === END AC exe-no-grader-read ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Standard library only; no third-party module.</li><li>Application code never reads <code>sources/run.sh</code> or any supplied data file.</li><li>Do not modify anything under <code>sources/</code>.</li></ul></article>
+</main>
+</body>
+</html>

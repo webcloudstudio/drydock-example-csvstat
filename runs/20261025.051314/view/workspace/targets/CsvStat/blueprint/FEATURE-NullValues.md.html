@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-NullValues.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-NullValues.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-NullValues.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Null Values</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Recognise null spellings (empty, NA, N/A, NULL ignoring case) on trimmed values.</td></tr><tr><td>Depends On</td><td>FEATURE-Trimming.md, FEATURE-CsvReading.md</td></tr><tr><td>Provides</td><td>csvdata.IsNull</td></tr><tr><td>Consumes</td><td>csvdata.Read</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>Statistics, type inference and frequency counting all need one shared definition of &quot;null&quot;. This feature provides it as a function in <code>internal/csvdata</code> so no other package re-implements it.</p>
+<h2>Behavior</h2>
+<ul><li><code>func IsNull(value string) bool</code> in package <code>csvdata</code> receives a value that has already been</li></ul>
+<p>trimmed of leading and trailing spaces.</p>
+<ul><li>A value is null when it is the empty string, or equals <code>NA</code>, <code>N/A</code>, or <code>NULL</code> ignoring case</li></ul>
+<p>(<code>na</code>, <code>n/a</code>, <code>Null</code> and <code>null</code> are null).</p>
+<ul><li>Every other value is non-null, including <code>0</code>, <code>false</code>, <code>NAN</code>, <code>N/B</code>, <code>NULLS</code> and <code>NA</code> is not</li></ul>
+<p>an input (trimming precedes this rule), so only exact spellings match.</p>
+<ul><li>A quoted empty field (<code>&quot;&quot;</code>) is read by <code>encoding/csv</code> as an empty string, so it is null.</li><li>A field made only of spaces is empty after trimming and is therefore null.</li><li><code>IsNull</code> is pure: it never reads files and never allocates state.</li></ul>
+<h2>Tests the build must write</h2>
+<p>The project&#x27;s own suite in <code>internal/csvdata</code> contains these test functions (names are fixed so acceptance can run them):</p>
+<ul><li><code>TestIsNullEmpty</code></li><li><code>TestIsNullSpellings</code></li><li><code>TestIsNullNonNullValues</code></li><li><code>TestQuotedEmptyFieldIsNull</code></li><li><code>TestSpacesOnlyFieldIsNull</code></li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC null-empty ===<br>Intent: The empty string is reported null by csvdata.IsNull.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/csvdata&quot;, &quot;TestIsNullEmpty&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC null-empty ===</p>
+<p>=== AC null-spellings ===<br>Intent: NA, N/A and NULL are null in any letter case.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/csvdata&quot;, &quot;TestIsNullSpellings&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC null-spellings ===</p>
+<p>=== AC null-non-null-values ===<br>Intent: Ordinary values such as 0, false and near-miss spellings are not null.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/csvdata&quot;, &quot;TestIsNullNonNullValues&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC null-non-null-values ===</p>
+<p>=== AC null-quoted-empty ===<br>Intent: A quoted empty field read from a CSV file is null.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/csvdata&quot;, &quot;TestQuotedEmptyFieldIsNull&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC null-quoted-empty ===</p>
+<p>=== AC null-spaces-only ===<br>Intent: A field of only spaces is null once trimmed.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/csvdata&quot;, &quot;TestSpacesOnlyFieldIsNull&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC null-spaces-only ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li><code>IsNull</code> never reads <code>sources/run.sh</code> or any supplied data file and embeds no answer.</li><li>Only the standard library is used.</li><li>Null spellings are exactly those named in the source; no other token is treated as null.</li></ul></article>
+</main>
+</body>
+</html>

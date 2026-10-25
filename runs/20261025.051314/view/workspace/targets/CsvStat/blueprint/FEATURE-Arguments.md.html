@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-Arguments.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-Arguments.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-Arguments.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Arguments</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Parse csvstat options and exactly one file argument, with options preceding the file.</td></tr><tr><td>Depends On</td><td>FEATURE-Executable.md</td></tr><tr><td>Provides</td><td>cli.ParseArgs</td></tr><tr><td>Consumes</td><td>cli.Run</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>csvstat accepts two command forms:</p>
+<pre><code>csvstat [--column &lt;name&gt;] &lt;file&gt;
+csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</code></pre>
+<p>Options precede the file and exactly one file is required. This story delivers the parser and its wiring into <code>Run</code>. Cross-option validation (<code>--top</code> without <code>--freq</code>, <code>--column</code> with <code>--freq</code>, non-positive <code>--top</code>) belongs to the usage-errors story.</p>
+<h2>Behavior</h2>
+<ul><li><code>internal/cli</code> exports <code>ParseArgs(args []string) (Options, error)</code>.</li><li><code>Options</code> has fields <code>Column string</code>, <code>Freq string</code>, <code>Top int</code>, <code>TopSet bool</code>, <code>File string</code>, and</li></ul>
+<p>flags are recorded as set or not set (a presence flag for <code>--column</code> and <code>--freq</code>, so an empty value is distinguishable from an absent option).</p>
+<ul><li>Parsing uses a local <code>flag.FlagSet</code> created with <code>flag.ContinueOnError</code> and its output discarded.</li></ul>
+<p>Options take a separate value (<code>--top 3</code>); a repeated option is a parse error.</p>
+<ul><li>Parsing stops at the first non-option argument. That argument is the file. Any argument after it,</li></ul>
+<p>including a later option, is an extra argument and a parse error. Options after the file are therefore rejected.</p>
+<ul><li>A missing file, an extra argument, an unknown option, and an option with no value each return an</li></ul>
+<p>error. <code>--top</code> is parsed as a decimal integer; a non-integer value is a parse error.</p>
+<ul><li><code>Run</code> calls <code>ParseArgs</code>. When it returns an error, <code>Run</code> writes one line to <code>stderr</code>, writes nothing</li></ul>
+<p>to <code>stdout</code>, and returns 2.</p>
+<h2>Tests For The Project Suite</h2>
+<p>The builder writes these <code>internal/cli</code> tests, named exactly as listed, using the named inputs:</p>
+<ul><li><code>TestParseArgsFileOnly</code>: <code>[file]</code> yields File set and no options.</li><li><code>TestParseArgsColumn</code>: <code>[--column name file]</code> yields Column and File.</li><li><code>TestParseArgsFreqTop</code>: <code>[--freq name --top 3 file]</code> yields Freq, Top 3, TopSet, and File.</li><li><code>TestParseArgsMissingFile</code>: <code>[--column name]</code> is an error.</li><li><code>TestParseArgsExtraFile</code>: two files is an error.</li><li><code>TestParseArgsUnknownOption</code>: <code>[--frobnicate file]</code> is an error.</li><li><code>TestParseArgsMissingValue</code>: <code>[file-less --top]</code> forms with no value are an error.</li><li><code>TestParseArgsOptionsAfterFile</code>: <code>[file --column name]</code> is an error.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC args-file-only ===<br>Intent: A lone file argument parses.<br>Requires: executable=go; scope=test</p>
+<p>import sys from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/cli&quot;, &quot;TestParseArgsFileOnly&quot;) print(result.stdout) print(result.stderr, file=sys.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC args-file-only ===</p>
+<p>=== AC args-column ===<br>Intent: The --column option and its value parse before the file.<br>Requires: executable=go; scope=test</p>
+<p>import sys from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/cli&quot;, &quot;TestParseArgsColumn&quot;) print(result.stdout) print(result.stderr, file=sys.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC args-column ===</p>
+<p>=== AC args-freq-top ===<br>Intent: The --freq and --top options and their values parse before the file.<br>Requires: executable=go; scope=test</p>
+<p>import sys from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/cli&quot;, &quot;TestParseArgsFreqTop&quot;) print(result.stdout) print(result.stderr, file=sys.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC args-freq-top ===</p>
+<p>=== AC args-structural-errors ===<br>Intent: Missing file, extra file, unknown option, missing value, and options after the file are parse errors.<br>Requires: executable=go; scope=test</p>
+<p>import sys from drydock_go import run_test</p>
+<p>names = [ &quot;TestParseArgsMissingFile&quot;, &quot;TestParseArgsExtraFile&quot;, &quot;TestParseArgsUnknownOption&quot;, &quot;TestParseArgsMissingValue&quot;, &quot;TestParseArgsOptionsAfterFile&quot;, ] for name in names: result = run_test(&quot;./internal/cli&quot;, name) print(name, result.status) print(result.stdout) print(result.stderr, file=sys.stderr) assert result.passed, (name, result.status, result.stdout, result.stderr) === END AC args-structural-errors ===</p>
+<p>=== AC args-valid-forms-not-usage-errors ===<br>Intent: The valid command forms are accepted by the executable and never exit with the usage-error code.<br>Requires: executable=go; scope=test</p>
+<p>import csv import os import tempfile from drydock_go import cli_runner</p>
+<p>usage_exit = 2 with tempfile.TemporaryDirectory() as workdir: path = os.path.join(workdir, &quot;data.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as handle: writer = csv.writer(handle, lineterminator=&quot;\n&quot;) writer.writerow([&quot;a&quot;, &quot;b&quot;]) writer.writerow([&quot;1&quot;, &quot;2&quot;]) forms = [ [path], [&quot;--column&quot;, &quot;a&quot;, path], [&quot;--freq&quot;, &quot;a&quot;, path], [&quot;--freq&quot;, &quot;a&quot;, &quot;--top&quot;, &quot;3&quot;, path], ] for form in forms: code, out, err = cli_runner(*form) print(form, code, out, err) assert code != usage_exit, form === END AC args-valid-forms-not-usage-errors ===</p>
+<p>=== AC args-options-after-file-exit ===<br>Intent: An option placed after the file is rejected by the executable with the usage-error exit status and no standard output.</p>
+<p>import csv import os import tempfile from drydock_go import cli_runner</p>
+<p>with tempfile.TemporaryDirectory() as workdir: path = os.path.join(workdir, &quot;data.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as handle: writer = csv.writer(handle, lineterminator=&quot;\n&quot;) writer.writerow([&quot;a&quot;, &quot;b&quot;]) writer.writerow([&quot;1&quot;, &quot;2&quot;]) code, out, err = cli_runner(path, &quot;--column&quot;, &quot;a&quot;) print(code, out, err) assert code == 2 assert out == &quot;&quot; === END AC args-options-after-file-exit ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Options precede the file; exactly one file is required.</li><li>A parse failure writes nothing to standard output.</li><li>Use a local <code>flag.FlagSet</code> with <code>flag.ContinueOnError</code>; never the global flag set.</li></ul></article>
+</main>
+</body>
+</html>

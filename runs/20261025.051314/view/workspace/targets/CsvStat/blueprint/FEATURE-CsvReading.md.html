@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-CsvReading.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-CsvReading.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-CsvReading.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: CSV Reading</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Read UTF-8 RFC 4180 CSV with the first record as the header, recording each record&#x27;s source line.</td></tr><tr><td>Depends On</td><td>ARCHITECTURE.md</td></tr><tr><td>Provides</td><td>csvdata.Read</td></tr><tr><td>Consumes</td><td>None</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p><code>internal/csvdata</code> turns an input stream into a header and data records. Trimming, null recognition, and rejection of malformed input are separate stories that build on this reader.</p>
+<h2>Behavior</h2>
+<ul><li><code>Read(r io.Reader) (*Table, error)</code> parses with <code>encoding/csv</code>, with <code>FieldsPerRecord = -1</code> so field</li></ul>
+<p>counts are judged by the rejection story, and <code>LazyQuotes</code> off.</p>
+<ul><li><code>Table</code> has <code>Header []string</code> and <code>Records []Record</code>. <code>Record</code> has <code>Line int</code>, the 1-based source line</li></ul>
+<p>on which the record starts, and <code>Fields []string</code>.</p>
+<ul><li>The first record is the header; every later record is a data record. Values are returned as parsed</li></ul>
+<p>with no trimming.</p>
+<ul><li>A quoted field containing a comma is one value. A quoted field may contain doubled quotes and newlines.</li><li>A line ending after the last record creates no extra record. Input with or without a final newline</li></ul>
+<p>yields the same records.</p>
+<ul><li>Input with no record at all (empty or only blank lines) returns a <code>Table</code> with a nil <code>Header</code> and no</li></ul>
+<p><code>Records</code> and no error; the input-rejection story turns that into a rejection.</p>
+<ul><li>A syntax error reported by <code>encoding/csv</code> is returned wrapped so callers can recover the line number</li></ul>
+<p>with <code>errors.As</code> and <code>*csv.ParseError</code>.</p>
+<ul><li><code>Read</code> does not open files; <code>cli</code> opens the file and passes the reader.</li></ul>
+<h2>Tests For The Project Suite</h2>
+<p>The builder writes these <code>internal/csvdata</code> tests, named exactly as listed:</p>
+<ul><li><code>TestReadHeaderAndRecords</code>: header is the first record; the rest are data records.</li><li><code>TestReadQuotedComma</code>: a quoted field with a comma is a single value.</li><li><code>TestReadTrailingNewline</code>: a final newline adds no record, matching the same input without one.</li><li><code>TestReadRecordLineNumbers</code>: each record carries the line on which it starts, including after a</li></ul>
+<p>quoted field that spans lines.</p>
+<ul><li><code>TestReadHeaderOnly</code>: a header with no data yields zero records.</li><li><code>TestReadNoRecords</code>: empty input yields a nil header and no records.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC read-header-and-records ===<br>Intent: The first record is the header and later records are data records.<br>Requires: executable=go; scope=test</p>
+<p>import sys from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/csvdata&quot;, &quot;TestReadHeaderAndRecords&quot;) print(result.stdout) print(result.stderr, file=sys.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC read-header-and-records ===</p>
+<p>=== AC read-quoted-comma ===<br>Intent: A quoted field containing a comma parses as one value.<br>Requires: executable=go; scope=test</p>
+<p>import sys from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/csvdata&quot;, &quot;TestReadQuotedComma&quot;) print(result.stdout) print(result.stderr, file=sys.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC read-quoted-comma ===</p>
+<p>=== AC read-trailing-newline ===<br>Intent: A line ending after the last record does not create an extra data record.<br>Requires: executable=go; scope=test</p>
+<p>import sys from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/csvdata&quot;, &quot;TestReadTrailingNewline&quot;) print(result.stdout) print(result.stderr, file=sys.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC read-trailing-newline ===</p>
+<p>=== AC read-line-numbers ===<br>Intent: Each record carries the source line on which it starts.<br>Requires: executable=go; scope=test</p>
+<p>import sys from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/csvdata&quot;, &quot;TestReadRecordLineNumbers&quot;) print(result.stdout) print(result.stderr, file=sys.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC read-line-numbers ===</p>
+<p>=== AC read-header-only-and-empty ===<br>Intent: A header-only input has zero records and an input with no record has no header.<br>Requires: executable=go; scope=test</p>
+<p>import sys from drydock_go import run_test</p>
+<p>for name in (&quot;TestReadHeaderOnly&quot;, &quot;TestReadNoRecords&quot;): result = run_test(&quot;./internal/csvdata&quot;, name) print(name, result.status) print(result.stdout) print(result.stderr, file=sys.stderr) assert result.passed, (name, result.status, result.stdout, result.stderr) === END AC read-header-only-and-empty ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Read with Go&#x27;s <code>encoding/csv</code>; do not write a custom CSV parser.</li><li>The reader does not trim, classify, or reject values; those belong to later stories.</li><li>Never read a supplied data file from application code; the file named on the command line is the only input.</li></ul></article>
+</main>
+</body>
+</html>

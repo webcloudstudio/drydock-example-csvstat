@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/prompt_outputs/20261025.053417.096Z_csvstat_build_claude.output.txt</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/prompt_outputs/20261025.053417.096Z_csvstat_build_claude.output.txt</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/prompt_outputs/20261025.053417.096Z_csvstat_build_claude.output.txt">Raw file</a></div></header>
+<article class="doc"><pre>The build directory has the scaffold (`go.mod`, `cmd/csvstat/main.go`, a stub `cli.Run`, package docs) and no implementation yet. Block 2 covers all nine stories, so I&#x27;ll build the full set: the `csvdata`, `profile`, and `cli` packages, plus their tests named as the specs require.Implementation is in place. Next, the tests, named as the specs require. Each one acts on the code and reads back the returned value, not the output text.Now I&#x27;ll format, then run the project&#x27;s declared gate (`bin/test.sh`: vet, then test).The one failure is a wrong expectation in my test, not a code bug. `20250203` is all digits, so it matches `integer` before `date` is ever considered, as the type order requires. The spec only says it is not a date, so I&#x27;ll assert `integer` for that value. The `cli_test.go` change is just gofmt realignment of my own file.The gate is green: vet passes, and 58 tests pass with 0 failures. The static rules hold: no `run.sh` in application code, `os.Exit` only in `main`, and all imports are stdlib or module-local. Last, I&#x27;ll run the built binary against the staged data files from the shell to confirm the exit codes the acceptance checks expect.Block 2 is implemented and `sh bin/test.sh` passes: vet is clean and all 58 tests pass.
+
+Valid files exit 0 and print nothing, because profile output belongs to later stories. Rejected input exits 3, usage errors exit 2, and an unreadable file exits 1. I ran the built binary on the staged CSVs: the five valid files exit 0, and `ragged.csv` exits 3 with `line 4` in the diagnostic. I did not run `sources/run.sh` or the Python acceptance criteria, since the `drydock_go` helper isn&#x27;t present here. The Go tests carry the same names and assertions.
+
+Choices I made where the specs left room:
+- **Read vs. Validate:** the reader returns no error for empty input, per the CSV-reading spec. Rejection lives in a separate `csvdata.Validate`, which the cli calls after `Read` and `Trim`. Header-level rejections report line 0, because the table does not record the header&#x27;s line.
+- **Option presence:** `Options` has `ColumnSet` and `FreqSet` alongside `TopSet`, so an empty `--column &quot;&quot;` is distinguishable from an absent option.
+- **Exit mapping:** a CSV syntax error maps to 3 as rejected input. Any other read failure maps to 1.
+- **Number parsing:** `--top` is parsed as base-10 only, so `0x10` is rejected.
+
+FILES CHANGED:
+- internal/cli/cli.go
+- internal/cli/args.go
+- internal/cli/args_test.go
+- internal/cli/cli_test.go
+- internal/csvdata/read.go
+- internal/csvdata/read_test.go
+- internal/csvdata/trim.go
+- internal/csvdata/trim_test.go
+- internal/csvdata/null.go
+- internal/csvdata/null_test.go
+- internal/csvdata/validate.go
+- internal/csvdata/validate_test.go
+- internal/profile/infer.go
+- internal/profile/infer_test.go
+
+SUMMARY:
+- `cmd/csvstat/main.go` was already correct and is unchanged. `cli.Run` now parses args, opens the file, reads, trims, and validates, mapping outcomes to exit codes 0/1/2/3.
+- `csvdata` provides `Read`, `Trim`, `IsNull`, `Validate`, and `ErrRejected`, with a `RejectedError` that carries the line number for ragged records.
+- `profile.InferType` returns empty, integer, number, date, boolean, or text in that order.
+- `cli.ParseArgs` uses a local `flag.FlagSet` with `ContinueOnError`, rejects repeated options, and stops at the first positional argument.
+- Static gates checked by hand: no `run.sh` reference in application code, `os.Exit` only in `main`, and stdlib or module-local imports only.
+- Test counts: 58 passing across `cli`, `csvdata`, and `profile`, 0 failing.
+
+&lt;blueprint-decisions&gt;
+[{&quot;spec&quot;:&quot;FEATURE-CsvReading.md&quot;,&quot;severity&quot;:&quot;Low&quot;,&quot;subject&quot;:&quot;Where empty-input rejection happens&quot;,&quot;decision&quot;:&quot;Read returns a nil Header with no error for empty or blank-only input, as the spec requires. Rejection is a separate csvdata.Validate, called by cli after Read and Trim, which returns ErrRejected. Reading and rejecting stay separate, and the input-rejection story still holds. Is that acceptable?&quot;}]
+&lt;/blueprint-decisions&gt;
+
+RESULT: SUCCESS
+
+FILES CHANGED:
+- internal/cli/cli.go
+- internal/cli/args.go
+- internal/cli/args_test.go
+- internal/cli/cli_test.go
+- internal/csvdata/read.go
+- internal/csvdata/read_test.go
+- internal/csvdata/trim.go
+- internal/csvdata/trim_test.go
+- internal/csvdata/null.go
+- internal/csvdata/null_test.go
+- internal/csvdata/validate.go
+- internal/csvdata/validate_test.go
+- internal/profile/infer.go
+- internal/profile/infer_test.go
+
+SUMMARY:
+Implemented all nine Block 2 stories. `csvdata` covers reading, trimming, null recognition, and rejection. `profile.InferType` covers integer, number, date, boolean, text, and empty. `cli` covers argument parsing and the Run pipeline with exit codes 0/1/2/3. `sh bin/test.sh` passes: vet is clean, and 58 tests pass with 0 failures. The built binary exits 0 on the valid staged CSVs, 3 on `ragged.csv` with empty stdout, and 2 on options after the file. The Python acceptance criteria were not run, because the `drydock_go` helper is not present in this environment.
+
+BLOCKERS:
+- None.</pre></article>
+</main>
+</body>
+</html>

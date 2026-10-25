@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-FreqLimit.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-FreqLimit.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-FreqLimit.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Frequency Limit</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Limit the number of frequency rows with --top, defaulting to five.</td></tr><tr><td>Depends On</td><td>FEATURE-FreqCount.md</td></tr><tr><td>Provides</td><td>freq.Top</td></tr><tr><td>Consumes</td><td>freq.Count</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>After the frequency listing is ordered, at most <code>--top</code> rows are written. <code>--top</code> is a positive integer and defaults to 5 when not given.</p>
+<h2>Behavior</h2>
+<ul><li>The limit applies after ordering, so the rows listed are the first N of the full ordered list.</li><li>A limit larger than the number of distinct values lists every value.</li><li>The header <code>value,count</code> is always written on success.</li><li>Validation of <code>--top</code> (non-positive, non-integer, without <code>--freq</code>) belongs to the usage-errors</li></ul>
+<p>story and exits 2.</p>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC freq-limit-default-five ===<br>Intent: Without --top the listing has at most five rows, the first five of the ordered list.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile from collections import Counter from drydock_go import cli_runner</p>
+<p>values = [] for i in range(7): values += [f&quot;v{i}&quot;] * (8 - i) rows = [[&quot;v&quot;]] + [[x] for x in values] with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f: csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows) code, out, err = cli_runner(&quot;--freq&quot;, &quot;v&quot;, path) print(out) print(err) assert code == 0, code parsed = list(csv.reader(io.StringIO(out))) counts = Counter(values) ordered = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0].encode(&quot;utf-8&quot;))) default_top = 5 assert parsed[0] == [&quot;value&quot;, &quot;count&quot;] assert parsed[1:] == [[k, str(n)] for k, n in ordered[:default_top]] assert len(ordered) &gt; default_top === END AC freq-limit-default-five ===</p>
+<p>=== AC freq-limit-explicit-top ===<br>Intent: --top N lists exactly the first N ordered rows.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile from collections import Counter from drydock_go import cli_runner</p>
+<p>values = [] for i in range(7): values += [f&quot;v{i}&quot;] * (8 - i) rows = [[&quot;v&quot;]] + [[x] for x in values] counts = Counter(values) ordered = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0].encode(&quot;utf-8&quot;))) with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f: csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows) for n in (1, 2, 3): code, out, err = cli_runner(&quot;--freq&quot;, &quot;v&quot;, &quot;--top&quot;, str(n), path) print(out) print(err) assert code == 0, code parsed = list(csv.reader(io.StringIO(out))) assert parsed[0] == [&quot;value&quot;, &quot;count&quot;] assert parsed[1:] == [[k, str(c)] for k, c in ordered[:n]] === END AC freq-limit-explicit-top ===</p>
+<p>=== AC freq-limit-larger-than-distinct ===<br>Intent: A --top larger than the distinct count lists every value.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile from collections import Counter from drydock_go import cli_runner</p>
+<p>values = [&quot;a&quot;, &quot;b&quot;, &quot;b&quot;, &quot;c&quot;, &quot;c&quot;, &quot;c&quot;] rows = [[&quot;v&quot;]] + [[x] for x in values] counts = Counter(values) ordered = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0].encode(&quot;utf-8&quot;))) with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f: csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows) code, out, err = cli_runner(&quot;--freq&quot;, &quot;v&quot;, &quot;--top&quot;, str(len(ordered) + 50), path) print(out) print(err) assert code == 0, code parsed = list(csv.reader(io.StringIO(out))) assert parsed[1:] == [[k, str(n)] for k, n in ordered] === END AC freq-limit-larger-than-distinct ===</p>
+<p>=== AC freq-limit-all-null-column ===<br>Intent: A column with no non-null values lists only the header even with --top given.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile from drydock_go import cli_runner</p>
+<p>rows = [[&quot;gap&quot;], [&quot;&quot;], [&quot;NA&quot;]] with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f: csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows) code, out, err = cli_runner(&quot;--freq&quot;, &quot;gap&quot;, &quot;--top&quot;, &quot;3&quot;, path) print(out) print(err) assert code == 0, code assert list(csv.reader(io.StringIO(out))) == [[&quot;value&quot;, &quot;count&quot;]] === END AC freq-limit-all-null-column ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>The limit is applied after ordering, never before.</li><li>The default limit is 5.</li></ul></article>
+</main>
+</body>
+</html>

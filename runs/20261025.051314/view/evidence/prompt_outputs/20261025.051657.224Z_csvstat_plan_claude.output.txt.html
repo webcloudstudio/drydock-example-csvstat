@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/prompt_outputs/20261025.051657.224Z_csvstat_plan_claude.output.txt</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/prompt_outputs/20261025.051657.224Z_csvstat_plan_claude.output.txt</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/prompt_outputs/20261025.051657.224Z_csvstat_plan_claude.output.txt">Raw file</a></div></header>
+<article class="doc"><pre>=== BEGIN ARTIFACT ARCHITECTURE.md ===
+# ARCHITECTURE: CsvStat
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Module layout, package ownership, entry contract, and exit-code policy for the csvstat command-line CSV profiler. |
+| Depends On  | None |
+| Provides    | go.mod, internal/cli, internal/csvdata, internal/profile, internal/freq, cmd/csvstat |
+
+## Questions
+
+- None.
+
+## Purpose
+
+csvstat is a single Go command-line executable. It reads one CSV file, infers a type for each column,
+and writes either a column profile or a frequency listing to standard output as CSV. Failures write one
+diagnostic line to standard error and nothing to standard output.
+
+## Technology Stack
+
+Derived from `TECHNOLOGY_STACK.md`; that file remains the decision of record.
+
+| Technology | Where it applies |
+|---|---|
+| Go 1.22 or newer, standard library only | The whole application; `go.mod` declares no third-party requirement |
+| `go test` with `go vet` | Project test suite behind `bin/test.sh` |
+| CSV (RFC 4180, `encoding/csv`) | Input reading and output writing |
+| POSIX shell | `bin/test.sh` and the supplied grader `sources/run.sh` |
+
+## Module Layout
+
+```text
+go.mod                    module csvstat, go 1.22 or newer, no require directive
+cmd/csvstat/main.go       package main; calls cli.Run and passes the result to os.Exit
+internal/cli              argument parsing, dispatch, exit-code mapping, diagnostics
+internal/csvdata          CSV reading, trimming, null recognition, input rejection
+internal/profile          type inference, counts, min/max, sum/mean/median, decimal formatting
+internal/freq             frequency counting, ordering, limiting
+bin/test.sh               POSIX test gate (go vet ./... then go test ./...)
+sources/                  read-only scoring assets; never modified
+```
+
+Each `internal/` package carries a `doc.go` declaring its package so the layout exists before any
+behavior is built.
+
+## Entry Contract
+
+`cli.Run(args []string, stdout, stderr io.Writer) int` is the single entry point. `args` excludes the
+program name. Only `cmd/csvstat/main.go` calls `os.Exit`; no package under `internal/` does. Tests call
+`Run` with `bytes.Buffer` writers.
+
+Standard output is written only on success: output is built in memory and flushed after every check
+has passed.
+
+## Exit Codes
+
+| Code | Meaning |
+|---|---|
+| 0 | Success |
+| 1 | Operational failure: the file cannot be opened or read |
+| 2 | Usage error: missing or extra file, unknown option, missing option value, non-positive or malformed `--top`, `--top` without `--freq`, `--column` with `--freq` |
+| 3 | Rejected input: empty file, empty or repeated header name, ragged or malformed record, or a column name absent from the header |
+
+## Package Ownership
+
+| Boundary | Owning package | Allowed low-level access |
+|---|---|---|
+| Command line, exit codes, stderr diagnostics | `internal/cli` | `flag`, `io`, `os.Open` for the input file |
+| CSV parsing, trimming, null spellings, rejection | `internal/csvdata` | `encoding/csv`, `io`, `strings` |
+| Type inference and statistics | `internal/profile` | `math/big`, `time`, `regexp`, `sort` |
+| Frequency counting | `internal/freq` | `sort` |
+| Configuration, file stores, external services, persistence | None; the application has no persistent state, no database, and no network access | Not applicable |
+
+## Technical Decisions
+
+- Sums, means, and medians are computed exactly with `math/big` and rounded once, half away from zero,
+  when written.
+- Application code never reads `sources/run.sh` or any supplied data file and never embeds a statistic,
+  a type, or a value list. Every value comes from the file examined.
+- Diagnostics go to standard error and are never compared by the grader.
+
+## Programmatic Acceptance
+
+=== AC arch-go-mod ===
+Intent: The root go.mod declares a module, Go 1.22 or newer, and no third-party requirement.
+Requires: executable=go; scope=test
+
+import re
+from pathlib import Path
+
+text = Path(&quot;go.mod&quot;).read_text(encoding=&quot;utf-8&quot;)
+lines = [line.strip() for line in text.splitlines()]
+modules = [line for line in lines if line.startswith(&quot;module &quot;)]
+assert len(modules) == 1, lines
+assert modules[0].split(None, 1)[1].strip() != &quot;&quot;
+goline = [line for line in lines if re.match(r&quot;^go\s+\d+\.\d+&quot;, line)]
+assert len(goline) == 1, lines
+match = re.match(r&quot;^go\s+(\d+)\.(\d+)&quot;, goline[0])
+assert (int(match.group(1)), int(match.group(2))) &gt;= (1, 22)
+assert not any(line.startswith(&quot;require&quot;) for line in lines), lines
+=== END AC arch-go-mod ===
+
+=== AC arch-layout ===
+Intent: The application packages exist under internal/ and the command directory exists under cmd/.
+
+from pathlib import Path
+
+for package in (&quot;cli&quot;, &quot;csvdata&quot;, &quot;profile&quot;, &quot;freq&quot;):
+    directory = Path(&quot;internal&quot;) / package
+    assert directory.is_dir(), directory
+    assert list(directory.glob(&quot;*.go&quot;)), directory
+assert Path(&quot;cmd/csvstat&quot;).is_dir()
+=== END AC arch-layout ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Do not modify, rewrite, regenerate, or substitute any file under `sources/`.
+- Application code never reads `sources/run.sh` or any supplied data file and never embeds an answer.
+- Use only the Go standard library; add no third-party module.
+- Only `cmd/csvstat/main.go` calls `os.Exit`.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-Executable.md ===
+# FEATURE: Executable
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Build the csvstat executable from the module root with a thin main package over cli.Run. |
+| Depends On  | ARCHITECTURE.md |
+| Provides    | csvstat command, cli.Run |
+| Consumes    | None |
+
+## Questions
+
+- None.
+
+## Purpose
+
+`go build ./cmd/csvstat` at the application root produces the `csvstat` executable using only the
+standard library. This story delivers the entry point and a minimal `Run` that later stories extend.
+
+## Behavior
+
+- `cmd/csvstat/main.go` is `package main`. It calls `cli.Run(os.Args[1:], os.Stdout, os.Stderr)` and
+  passes the returned code to `os.Exit`. It contains no other logic.
+- `internal/cli` exports `Run(args []string, stdout, stderr io.Writer) int`. In this story it returns 0.
+  Later stories add parsing, dispatch, and failure mapping.
+- The import path of the cli package is `&lt;module&gt;/internal/cli`, where the module path is the one in
+  `go.mod`.
+- Every import in the module is either standard library or module-local.
+
+## Tests For The Project Suite
+
+The builder adds `internal/cli` tests that call `Run` with `bytes.Buffer` writers.
+
+## Programmatic Acceptance
+
+=== AC exe-builds ===
+Intent: The csvstat executable builds with go build and runs to a defined exit code on a valid file.
+Requires: executable=go; scope=test
+
+import csv
+import os
+import tempfile
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as workdir:
+    path = os.path.join(workdir, &quot;data.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as handle:
+        writer = csv.writer(handle, lineterminator=&quot;\n&quot;)
+        writer.writerow([&quot;a&quot;, &quot;b&quot;])
+        writer.writerow([&quot;1&quot;, &quot;2&quot;])
+    code, out, err = cli_runner(path)
+    print(code, out, err)
+    assert isinstance(code, int)
+    assert 0 &lt;= code &lt;= 3
+    assert isinstance(out, str)
+=== END AC exe-builds ===
+
+=== AC exe-stdlib-only ===
+Intent: Every import in the module is standard library or module-local, with no third-party path.
+
+import re
+from pathlib import Path
+
+files = list(Path(&quot;cmd&quot;).rglob(&quot;*.go&quot;)) + list(Path(&quot;internal&quot;).rglob(&quot;*.go&quot;))
+assert files
+paths = []
+for source in files:
+    text = source.read_text(encoding=&quot;utf-8&quot;)
+    blocks = re.findall(r&quot;import\s*\((.*?)\)&quot;, text, re.S)
+    blocks += re.findall(r&quot;^import\s+(?:\w+\s+)?(\&quot;[^\&quot;]+\&quot;)&quot;, text, re.M)
+    for block in blocks:
+        paths += re.findall(r&quot;\&quot;([^\&quot;]+)\&quot;&quot;, block)
+assert paths
+for path in paths:
+    first = path.split(&quot;/&quot;)[0]
+    assert &quot;.&quot; not in first, path
+=== END AC exe-stdlib-only ===
+
+=== AC exe-main-owns-exit ===
+Intent: Only the main package calls os.Exit and main delegates to cli.Run.
+
+from pathlib import Path
+
+main_source = Path(&quot;cmd/csvstat/main.go&quot;).read_text(encoding=&quot;utf-8&quot;)
+assert &quot;package main&quot; in main_source
+assert &quot;os.Exit(&quot; in main_source
+assert &quot;cli.Run(&quot; in main_source
+for source in Path(&quot;internal&quot;).rglob(&quot;*.go&quot;):
+    assert &quot;os.Exit(&quot; not in source.read_text(encoding=&quot;utf-8&quot;), source
+=== END AC exe-main-owns-exit ===
+
+=== AC exe-no-grader-read ===
+Intent: Application code never references the supplied grader script.
+
+from pathlib import Path
+
+files = list(Path(&quot;cmd&quot;).rglob(&quot;*.go&quot;)) + list(Path(&quot;internal&quot;).rglob(&quot;*.go&quot;))
+for source in files:
+    if source.name.endswith(&quot;_test.go&quot;):
+        continue
+    assert &quot;run.sh&quot; not in source.read_text(encoding=&quot;utf-8&quot;), source
+=== END AC exe-no-grader-read ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Standard library only; no third-party module.
+- Application code never reads `sources/run.sh` or any supplied data file.
+- Do not modify anything under `sources/`.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-Arguments.md ===
+# FEATURE: Arguments
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Parse csvstat options and exactly one file argument, with options preceding the file. |
+| Depends On  | FEATURE-Executable.md |
+| Provides    | cli.ParseArgs |
+| Consumes    | cli.Run |
+
+## Questions
+
+- None.
+
+## Purpose
+
+csvstat accepts two command forms:
+
+```text
+csvstat [--column &lt;name&gt;] &lt;file&gt;
+csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;
+```
+
+Options precede the file and exactly one file is required. This story delivers the parser and its
+wiring into `Run`. Cross-option validation (`--top` without `--freq`, `--column` with `--freq`,
+non-positive `--top`) belongs to the usage-errors story.
+
+## Behavior
+
+- `internal/cli` exports `ParseArgs(args []string) (Options, error)`.
+- `Options` has fields `Column string`, `Freq string`, `Top int`, `TopSet bool`, `File string`, and
+  flags are recorded as set or not set (a presence flag for `--column` and `--freq`, so an empty value
+  is distinguishable from an absent option).
+- Parsing uses a local `flag.FlagSet` created with `flag.ContinueOnError` and its output discarded.
+  Options take a separate value (`--top 3`); a repeated option is a parse error.
+- Parsing stops at the first non-option argument. That argument is the file. Any argument after it,
+  including a later option, is an extra argument and a parse error. Options after the file are
+  therefore rejected.
+- A missing file, an extra argument, an unknown option, and an option with no value each return an
+  error. `--top` is parsed as a decimal integer; a non-integer value is a parse error.
+- `Run` calls `ParseArgs`. When it returns an error, `Run` writes one line to `stderr`, writes nothing
+  to `stdout`, and returns 2.
+
+## Tests For The Project Suite
+
+The builder writes these `internal/cli` tests, named exactly as listed, using the named inputs:
+
+- `TestParseArgsFileOnly`: `[file]` yields File set and no options.
+- `TestParseArgsColumn`: `[--column name file]` yields Column and File.
+- `TestParseArgsFreqTop`: `[--freq name --top 3 file]` yields Freq, Top 3, TopSet, and File.
+- `TestParseArgsMissingFile`: `[--column name]` is an error.
+- `TestParseArgsExtraFile`: two files is an error.
+- `TestParseArgsUnknownOption`: `[--frobnicate file]` is an error.
+- `TestParseArgsMissingValue`: `[file-less --top]` forms with no value are an error.
+- `TestParseArgsOptionsAfterFile`: `[file --column name]` is an error.
+
+## Programmatic Acceptance
+
+=== AC args-file-only ===
+Intent: A lone file argument parses.
+Requires: executable=go; scope=test
+
+import sys
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/cli&quot;, &quot;TestParseArgsFileOnly&quot;)
+print(result.stdout)
+print(result.stderr, file=sys.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC args-file-only ===
+
+=== AC args-column ===
+Intent: The --column option and its value parse before the file.
+Requires: executable=go; scope=test
+
+import sys
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/cli&quot;, &quot;TestParseArgsColumn&quot;)
+print(result.stdout)
+print(result.stderr, file=sys.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC args-column ===
+
+=== AC args-freq-top ===
+Intent: The --freq and --top options and their values parse before the file.
+Requires: executable=go; scope=test
+
+import sys
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/cli&quot;, &quot;TestParseArgsFreqTop&quot;)
+print(result.stdout)
+print(result.stderr, file=sys.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC args-freq-top ===
+
+=== AC args-structural-errors ===
+Intent: Missing file, extra file, unknown option, missing value, and options after the file are parse errors.
+Requires: executable=go; scope=test
+
+import sys
+from drydock_go import run_test
+
+names = [
+    &quot;TestParseArgsMissingFile&quot;,
+    &quot;TestParseArgsExtraFile&quot;,
+    &quot;TestParseArgsUnknownOption&quot;,
+    &quot;TestParseArgsMissingValue&quot;,
+    &quot;TestParseArgsOptionsAfterFile&quot;,
+]
+for name in names:
+    result = run_test(&quot;./internal/cli&quot;, name)
+    print(name, result.status)
+    print(result.stdout)
+    print(result.stderr, file=sys.stderr)
+    assert result.passed, (name, result.status, result.stdout, result.stderr)
+=== END AC args-structural-errors ===
+
+=== AC args-valid-forms-not-usage-errors ===
+Intent: The valid command forms are accepted by the executable and never exit with the usage-error code.
+Requires: executable=go; scope=test
+
+import csv
+import os
+import tempfile
+from drydock_go import cli_runner
+
+usage_exit = 2
+with tempfile.TemporaryDirectory() as workdir:
+    path = os.path.join(workdir, &quot;data.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as handle:
+        writer = csv.writer(handle, lineterminator=&quot;\n&quot;)
+        writer.writerow([&quot;a&quot;, &quot;b&quot;])
+        writer.writerow([&quot;1&quot;, &quot;2&quot;])
+    forms = [
+        [path],
+        [&quot;--column&quot;, &quot;a&quot;, path],
+        [&quot;--freq&quot;, &quot;a&quot;, path],
+        [&quot;--freq&quot;, &quot;a&quot;, &quot;--top&quot;, &quot;3&quot;, path],
+    ]
+    for form in forms:
+        code, out, err = cli_runner(*form)
+        print(form, code, out, err)
+        assert code != usage_exit, form
+=== END AC args-valid-forms-not-usage-errors ===
+
+=== AC args-options-after-file-exit ===
+Intent: An option placed after the file is rejected by the executable with the usage-error exit status and no standard output.
+
+import csv
+import os
+import tempfile
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as workdir:
+    path = os.path.join(workdir, &quot;data.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as handle:
+        writer = csv.writer(handle, lineterminator=&quot;\n&quot;)
+        writer.writerow([&quot;a&quot;, &quot;b&quot;])
+        writer.writerow([&quot;1&quot;, &quot;2&quot;])
+    code, out, err = cli_runner(path, &quot;--column&quot;, &quot;a&quot;)
+    print(code, out, err)
+    assert code == 2
+    assert out == &quot;&quot;
+=== END AC args-options-after-file-exit ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Options precede the file; exactly one file is required.
+- A parse failure writes nothing to standard output.
+- Use a local `flag.FlagSet` with `flag.ContinueOnError`; never the global flag set.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-CsvReading.md ===
+# FEATURE: CSV Reading
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Read UTF-8 RFC 4180 CSV with the first record as the header, recording each record&#x27;s source line. |
+| Depends On  | ARCHITECTURE.md |
+| Provides    | csvdata.Read |
+| Consumes    | None |
+
+## Questions
+
+- None.
+
+## Purpose
+
+`internal/csvdata` turns an input stream into a header and data records. Trimming, null recognition, and
+rejection of malformed input are separate stories that build on this reader.
+
+## Behavior
+
+- `Read(r io.Reader) (*Table, error)` parses with `encoding/csv`, with `FieldsPerRecord = -1` so field
+  counts are judged by the rejection story, and `LazyQuotes` off.
+- `Table` has `Header []string` and `Records []Record`. `Record` has `Line int`, the 1-based source line
+  on which the record starts, and `Fields []string`.
+- The first record is the header; every later record is a data record. Values are returned as parsed
+  with no trimming.
+- A quoted field containing a comma is one value. A quoted field may contain doubled quotes and newlines.
+- A line ending after the last record creates no extra record. Input with or without a final newline
+  yields the same records.
+- Input with no record at all (empty or only blank lines) returns a `Table` with a nil `Header` and no
+  `Records` and no error; the input-rejection story turns that into a rejection.
+- A syntax error reported by `encoding/csv` is returned wrapped so callers can recover the line number
+  with `errors.As` and `*csv.ParseError`.
+- `Read` does not open files; `cli` opens the file and passes the reader.
+
+## Tests For The Project Suite
+
+The builder writes these `internal/csvdata` tests, named exactly as listed:
+
+- `TestReadHeaderAndRecords`: header is the first record; the rest are data records.
+- `TestReadQuotedComma`: a quoted field with a comma is a single value.
+- `TestReadTrailingNewline`: a final newline adds no record, matching the same input without one.
+- `TestReadRecordLineNumbers`: each record carries the line on which it starts, including after a
+  quoted field that spans lines.
+- `TestReadHeaderOnly`: a header with no data yields zero records.
+- `TestReadNoRecords`: empty input yields a nil header and no records.
+
+## Programmatic Acceptance
+
+=== AC read-header-and-records ===
+Intent: The first record is the header and later records are data records.
+Requires: executable=go; scope=test
+
+import sys
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/csvdata&quot;, &quot;TestReadHeaderAndRecords&quot;)
+print(result.stdout)
+print(result.stderr, file=sys.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC read-header-and-records ===
+
+=== AC read-quoted-comma ===
+Intent: A quoted field containing a comma parses as one value.
+Requires: executable=go; scope=test
+
+import sys
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/csvdata&quot;, &quot;TestReadQuotedComma&quot;)
+print(result.stdout)
+print(result.stderr, file=sys.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC read-quoted-comma ===
+
+=== AC read-trailing-newline ===
+Intent: A line ending after the last record does not create an extra data record.
+Requires: executable=go; scope=test
+
+import sys
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/csvdata&quot;, &quot;TestReadTrailingNewline&quot;)
+print(result.stdout)
+print(result.stderr, file=sys.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC read-trailing-newline ===
+
+=== AC read-line-numbers ===
+Intent: Each record carries the source line on which it starts.
+Requires: executable=go; scope=test
+
+import sys
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/csvdata&quot;, &quot;TestReadRecordLineNumbers&quot;)
+print(result.stdout)
+print(result.stderr, file=sys.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC read-line-numbers ===
+
+=== AC read-header-only-and-empty ===
+Intent: A header-only input has zero records and an input with no record has no header.
+Requires: executable=go; scope=test
+
+import sys
+from drydock_go import run_test
+
+for name in (&quot;TestReadHeaderOnly&quot;, &quot;TestReadNoRecords&quot;):
+    result = run_test(&quot;./internal/csvdata&quot;, name)
+    print(name, result.status)
+    print(result.stdout)
+    print(result.stderr, file=sys.stderr)
+    assert result.passed, (name, result.status, result.stdout, result.stderr)
+=== END AC read-header-only-and-empty ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Read with Go&#x27;s `encoding/csv`; do not write a custom CSV parser.
+- The reader does not trim, classify, or reject values; those belong to later stories.
+- Never read a supplied data file from application code; the file named on the command line is the only input.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-Trimming.md ===
+# FEATURE: Trimming
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Trim leading and trailing spaces from every header name and every value before any other rule applies. |
+| Depends On  | FEATURE-CsvReading.md |
+| Provides    | csvdata.Trim |
+| Consumes    | csvdata.Read |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Every header name and every value is trimmed of leading and trailing spaces before null recognition,
+typing, counting, or comparison. Padded text such as `  Globex  ` and `Acme Corp ` therefore count as
+`Globex` and `Acme Corp`.
+
+## Behavior
+
+- `Trim(t *Table)` replaces, in place, each header name and each record field with the same string
+  stripped of leading and trailing space characters (U+0020).
+- Only U+0020 is trimmed. Tabs and other whitespace are preserved. Interior spaces are preserved.
+- Trimming applies after CSV parsing, so spaces inside a quoted field are also trimmed.
+- Record line numbers and field counts are unchanged.
+- The cli pipeline calls `Read` then `Trim` before any other rule; the profile-output and
+  frequency-mode stories wire that call.
+
+## Tests For The Project Suite
+
+The builder writes these `internal/csvdata` tests, named exactly as listed:
+
+- `TestTrimHeaderNames`: padded header names are trimmed.
+- `TestTrimValues`: padded values are trimmed on both sides.
+- `TestTrimQuotedPadding`: spaces inside a quoted field are trimmed, and the comma inside the quotes is kept.
+- `TestTrimOnlySpaces`: tabs are preserved and interior spaces are kept.
+- `TestTrimKeepsLines`: line numbers and field counts are unchanged.
+
+## Programmatic Acceptance
+
+=== AC trim-header-names ===
+Intent: Leading and trailing spaces are removed from header names.
+Requires: executable=go; scope=test
+
+import sys
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/csvdata&quot;, &quot;TestTrimHeaderNames&quot;)
+print(result.stdout)
+print(result.stderr, file=sys.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC trim-header-names ===
+
+=== AC trim-values ===
+Intent: Leading and trailing spaces are removed from every value.
+Requires: executable=go; scope=test
+
+import sys
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/csvdata&quot;, &quot;TestTrimValues&quot;)
+print(result.stdout)
+print(result.stderr, file=sys.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC trim-values ===
+
+=== AC trim-quoted-padding ===
+Intent: Padding inside a quoted field is trimmed while the quoted comma is kept.
+Requires: executable=go; scope=test
+
+import sys
+from drydock_go import run_test
+
+result = run_test(&quot;./internal/csvdata&quot;, &quot;TestTrimQuotedPadding&quot;)
+print(result.stdout)
+print(result.stderr, file=sys.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC trim-quoted-padding ===
+
+=== AC trim-scope ===
+Intent: Only spaces are trimmed, interior spaces remain, and line numbers and field counts are unchanged.
+Requires: executable=go; scope=test
+
+import sys
+from drydock_go import run_test
+
+for name in (&quot;TestTrimOnlySpaces&quot;, &quot;TestTrimKeepsLines&quot;):
+    result = run_test(&quot;./internal/csvdata&quot;, name)
+    print(name, result.status)
+    print(result.stdout)
+    print(result.stderr, file=sys.stderr)
+    assert result.passed, (name, result.status, result.stdout, result.stderr)
+=== END AC trim-scope ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Trimming happens before null recognition, typing, counting, and comparison.
+- Trim leading and trailing spaces only; do not alter interior content.
+- Distinctness is compared as exact strings after trimming.
+=== END ARTIFACT ===</pre></article>
+</main>
+</body>
+</html>

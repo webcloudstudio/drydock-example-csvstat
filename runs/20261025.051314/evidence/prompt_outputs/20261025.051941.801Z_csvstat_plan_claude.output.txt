@@ -1,0 +1,664 @@
+=== BEGIN ARTIFACT FEATURE-RowCounts.md ===
+# FEATURE: Row Counts
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Count data records, null values, and distinct non-null values for one column. |
+| Depends On  | FEATURE-NullValues.md, FEATURE-InputRejection.md |
+| Provides    | profile.Counts |
+| Consumes    | csvdata.IsNull |
+
+## Questions
+
+- None.
+
+## Purpose
+
+For each column the profile reports `rows`, `nulls`, and `distinct`. This story implements the
+counting function in `internal/profile`. Rendering the counts into the profile CSV belongs to the
+profile output story.
+
+## Interface
+
+```go
+// Counts holds the three counts reported for one column.
+type CountResult struct {
+    Rows     int
+    Nulls    int
+    Distinct int
+}
+
+// Counts takes every trimmed value of one column, in file order, and returns its counts.
+func Counts(values []string) CountResult
+```
+
+## Behavior
+
+- `Rows` is the number of data records, that is `len(values)`. A header-only file gives zero values
+  and therefore `Rows` 0.
+- `Nulls` is the number of values for which `csvdata.IsNull` is true (empty, `NA`, `N/A`, `NULL`
+  ignoring case).
+- `Distinct` is the number of different non-null values, compared as exact strings after trimming.
+  `Globex` and `globex` are different values. Null values are never counted as distinct.
+- A column whose values are all null has `Distinct` 0.
+
+## Required Tests
+
+The project suite in `internal/profile` includes these tests by exact name, each written against
+real output:
+
+- `TestCountsRowsNullsDistinct` — mixed null and non-null values give the expected three counts.
+- `TestCountsHeaderOnly` — no values give all three counts zero.
+- `TestCountsDistinctExactStrings` — values differing only in case are distinct; repeated values
+  count once.
+- `TestCountsAllNull` — a column of only null spellings has `Distinct` 0 and `Nulls` equal to `Rows`.
+
+## Programmatic Acceptance
+
+=== AC rowcounts-rows-nulls-distinct ===
+Intent: Counts reports rows, nulls, and distinct for a mixed column.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestCountsRowsNullsDistinct")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC rowcounts-rows-nulls-distinct ===
+
+=== AC rowcounts-header-only ===
+Intent: A column with no data records reports zero for every count.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestCountsHeaderOnly")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC rowcounts-header-only ===
+
+=== AC rowcounts-distinct-exact ===
+Intent: Distinct compares exact strings and counts repeats once.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestCountsDistinctExactStrings")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC rowcounts-distinct-exact ===
+
+=== AC rowcounts-all-null ===
+Intent: An all-null column has zero distinct values and every row null.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestCountsAllNull")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC rowcounts-all-null ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Counts are computed from the values given; no count is embedded or read from `sources/`.
+- Distinct never merges values by case folding or further trimming.
+- Application code never reads `sources/run.sh`.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-MinMax.md ===
+# FEATURE: Min and Max
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Compute the minimum and maximum of a column according to its inferred type. |
+| Depends On  | FEATURE-BooleanTextTypes.md |
+| Provides    | profile.MinMax |
+| Consumes    | profile.InferType |
+
+## Questions
+
+- None.
+
+## Purpose
+
+The profile reports `min` and `max` for every column. The rule depends on the column type. This
+story implements the extremes computation in `internal/profile`; two-decimal formatting of
+`number` results belongs to the decimal formatting story.
+
+## Interface
+
+```go
+// Extremes holds the minimum and maximum of one column.
+type Extremes struct {
+    Min, Max       string   // text form, see below
+    MinRat, MaxRat *big.Rat // exact values for integer and number columns, else nil
+}
+
+// MinMax takes the column type and the trimmed non-null values of the column.
+func MinMax(typ string, values []string) Extremes
+```
+
+`typ` is one of `integer`, `number`, `date`, `boolean`, `text`, `empty`.
+
+## Behavior
+
+- `integer`: compare exactly with `math/big`, never as `float64`. `Min` and `Max` are the smallest
+  and largest values written as plain integers. `MinRat` and `MaxRat` are set.
+- `number`: compare exactly as `big.Rat` (so `2.5` is less than `10.25`, and `-0.5` less than
+  `-0.25`). `MinRat` and `MaxRat` are set; `Min` and `Max` hold the source text of the extreme
+  values, and the decimal formatting story renders them with two places.
+- `date`: `Min` is the earliest and `Max` the latest. `YYYY-MM-DD` text orders chronologically.
+- `boolean`: `Min` is `false` if any value is false (ignoring case), else `true`. `Max` is `true`
+  if any value is true (ignoring case), else `false`. Output is lowercase whatever the input case.
+- `text`: smallest and largest by byte value, not locale collation. Upper case sorts before lower
+  case; a space sorts before letters.
+- `empty`: `Min` and `Max` are blank and the `Rat` fields are nil.
+- A column with exactly one non-null value reports that value as both minimum and maximum.
+
+## Required Tests
+
+The project suite in `internal/profile` includes these tests by exact name:
+
+- `TestMinMaxInteger` — signed integers, including a negative, are ordered numerically, not
+  lexically (`9` is less than `10`).
+- `TestMinMaxNumber` — decimals are ordered exactly, including negatives and differing digit counts.
+- `TestMinMaxDate` — earliest and latest dates.
+- `TestMinMaxBoolean` — mixed case input yields lowercase output; all-true gives `true` for both;
+  all-false gives `false` for both; mixed gives `false` and `true`.
+- `TestMinMaxText` — byte-value ordering, including mixed case.
+- `TestMinMaxEmpty` — an empty column yields blank extremes.
+- `TestMinMaxSingleValue` — one value is both minimum and maximum.
+
+## Programmatic Acceptance
+
+=== AC minmax-integer ===
+Intent: Integer extremes are ordered numerically with exact arithmetic.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestMinMaxInteger")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC minmax-integer ===
+
+=== AC minmax-number ===
+Intent: Number extremes are ordered exactly as decimals.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestMinMaxNumber")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC minmax-number ===
+
+=== AC minmax-date ===
+Intent: Date extremes are the earliest and latest dates.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestMinMaxDate")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC minmax-date ===
+
+=== AC minmax-boolean ===
+Intent: Boolean extremes follow the false/true rule and are lowercase regardless of input case.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestMinMaxBoolean")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC minmax-boolean ===
+
+=== AC minmax-text ===
+Intent: Text extremes are ordered by byte value.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestMinMaxText")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC minmax-text ===
+
+=== AC minmax-empty ===
+Intent: An empty column has blank minimum and maximum.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestMinMaxEmpty")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC minmax-empty ===
+
+=== AC minmax-single-value ===
+Intent: A single non-null value is both the minimum and the maximum.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestMinMaxSingleValue")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC minmax-single-value ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Numeric comparison never uses `float64`.
+- Text comparison is by byte value only.
+- No extreme is embedded in code or read from `sources/`; every value comes from the input given.
+EOF_NOT_USED
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-SumMean.md ===
+# FEATURE: Sum and Mean
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Compute the exact sum and mean of integer and number columns. |
+| Depends On  | FEATURE-BooleanTextTypes.md |
+| Provides    | profile.SumMean |
+| Consumes    | profile.InferType |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Numeric columns report `sum` and `mean`. Exactness matters because the output is rounded once, at
+write time, from the exact value. This story computes the exact values; formatting belongs to the
+decimal formatting story.
+
+## Interface
+
+```go
+// SumMean takes the column type and the trimmed non-null values of the column. ok is false when
+// the type is not integer or number, or when there are no values.
+func SumMean(typ string, values []string) (sum, mean *big.Rat, ok bool)
+```
+
+## Behavior
+
+- Only `integer` and `number` columns have a sum and mean. For every other type, including `empty`,
+  `ok` is false.
+- Parse every value into a `big.Rat` and accumulate exactly with `math/big`. No `float64` is used
+  at any step, so `0.1` plus `0.2` is exactly three tenths.
+- `sum` is the exact total of the non-null values.
+- `mean` is the exact total divided by the non-null count. Null values are neither summed nor
+  counted.
+- The returned values are exact rationals. They are not rounded here.
+
+## Required Tests
+
+The project suite in `internal/profile` includes these tests by exact name:
+
+- `TestSumIntegerExact` — an integer total, including negatives, equals the big-integer total.
+- `TestSumNumberNoFloatDrift` — decimals such as `0.1` and `0.2` sum exactly to their rational total.
+- `TestMeanExactRational` — total over count is an exact rational, for example a repeating third.
+- `TestSumMeanIgnoresNulls` — the divisor is the non-null count, not the row count.
+- `TestSumMeanNonNumeric` — text, date, boolean, and empty columns give `ok` false.
+
+## Programmatic Acceptance
+
+=== AC summean-integer-sum ===
+Intent: Integer sums are exact, including negative values.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestSumIntegerExact")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC summean-integer-sum ===
+
+=== AC summean-number-no-drift ===
+Intent: Decimal sums carry no floating-point drift.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestSumNumberNoFloatDrift")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC summean-number-no-drift ===
+
+=== AC summean-mean-exact ===
+Intent: The mean is the exact total divided by the non-null count.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestMeanExactRational")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC summean-mean-exact ===
+
+=== AC summean-ignores-nulls ===
+Intent: The mean divisor is the non-null count.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestSumMeanIgnoresNulls")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC summean-ignores-nulls ===
+
+=== AC summean-non-numeric ===
+Intent: Non-numeric column types have no sum or mean.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestSumMeanNonNumeric")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC summean-non-numeric ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- No `float64` arithmetic in sum or mean.
+- Values are rounded once, at output time, never here.
+- No total is embedded in code or read from `sources/`.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-Median.md ===
+# FEATURE: Median
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Compute the exact median of integer and number columns. |
+| Depends On  | FEATURE-SumMean.md |
+| Provides    | profile.Median |
+| Consumes    | profile.SumMean |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Numeric columns report a `median`. It is computed exactly and rounded once at output time by the
+decimal formatting story.
+
+## Interface
+
+```go
+// Median takes the column type and the trimmed non-null values of the column. ok is false when
+// the type is not integer or number, or when there are no values.
+func Median(typ string, values []string) (median *big.Rat, ok bool)
+```
+
+## Behavior
+
+- Parse values into `big.Rat` and sort them numerically (`9` before `10`, `-3` before `2.5`),
+  never lexically.
+- With an odd count the median is the middle value.
+- With an even count the median is the exact mean of the two middle values.
+- Null values are excluded before counting.
+- Non-numeric types and columns with no non-null value give `ok` false.
+- The input slice is not reordered for the caller.
+
+## Required Tests
+
+The project suite in `internal/profile` includes these tests by exact name:
+
+- `TestMedianOddCount` — the middle of an unsorted odd-length list.
+- `TestMedianEvenCountExact` — the exact mean of the two middle values, including a case whose
+  result is not representable in binary floating point.
+- `TestMedianNumericOrder` — numeric rather than lexical ordering.
+- `TestMedianIgnoresNulls` — nulls are excluded from the count.
+- `TestMedianNonNumeric` — non-numeric and empty columns give `ok` false.
+
+## Programmatic Acceptance
+
+=== AC median-odd ===
+Intent: An odd count yields the middle value of the sorted values.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestMedianOddCount")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC median-odd ===
+
+=== AC median-even ===
+Intent: An even count yields the exact mean of the two middle values.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestMedianEvenCountExact")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC median-even ===
+
+=== AC median-numeric-order ===
+Intent: Values are sorted numerically, not lexically.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestMedianNumericOrder")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC median-numeric-order ===
+
+=== AC median-ignores-nulls ===
+Intent: Null values do not count toward the median.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestMedianIgnoresNulls")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC median-ignores-nulls ===
+
+=== AC median-non-numeric ===
+Intent: Non-numeric and empty columns have no median.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestMedianNonNumeric")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC median-non-numeric ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- No `float64` arithmetic in the median.
+- The median is never rounded before output.
+- No median is embedded in code or read from `sources/`.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-DecimalFormat.md ===
+# FEATURE: Decimal Format
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Format exact rational results as two-decimal strings rounded half away from zero, and integers as plain integers. |
+| Depends On  | FEATURE-MinMax.md, FEATURE-SumMean.md, FEATURE-Median.md |
+| Provides    | profile.FormatDecimal, profile.FormatInteger |
+| Consumes    | profile.MinMax, profile.SumMean, profile.Median |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Exact values are rounded once, when written. This story provides the formatting functions the
+profile output story applies to each statistic.
+
+## Interface
+
+```go
+// FormatDecimal writes r with exactly two decimal places.
+func FormatDecimal(r *big.Rat) string
+
+// FormatInteger writes an integer-valued r as a plain integer.
+func FormatInteger(r *big.Rat) string
+```
+
+## Behavior
+
+- `FormatDecimal` rounds the exact value to two places, half away from zero: an exact tie such as
+  one thousandth short of a half cent rounds by magnitude upward for both signs (`0.005` becomes
+  `0.01`, `-0.005` becomes `-0.01`). Rounding is done on the exact rational with integer
+  arithmetic, never through `float64` or `fmt` rounding of a float.
+- Exactly two decimal places are always written, so a whole value has `.00`.
+- A leading `-` is written only when the rounded result is non-zero. A value that rounds to zero
+  is written `0.00` with no minus sign.
+- No thousands separator is written.
+- Very large magnitudes keep every digit.
+- `FormatInteger` writes the integer with no decimal point and no separator, with `-` for negatives
+  and no negative zero.
+- Which statistics use which function: `number` min, max, sum, mean, and median, and `integer`
+  mean and median use `FormatDecimal`; `integer` min, max, and sum use `FormatInteger`. `date`,
+  `boolean`, `text` extremes are written as given.
+
+## Required Tests
+
+The project suite in `internal/profile` includes these tests by exact name:
+
+- `TestFormatDecimalTwoPlaces` — whole, one-place, and many-place values all gain exactly two places.
+- `TestFormatDecimalHalfAwayFromZero` — positive and negative exact ties round away from zero.
+- `TestFormatDecimalNoNegativeZero` — a small negative value that rounds to zero is `0.00`.
+- `TestFormatDecimalNoSeparator` — a value above one thousand has no thousands separator.
+- `TestFormatDecimalLargeExact` — a magnitude beyond `float64` precision keeps all digits.
+- `TestFormatInteger` — plain integers, negatives, and zero.
+
+## Programmatic Acceptance
+
+=== AC decfmt-two-places ===
+Intent: FormatDecimal always writes exactly two decimal places.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestFormatDecimalTwoPlaces")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC decfmt-two-places ===
+
+=== AC decfmt-half-away ===
+Intent: Exact ties round half away from zero for both signs.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestFormatDecimalHalfAwayFromZero")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC decfmt-half-away ===
+
+=== AC decfmt-no-negative-zero ===
+Intent: A negative value that rounds to zero is written without a minus sign.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestFormatDecimalNoNegativeZero")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC decfmt-no-negative-zero ===
+
+=== AC decfmt-no-separator ===
+Intent: Large values are written without a thousands separator.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestFormatDecimalNoSeparator")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC decfmt-no-separator ===
+
+=== AC decfmt-large-exact ===
+Intent: Values beyond float64 precision keep every digit.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestFormatDecimalLargeExact")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC decfmt-large-exact ===
+
+=== AC decfmt-integer ===
+Intent: FormatInteger writes plain integers with no decimal point.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestFormatInteger")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC decfmt-integer ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Rounding happens once, on the exact rational, never through `float64`.
+- No negative zero in any output.
+- No thousands separator.
+- No formatted value is embedded in code or read from `sources/`.
+=== END ARTIFACT ===

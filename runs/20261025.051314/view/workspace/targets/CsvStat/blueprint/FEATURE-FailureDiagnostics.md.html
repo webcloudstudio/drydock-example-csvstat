@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-FailureDiagnostics.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-FailureDiagnostics.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-FailureDiagnostics.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Failure Diagnostics</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Ensures every failing csvstat command writes nothing to standard output and exactly one diagnostic line to standard error.</td></tr><tr><td>Depends On</td><td>FEATURE-InputRejection.md, FEATURE-UsageErrors.md, FEATURE-ProfileOutput.md</td></tr><tr><td>Provides</td><td>stderr diagnostics, exit code 3</td></tr><tr><td>Consumes</td><td>csvdata.ErrRejected, cli.Run</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>A command that fails reports the failure on standard error as one line and leaves standard output empty. Rejected input exits 3. The diagnostic names the file and, for a rejected record, its line number. Standard error is never compared by the grader, so its wording is free; its shape (one line, nothing on standard output) is the contract.</p>
+<h2>Behavior</h2>
+<ul><li>Rejected input (empty file, file containing only blank lines, empty header name, repeated header name, ragged record) exits 3.</li><li>Standard output is written only after the whole result is built, so no partial output precedes a failure.</li><li>Exactly one non-blank line is written to standard error per failure.</li><li>A ragged record&#x27;s diagnostic includes the line number of the offending record.</li><li>Exit code 1 (unreadable file) and exit code 2 (usage) share the same stdout-empty, one-line-stderr rule and are owned by their own stories.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC diag-ragged-fixture ===<br>Intent: The supplied ragged fixture exits 3, writes nothing to standard output, and writes one diagnostic line.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import cli_runner</p>
+<p>code, out, err = cli_runner(&quot;sources/ragged.csv&quot;) print(out) print(err) assert code == 3, code assert out == &quot;&quot;, out lines = [ln for ln in err.splitlines() if ln.strip()] assert len(lines) == 1, lines === END AC diag-ragged-fixture ===</p>
+<p>=== AC diag-ragged-line-number ===<br>Intent: The diagnostic for a ragged record carries the number of the line holding that record.<br>Requires: executable=go; scope=test</p>
+<p>import csv import os import re import tempfile from drydock_go import cli_runner</p>
+<p>rows = [[&quot;a&quot;, &quot;b&quot;], [&quot;1&quot;, &quot;2&quot;], [&quot;3&quot;, &quot;4&quot;], [&quot;5&quot;, &quot;6&quot;, &quot;7&quot;], [&quot;8&quot;, &quot;9&quot;]] bad_line = 4 with tempfile.TemporaryDirectory() as tmp: path = os.path.join(tmp, &quot;ragged_case.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as fh: csv.writer(fh, lineterminator=&quot;\n&quot;).writerows(rows) code, out, err = cli_runner(path) print(out) print(err) assert code == 3, code assert out == &quot;&quot;, out assert str(bad_line) in re.findall(r&quot;\d+&quot;, err), err === END AC diag-ragged-line-number ===</p>
+<p>=== AC diag-empty-file ===<br>Intent: An empty file is rejected with exit 3 and nothing on standard output.<br>Requires: executable=go; scope=test</p>
+<p>import os import tempfile from drydock_go import cli_runner</p>
+<p>with tempfile.TemporaryDirectory() as tmp: path = os.path.join(tmp, &quot;empty.csv&quot;) with open(path, &quot;w&quot;, encoding=&quot;utf-8&quot;) as fh: fh.write(&quot;&quot;) code, out, err = cli_runner(path) print(out) print(err) assert code == 3, code assert out == &quot;&quot;, out lines = [ln for ln in err.splitlines() if ln.strip()] assert len(lines) == 1, lines === END AC diag-empty-file ===</p>
+<p>=== AC diag-blank-lines-only ===<br>Intent: A file containing only blank lines is rejected as empty with exit 3.<br>Requires: executable=go; scope=test</p>
+<p>import os import tempfile from drydock_go import cli_runner</p>
+<p>with tempfile.TemporaryDirectory() as tmp: path = os.path.join(tmp, &quot;blank.csv&quot;) with open(path, &quot;w&quot;, encoding=&quot;utf-8&quot;, newline=&quot;&quot;) as fh: fh.write(&quot;\n\n\n&quot;) code, out, err = cli_runner(path) print(out) print(err) assert code == 3, code assert out == &quot;&quot;, out === END AC diag-blank-lines-only ===</p>
+<p>=== AC diag-empty-header-name ===<br>Intent: An empty header name is rejected with exit 3 and nothing on standard output.<br>Requires: executable=go; scope=test</p>
+<p>import csv import os import tempfile from drydock_go import cli_runner</p>
+<p>rows = [[&quot;a&quot;, &quot;&quot;, &quot;c&quot;], [&quot;1&quot;, &quot;2&quot;, &quot;3&quot;]] with tempfile.TemporaryDirectory() as tmp: path = os.path.join(tmp, &quot;emptyname.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as fh: csv.writer(fh, lineterminator=&quot;\n&quot;).writerows(rows) code, out, err = cli_runner(path) print(out) print(err) assert code == 3, code assert out == &quot;&quot;, out === END AC diag-empty-header-name ===</p>
+<p>=== AC diag-repeated-header-name ===<br>Intent: A repeated header name, including one repeated only after trimming, is rejected with exit 3.<br>Requires: executable=go; scope=test</p>
+<p>import csv import os import tempfile from drydock_go import cli_runner</p>
+<p>name = &quot;dup&quot; rows = [[name, &quot;x&quot;, &quot;  &quot; + name + &quot;  &quot;], [&quot;1&quot;, &quot;2&quot;, &quot;3&quot;]] with tempfile.TemporaryDirectory() as tmp: path = os.path.join(tmp, &quot;repeated.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as fh: csv.writer(fh, lineterminator=&quot;\n&quot;).writerows(rows) code, out, err = cli_runner(path) print(out) print(err) assert code == 3, code assert out == &quot;&quot;, out === END AC diag-repeated-header-name ===</p>
+<p>=== AC diag-failure-with-column-option ===<br>Intent: A rejected file under --column still exits 3 with nothing on standard output.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import cli_runner</p>
+<p>code, out, err = cli_runner(&quot;--column&quot;, &quot;sku&quot;, &quot;sources/ragged.csv&quot;) print(out) print(err) assert code == 3, code assert out == &quot;&quot;, out === END AC diag-failure-with-column-option ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>A failing command never writes a partial profile or frequency listing to standard output.</li><li>Diagnostics go to standard error only and are never compared by the grader.</li><li>Rejected files are never modified.</li></ul></article>
+</main>
+</body>
+</html>

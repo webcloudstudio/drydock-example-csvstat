@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-DateType.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-DateType.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-DateType.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Date Type</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Infer date columns whose non-null values are real YYYY-MM-DD calendar dates.</td></tr><tr><td>Depends On</td><td>FEATURE-NumericTypes.md</td></tr><tr><td>Provides</td><td>profile.InferType (date)</td></tr><tr><td>Consumes</td><td>csvdata.IsNull, profile.InferType</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>Extend <code>profile.InferType</code> so date columns are recognised and sort chronologically in later statistics.</p>
+<h2>Behavior</h2>
+<ul><li>After integer and number are ruled out, a column is <code>date</code> when every non-null value has the</li></ul>
+<p>shape <code>YYYY-MM-DD</code> (four digits, hyphen, two digits, hyphen, two digits) and is a real calendar date.</p>
+<ul><li>Real-date validation uses <code>time.Parse</code> with layout <code>2006-01-02</code> in addition to the digit-shape</li></ul>
+<p>check, so <code>2025-02-30</code>, <code>2025-13-01</code>, and <code>2025-02-29</code> are not dates while <code>2024-02-29</code> is.</p>
+<ul><li>Shapes such as <code>2025-2-3</code>, <code>2025/02/03</code>, <code>20250203</code>, and <code>2025-02-03T10:00</code> are not dates.</li><li>Null values are ignored.</li><li>One non-date value makes the column fall through to later types (<code>boolean</code>, then <code>text</code>).</li></ul>
+<p>Integer and number take precedence, but no YYYY-MM-DD value can match them.</p>
+<h2>Tests the build must write</h2>
+<p>In <code>internal/profile</code>:</p>
+<ul><li><code>TestInferDateColumn</code></li><li><code>TestInvalidCalendarDateIsNotDate</code></li><li><code>TestLeapDayHandling</code></li><li><code>TestDateShapeIsStrict</code></li><li><code>TestNullsIgnoredWhenInferringDate</code></li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC date-column ===<br>Intent: A column of valid YYYY-MM-DD values is typed date.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestInferDateColumn&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC date-column ===</p>
+<p>=== AC date-invalid-calendar ===<br>Intent: A column containing an impossible date such as 2025-02-30 is not typed date.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestInvalidCalendarDateIsNotDate&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC date-invalid-calendar ===</p>
+<p>=== AC date-leap-day ===<br>Intent: A leap-year February 29 is a date and a non-leap-year February 29 is not.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestLeapDayHandling&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC date-leap-day ===</p>
+<p>=== AC date-shape-strict ===<br>Intent: Values with the wrong shape (unpadded, slashes, timestamps) are not dates.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestDateShapeIsStrict&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC date-shape-strict ===</p>
+<p>=== AC date-nulls-ignored ===<br>Intent: Null spellings among dates do not change the inferred date type.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestNullsIgnoredWhenInferringDate&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC date-nulls-ignored ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Date validity is computed from the value, never from a list of known dates.</li><li>Only the standard library (<code>time</code>, <code>regexp</code>) is used.</li><li>The numeric rules from FEATURE-NumericTypes.md are not altered.</li></ul></article>
+</main>
+</body>
+</html>

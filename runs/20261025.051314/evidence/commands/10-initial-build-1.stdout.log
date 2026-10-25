@@ -1,0 +1,97 @@
+Drydock 0.8.0  Copyright (c) 2026 Web Cloud Studio. All rights reserved.
+Build: CsvStat
+scope: entire project
+frontier: foundation
+git: baseline CsvStat 2d4770d2f4c4
+git: baseline CsvStat cc7ab399a3aa
+
+BLOCK block-1  name="Block 1 · Foundational"  calls_max=7
+  story=foundation  "Stand up the Go module, directory layout, and architecture for csvstat."
+
+  [call 1/7]  kind=initial  llm=claude/claude-haiku-5-5
+    result=ok  rc=0  execution=20261025.053142.773Z-2fde1648
+    acceptance=2/2
+git: block-1 | go.md, ARCHITECTURE.md | call=1 | app=dcb0bc45e3a5 target=5a3eb10d13fb
+
+  DONE  story=foundation  state=closed/implemented  execution=20261025.053142.773Z-2fde1648  elapsed=58.3s
+git: block-1 | go.md, ARCHITECTURE.md | step_completed | app=unchanged target=d1e82352c53a
+
+BLOCK block-2  name="Block 2 · Service"  calls_max=7
+  story=executable  "Build the csvstat executable from the module root with a thin main over cli.Run."
+  story=csv-reading  "Read UTF-8 RFC 4180 CSV with the first record as header."
+  story=value-trimming  "Trim leading and trailing spaces from every header name and value."
+  story=null-values  "Recognise null spellings: empty, NA, N/A, NULL ignoring case."
+  story=numeric-types  "Infer integer and number column types."
+  story=date-type  "Infer date columns of real YYYY-MM-DD calendar dates."
+  story=boolean-text-types  "Infer boolean, text, and empty column types."
+  story=args-parsing  "Parse options and exactly one file argument, with options preceding the file."
+  story=input-rejection  "Reject empty files, empty or repeated header names, and ragged records."
+
+  [call 1/7]  kind=initial  llm=claude/claude-haiku-5-5
+    result=ok  rc=0  execution=20261025.053417.096Z-02b57a21
+    acceptance=48/48
+git: block-2 | FEATURE-Executable.md, FEATURE-CsvReading.md, FEATURE-Trimming.md, FEATURE-NullValues.md, FEATURE-NumericTypes.md, FEATURE-DateType.md, FEATURE-BooleanTextTypes.md, FEATURE-Arguments.md, FEATURE-InputRejection.md | call=1 | app=490e99bd150e target=e8fd87f6a925
+
+  DONE  story=executable  state=closed/implemented  execution=20261025.053417.096Z-02b57a21  elapsed=5m35s
+git: block-2 | FEATURE-Executable.md, FEATURE-CsvReading.md, FEATURE-Trimming.md, FEATURE-NullValues.md, FEATURE-NumericTypes.md, FEATURE-DateType.md, FEATURE-BooleanTextTypes.md, FEATURE-Arguments.md, FEATURE-InputRejection.md | step_completed | app=unchanged target=c5ddb6cb8b97
+
+BLOCK block-3  name="Block 3 · Service"  calls_max=7
+  story=row-counts  "Report rows, nulls, and distinct counts per column."
+  story=sum-mean  "Compute exact sum and mean for integer and number columns."
+  story=median  "Compute the median for integer and number columns."
+  story=min-max  "Compute min and max by column type."
+  story=decimal-format  "Format decimal results to two places, rounded half away from zero once."
+  story=freq-count  "Count and order distinct non-null values of a column."
+  story=freq-limit  "Limit frequency rows with --top, default 5."
+  story=profile-output  "Write the column profile as RFC 4180 CSV for the default invocation."
+
+  [call 1/7]  kind=initial  llm=claude/claude-haiku-5-5
+    result=ok  rc=0  execution=20261025.054012.840Z-d903a989
+    acceptance=43/43
+git: block-3 | FEATURE-RowCounts.md, FEATURE-SumMean.md, FEATURE-Median.md, FEATURE-MinMax.md, FEATURE-DecimalFormat.md, FEATURE-FreqCount.md, FEATURE-FreqLimit.md, FEATURE-ProfileOutput.md | call=1 | app=d1c5ebdf202e target=60cf7b8be549
+
+  DONE  story=row-counts  state=closed/implemented  execution=20261025.054012.840Z-d903a989  elapsed=9m09s
+git: block-3 | FEATURE-RowCounts.md, FEATURE-SumMean.md, FEATURE-Median.md, FEATURE-MinMax.md, FEATURE-DecimalFormat.md, FEATURE-FreqCount.md, FEATURE-FreqLimit.md, FEATURE-ProfileOutput.md | step_completed | app=unchanged target=6bcd2eff92d8
+
+BLOCK block-4  name="Block 4 · Service"  calls_max=7
+  story=usage-errors  "Reject malformed arguments with exit 2 and a usage line on standard error."
+  story=column-profile  "Profile a single named column with --column."
+  story=failure-diagnostics  "Write one stderr diagnostic line and nothing on stdout when a command fails."
+  story=unreadable-file  "Exit 1 when the file cannot be opened or read."
+  story=freq-mode  "Select frequency mode with --freq."
+
+  [call 1/7]  kind=initial  llm=claude/claude-haiku-5-5
+    result=ok  rc=0  execution=20261025.054944.501Z-bdb56842
+    acceptance=28/28
+git: block-4 | FEATURE-UsageErrors.md, FEATURE-ColumnProfile.md, FEATURE-FailureDiagnostics.md, FEATURE-UnreadableFile.md, FEATURE-FreqMode.md | call=1 | app=0d177fa6e70e target=1b97580cce65
+
+  DONE  story=usage-errors  state=closed/implemented  execution=20261025.054944.501Z-bdb56842  elapsed=7m03s
+git: block-4 | FEATURE-UsageErrors.md, FEATURE-ColumnProfile.md, FEATURE-FailureDiagnostics.md, FEATURE-UnreadableFile.md, FEATURE-FreqMode.md | step_completed | app=unchanged target=2aa3ae661f59
+
+BLOCK block-5  name="Block 5 · Service"  calls_max=7
+  story=test-gate  "Provide bin/test.sh running go vet and go test and the project test suite."
+
+  [call 1/7]  kind=initial  llm=claude/claude-haiku-5-5
+    result=ok  rc=0  execution=20261025.055501.273Z-18678fb5
+    acceptance=4/4
+git: block-5 | FEATURE-TestGate.md | call=1 | app=unchanged target=080910ab374a
+
+  DONE  story=test-gate  state=closed/implemented  execution=20261025.055501.273Z-18678fb5  elapsed=4m46s
+git: block-5 | FEATURE-TestGate.md | step_completed | app=unchanged target=3a0644dcfd33
+
+BLOCK block-6  name="Block 6 · Feature"  calls_max=7
+  story=release-verification  "Pass the supplied grader sources/run.sh with all 22 checks."
+
+  [call 1/7]  kind=initial  llm=claude/claude-haiku-5-5
+    result=ok  rc=0  execution=20261025.055938.959Z-572e3679
+    acceptance=1/1
+git: block-6 | VERIFICATION.md | call=1 | app=unchanged target=a64bddb3269c
+
+  DONE  story=release-verification  state=closed/implemented  execution=20261025.055938.959Z-572e3679  elapsed=4m24s
+git: block-6 | VERIFICATION.md | step_completed | app=unchanged target=8b1511c401a8
+git: build complete CsvStat 53ac47242b6e
+git: build complete CsvStat c2f423ac536b
+
+result: 25 built, 0 failed, 0 unchanged
+elapsed: 34 minutes 4 seconds
+Target - committed project workspace git store

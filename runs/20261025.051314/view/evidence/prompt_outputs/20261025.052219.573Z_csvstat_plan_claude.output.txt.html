@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/prompt_outputs/20261025.052219.573Z_csvstat_plan_claude.output.txt</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/prompt_outputs/20261025.052219.573Z_csvstat_plan_claude.output.txt</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/prompt_outputs/20261025.052219.573Z_csvstat_plan_claude.output.txt">Raw file</a></div></header>
+<article class="doc"><pre>=== BEGIN ARTIFACT FEATURE-FreqMode.md ===
+# FEATURE: Frequency Mode
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Dispatches `csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;` to the frequency listing instead of the profile. |
+| Depends On  | FEATURE-FreqLimit.md, FEATURE-UsageErrors.md |
+| Provides    | csvstat --freq, csvstat --freq --top |
+| Consumes    | freq.Count, freq.Top, cli.ParseArgs |
+
+## Questions
+
+- None.
+
+## Purpose
+
+When `--freq &lt;name&gt;` is given, `cli.Run` writes the frequency listing for that column and never the profile. `--top &lt;n&gt;` limits the rows and defaults to 5. The listing is CSV with header `value,count`, rows ordered by count descending and then value ascending by byte value, using trimmed non-null values only.
+
+## Behavior
+
+- The column name is matched exactly and case-sensitively against the trimmed header.
+- A column name absent from the header exits 3 with nothing on standard output and one diagnostic line on standard error.
+- Combinations that are usage errors (`--column` with `--freq`, `--top` without `--freq`, a non-positive `--top`) are rejected with exit 2 by the usage-errors story before this dispatch runs.
+- Output is built in memory and written to standard output only on success, so a failing command writes nothing to standard output.
+- A column with no non-null values writes only the header.
+
+## Programmatic Acceptance
+
+=== AC freq-default-matches-fixture ===
+Intent: The default frequency listing for a named column equals the top five counts computed independently from the fixture.
+Requires: executable=go; scope=test
+
+import csv
+import io
+from collections import Counter
+from drydock_go import cli_runner
+
+path = &quot;sources/employees.csv&quot;
+column = &quot;department&quot;
+with open(path, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as fh:
+    records = list(csv.reader(fh))
+header = [h.strip() for h in records[0]]
+idx = header.index(column)
+values = [r[idx].strip() for r in records[1:] if r[idx].strip() != &quot;&quot;]
+counts = Counter(values)
+ordered = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0].encode(&quot;utf-8&quot;)))
+expected = [[v, str(c)] for v, c in ordered][:5]
+
+code, out, err = cli_runner(&quot;--freq&quot;, column, path)
+print(out)
+print(err)
+assert code == 0, code
+rows = list(csv.reader(io.StringIO(out)))
+assert rows[0] == [&quot;value&quot;, &quot;count&quot;], rows[0]
+assert rows[1:] == expected, (rows[1:], expected)
+=== END AC freq-default-matches-fixture ===
+
+=== AC freq-top-limits-rows ===
+Intent: With --top 2 exactly the first two ordered rows are listed.
+Requires: executable=go; scope=test
+
+import csv
+import io
+from collections import Counter
+from drydock_go import cli_runner
+
+path = &quot;sources/sensors.csv&quot;
+column = &quot;sensor&quot;
+top = 2
+with open(path, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as fh:
+    records = list(csv.reader(fh))
+header = [h.strip() for h in records[0]]
+idx = header.index(column)
+values = [r[idx].strip() for r in records[1:] if r[idx].strip() != &quot;&quot;]
+counts = Counter(values)
+ordered = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0].encode(&quot;utf-8&quot;)))
+expected = [[v, str(c)] for v, c in ordered][:top]
+
+code, out, err = cli_runner(&quot;--freq&quot;, column, &quot;--top&quot;, str(top), path)
+print(out)
+print(err)
+assert code == 0, code
+rows = list(csv.reader(io.StringIO(out)))
+assert len(rows) - 1 == top, rows
+assert rows[1:] == expected, (rows[1:], expected)
+=== END AC freq-top-limits-rows ===
+
+=== AC freq-omits-null-spellings ===
+Intent: Null values (empty, NA, N/A, NULL in any case) are not listed in a frequency listing.
+Requires: executable=go; scope=test
+
+import csv
+import io
+from collections import Counter
+from drydock_go import cli_runner
+
+path = &quot;sources/employees.csv&quot;
+column = &quot;manager_id&quot;
+top = 3
+nulls = {&quot;&quot;, &quot;na&quot;, &quot;n/a&quot;, &quot;null&quot;}
+with open(path, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as fh:
+    records = list(csv.reader(fh))
+header = [h.strip() for h in records[0]]
+idx = header.index(column)
+values = [r[idx].strip() for r in records[1:] if r[idx].strip().lower() not in nulls]
+counts = Counter(values)
+ordered = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0].encode(&quot;utf-8&quot;)))
+expected = [[v, str(c)] for v, c in ordered][:top]
+
+code, out, err = cli_runner(&quot;--freq&quot;, column, &quot;--top&quot;, str(top), path)
+print(out)
+print(err)
+assert code == 0, code
+rows = list(csv.reader(io.StringIO(out)))
+listed = {r[0].lower() for r in rows[1:]}
+assert listed.isdisjoint(nulls), listed
+assert rows[1:] == expected, (rows[1:], expected)
+=== END AC freq-omits-null-spellings ===
+
+=== AC freq-values-are-trimmed ===
+Intent: Padded values are trimmed before counting, so padded and unpadded spellings count together.
+Requires: executable=go; scope=test
+
+import csv
+import io
+from collections import Counter
+from drydock_go import cli_runner
+
+path = &quot;sources/orders.csv&quot;
+column = &quot;customer&quot;
+with open(path, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as fh:
+    records = list(csv.reader(fh))
+header = [h.strip() for h in records[0]]
+idx = header.index(column)
+values = [r[idx].strip() for r in records[1:] if r[idx].strip() != &quot;&quot;]
+counts = Counter(values)
+ordered = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0].encode(&quot;utf-8&quot;)))
+expected = [[v, str(c)] for v, c in ordered][:5]
+
+code, out, err = cli_runner(&quot;--freq&quot;, column, path)
+print(out)
+print(err)
+assert code == 0, code
+rows = list(csv.reader(io.StringIO(out)))
+assert rows[1:] == expected, (rows[1:], expected)
+=== END AC freq-values-are-trimmed ===
+
+=== AC freq-all-null-column-header-only ===
+Intent: A column with no non-null values lists only the header.
+Requires: executable=go; scope=test
+
+import csv
+import io
+from drydock_go import cli_runner
+
+code, out, err = cli_runner(&quot;--freq&quot;, &quot;battery&quot;, &quot;sources/sensors.csv&quot;)
+print(out)
+print(err)
+assert code == 0, code
+rows = list(csv.reader(io.StringIO(out)))
+assert rows == [[&quot;value&quot;, &quot;count&quot;]], rows
+=== END AC freq-all-null-column-header-only ===
+
+=== AC freq-unknown-column-rejected ===
+Intent: A column name absent from the header exits 3 and writes nothing to standard output.
+Requires: executable=go; scope=test
+
+from drydock_go import cli_runner
+
+code, out, err = cli_runner(&quot;--freq&quot;, &quot;nosuch&quot;, &quot;sources/orders.csv&quot;)
+print(out)
+print(err)
+assert code == 3, code
+assert out == &quot;&quot;, out
+=== END AC freq-unknown-column-rejected ===
+
+=== AC freq-name-is-case-sensitive ===
+Intent: A column name differing only in case from a header name is not found and exits 3.
+Requires: executable=go; scope=test
+
+import csv
+from drydock_go import cli_runner
+
+path = &quot;sources/employees.csv&quot;
+with open(path, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as fh:
+    header = [h.strip() for h in next(csv.reader(fh))]
+name = header[2]
+swapped = name.upper() if name != name.upper() else name.lower()
+assert swapped not in header
+
+code, out, err = cli_runner(&quot;--freq&quot;, swapped, path)
+print(out)
+print(err)
+assert code == 3, code
+assert out == &quot;&quot;, out
+=== END AC freq-name-is-case-sensitive ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Frequency mode never writes the profile header or any profile row.
+- Application code never reads `sources/run.sh` or embeds a count or value list; every row comes from the file examined.
+- A failing command writes nothing to standard output.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-FailureDiagnostics.md ===
+# FEATURE: Failure Diagnostics
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Ensures every failing csvstat command writes nothing to standard output and exactly one diagnostic line to standard error. |
+| Depends On  | FEATURE-InputRejection.md, FEATURE-UsageErrors.md, FEATURE-ProfileOutput.md |
+| Provides    | stderr diagnostics, exit code 3 |
+| Consumes    | csvdata.ErrRejected, cli.Run |
+
+## Questions
+
+- None.
+
+## Purpose
+
+A command that fails reports the failure on standard error as one line and leaves standard output empty. Rejected input exits 3. The diagnostic names the file and, for a rejected record, its line number. Standard error is never compared by the grader, so its wording is free; its shape (one line, nothing on standard output) is the contract.
+
+## Behavior
+
+- Rejected input (empty file, file containing only blank lines, empty header name, repeated header name, ragged record) exits 3.
+- Standard output is written only after the whole result is built, so no partial output precedes a failure.
+- Exactly one non-blank line is written to standard error per failure.
+- A ragged record&#x27;s diagnostic includes the line number of the offending record.
+- Exit code 1 (unreadable file) and exit code 2 (usage) share the same stdout-empty, one-line-stderr rule and are owned by their own stories.
+
+## Programmatic Acceptance
+
+=== AC diag-ragged-fixture ===
+Intent: The supplied ragged fixture exits 3, writes nothing to standard output, and writes one diagnostic line.
+Requires: executable=go; scope=test
+
+from drydock_go import cli_runner
+
+code, out, err = cli_runner(&quot;sources/ragged.csv&quot;)
+print(out)
+print(err)
+assert code == 3, code
+assert out == &quot;&quot;, out
+lines = [ln for ln in err.splitlines() if ln.strip()]
+assert len(lines) == 1, lines
+=== END AC diag-ragged-fixture ===
+
+=== AC diag-ragged-line-number ===
+Intent: The diagnostic for a ragged record carries the number of the line holding that record.
+Requires: executable=go; scope=test
+
+import csv
+import os
+import re
+import tempfile
+from drydock_go import cli_runner
+
+rows = [[&quot;a&quot;, &quot;b&quot;], [&quot;1&quot;, &quot;2&quot;], [&quot;3&quot;, &quot;4&quot;], [&quot;5&quot;, &quot;6&quot;, &quot;7&quot;], [&quot;8&quot;, &quot;9&quot;]]
+bad_line = 4
+with tempfile.TemporaryDirectory() as tmp:
+    path = os.path.join(tmp, &quot;ragged_case.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as fh:
+        csv.writer(fh, lineterminator=&quot;\n&quot;).writerows(rows)
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 3, code
+assert out == &quot;&quot;, out
+assert str(bad_line) in re.findall(r&quot;\d+&quot;, err), err
+=== END AC diag-ragged-line-number ===
+
+=== AC diag-empty-file ===
+Intent: An empty file is rejected with exit 3 and nothing on standard output.
+Requires: executable=go; scope=test
+
+import os
+import tempfile
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as tmp:
+    path = os.path.join(tmp, &quot;empty.csv&quot;)
+    with open(path, &quot;w&quot;, encoding=&quot;utf-8&quot;) as fh:
+        fh.write(&quot;&quot;)
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 3, code
+assert out == &quot;&quot;, out
+lines = [ln for ln in err.splitlines() if ln.strip()]
+assert len(lines) == 1, lines
+=== END AC diag-empty-file ===
+
+=== AC diag-blank-lines-only ===
+Intent: A file containing only blank lines is rejected as empty with exit 3.
+Requires: executable=go; scope=test
+
+import os
+import tempfile
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as tmp:
+    path = os.path.join(tmp, &quot;blank.csv&quot;)
+    with open(path, &quot;w&quot;, encoding=&quot;utf-8&quot;, newline=&quot;&quot;) as fh:
+        fh.write(&quot;\n\n\n&quot;)
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 3, code
+assert out == &quot;&quot;, out
+=== END AC diag-blank-lines-only ===
+
+=== AC diag-empty-header-name ===
+Intent: An empty header name is rejected with exit 3 and nothing on standard output.
+Requires: executable=go; scope=test
+
+import csv
+import os
+import tempfile
+from drydock_go import cli_runner
+
+rows = [[&quot;a&quot;, &quot;&quot;, &quot;c&quot;], [&quot;1&quot;, &quot;2&quot;, &quot;3&quot;]]
+with tempfile.TemporaryDirectory() as tmp:
+    path = os.path.join(tmp, &quot;emptyname.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as fh:
+        csv.writer(fh, lineterminator=&quot;\n&quot;).writerows(rows)
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 3, code
+assert out == &quot;&quot;, out
+=== END AC diag-empty-header-name ===
+
+=== AC diag-repeated-header-name ===
+Intent: A repeated header name, including one repeated only after trimming, is rejected with exit 3.
+Requires: executable=go; scope=test
+
+import csv
+import os
+import tempfile
+from drydock_go import cli_runner
+
+name = &quot;dup&quot;
+rows = [[name, &quot;x&quot;, &quot;  &quot; + name + &quot;  &quot;], [&quot;1&quot;, &quot;2&quot;, &quot;3&quot;]]
+with tempfile.TemporaryDirectory() as tmp:
+    path = os.path.join(tmp, &quot;repeated.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as fh:
+        csv.writer(fh, lineterminator=&quot;\n&quot;).writerows(rows)
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 3, code
+assert out == &quot;&quot;, out
+=== END AC diag-repeated-header-name ===
+
+=== AC diag-failure-with-column-option ===
+Intent: A rejected file under --column still exits 3 with nothing on standard output.
+Requires: executable=go; scope=test
+
+from drydock_go import cli_runner
+
+code, out, err = cli_runner(&quot;--column&quot;, &quot;sku&quot;, &quot;sources/ragged.csv&quot;)
+print(out)
+print(err)
+assert code == 3, code
+assert out == &quot;&quot;, out
+=== END AC diag-failure-with-column-option ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- A failing command never writes a partial profile or frequency listing to standard output.
+- Diagnostics go to standard error only and are never compared by the grader.
+- Rejected files are never modified.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-UnreadableFile.md ===
+# FEATURE: Unreadable File
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Exits 1 with an empty standard output when the named file cannot be opened or read. |
+| Depends On  | FEATURE-FailureDiagnostics.md |
+| Provides    | exit code 1 |
+| Consumes    | cli.Run, csvdata.Read |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Exit code 1 is the operational-failure code. It is used when the file named on the command line does not exist, is not permitted to be read, or fails while being read. It is distinct from exit 3, which means the file was read but its content was rejected.
+
+## Behavior
+
+- An open or read error from the operating system maps to exit 1, not exit 3.
+- Standard output stays empty.
+- One diagnostic line naming the file is written to standard error.
+- This applies to every invocation form: profile, `--column`, and `--freq`.
+- Usage errors (exit 2) take precedence over file access, because argument parsing completes before the file is opened.
+
+## Programmatic Acceptance
+
+=== AC unreadable-missing-file ===
+Intent: A path that does not exist exits 1 and writes nothing to standard output.
+Requires: executable=go; scope=test
+
+import os
+import tempfile
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as tmp:
+    missing = os.path.join(tmp, &quot;no-such-file.csv&quot;)
+    assert not os.path.exists(missing)
+    code, out, err = cli_runner(missing)
+print(out)
+print(err)
+assert code == 1, code
+assert out == &quot;&quot;, out
+lines = [ln for ln in err.splitlines() if ln.strip()]
+assert len(lines) == 1, lines
+=== END AC unreadable-missing-file ===
+
+=== AC unreadable-missing-file-freq ===
+Intent: A missing file under --freq also exits 1 with nothing on standard output.
+Requires: executable=go; scope=test
+
+import os
+import tempfile
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as tmp:
+    missing = os.path.join(tmp, &quot;absent.csv&quot;)
+    code, out, err = cli_runner(&quot;--freq&quot;, &quot;anything&quot;, missing)
+print(out)
+print(err)
+assert code == 1, code
+assert out == &quot;&quot;, out
+=== END AC unreadable-missing-file-freq ===
+
+=== AC unreadable-missing-file-column ===
+Intent: A missing file under --column also exits 1 with nothing on standard output.
+Requires: executable=go; scope=test
+
+import os
+import tempfile
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as tmp:
+    missing = os.path.join(tmp, &quot;absent.csv&quot;)
+    code, out, err = cli_runner(&quot;--column&quot;, &quot;anything&quot;, missing)
+print(out)
+print(err)
+assert code == 1, code
+assert out == &quot;&quot;, out
+=== END AC unreadable-missing-file-column ===
+
+=== AC unreadable-directory-as-file ===
+Intent: A directory named as the file cannot be read and exits 1 with nothing on standard output.
+Requires: executable=go; scope=test
+
+import tempfile
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as tmp:
+    code, out, err = cli_runner(tmp)
+print(out)
+print(err)
+assert code == 1, code
+assert out == &quot;&quot;, out
+=== END AC unreadable-directory-as-file ===
+
+=== AC unreadable-readable-file-still-succeeds ===
+Intent: A readable fixture is not treated as unreadable and exits 0.
+Requires: executable=go; scope=test
+
+from drydock_go import cli_runner
+
+code, out, err = cli_runner(&quot;sources/header_only.csv&quot;)
+print(out)
+print(err)
+assert code == 0, code
+assert out != &quot;&quot;
+=== END AC unreadable-readable-file-still-succeeds ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Exit 1 is reserved for files that cannot be opened or read; rejected content is exit 3.
+- A failing command writes nothing to standard output.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-TestGate.md ===
+# FEATURE: Test Gate
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Provides the POSIX `bin/test.sh` that runs `go vet ./...` and `go test ./...` and exits zero only when both pass. |
+| Depends On  | FEATURE-ColumnProfile.md, FEATURE-FreqMode.md, FEATURE-UnreadableFile.md |
+| Provides    | bin/test.sh |
+| Consumes    | csvstat command, go vet, go test |
+
+## Questions
+
+- None.
+
+## Purpose
+
+`bin/test.sh` is the project&#x27;s single test entry point. It is a POSIX `sh` script that changes to the application root, runs `go vet ./...`, then `go test ./...`, and exits non-zero if either fails. The project suite, written beside the code, covers each type, each statistic, null handling, rounding, each output form, and each exit code, using files the tests write to temporary directories.
+
+## Behavior
+
+- The script uses only POSIX `sh` constructs and resolves the application root from its own location, so it works from any current directory.
+- It runs `go vet ./...` first and stops with a non-zero status if vet fails.
+- It then runs `go test ./...` and exits with that command&#x27;s status.
+- It never modifies files under `sources/`.
+- The suite covers:
+  - every column type (integer, number, date, boolean, text, empty);
+  - rows, nulls, distinct, min, max, sum, mean, and median;
+  - null spellings and trimming;
+  - half-away-from-zero rounding and no negative zero;
+  - the profile form, the `--column` form, and the `--freq` form;
+  - exit codes 0, 1, 2, and 3.
+
+## Programmatic Acceptance
+
+=== AC testgate-script-exits-zero ===
+Intent: Running bin/test.sh from the application root exits zero.
+Requires: executable=go; scope=test
+
+import subprocess
+
+result = subprocess.run([&quot;sh&quot;, &quot;bin/test.sh&quot;], capture_output=True, text=True)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0, result.returncode
+=== END AC testgate-script-exits-zero ===
+
+=== AC testgate-runs-from-other-directory ===
+Intent: bin/test.sh locates the application root itself and exits zero when started from another directory.
+Requires: executable=go; scope=test
+
+import os
+import subprocess
+import tempfile
+
+script = os.path.abspath(&quot;bin/test.sh&quot;)
+with tempfile.TemporaryDirectory() as tmp:
+    result = subprocess.run([&quot;sh&quot;, script], capture_output=True, text=True, cwd=tmp)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0, result.returncode
+=== END AC testgate-runs-from-other-directory ===
+
+=== AC testgate-go-test-and-vet-pass ===
+Intent: go vet and go test pass directly at the application root, the two commands the script wraps.
+Requires: executable=go; scope=test
+
+import subprocess
+
+vet = subprocess.run([&quot;go&quot;, &quot;vet&quot;, &quot;./...&quot;], capture_output=True, text=True)
+print(vet.stdout)
+print(vet.stderr)
+assert vet.returncode == 0, vet.returncode
+
+tests = subprocess.run([&quot;go&quot;, &quot;test&quot;, &quot;./...&quot;], capture_output=True, text=True)
+print(tests.stdout)
+print(tests.stderr)
+assert tests.returncode == 0, tests.returncode
+=== END AC testgate-go-test-and-vet-pass ===
+
+=== AC testgate-suite-has-tests ===
+Intent: The project ships Go test files in more than one internal package, so the gate is not vacuous.
+Requires: executable=go; scope=test
+
+import pathlib
+
+root = pathlib.Path(&quot;internal&quot;)
+test_files = sorted(root.rglob(&quot;*_test.go&quot;))
+packages = {p.parent for p in test_files}
+print([str(p) for p in test_files])
+assert len(test_files) &gt; 0
+assert len(packages) &gt; 1, packages
+=== END AC testgate-suite-has-tests ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- `bin/test.sh` never edits, regenerates, or substitutes any file under `sources/`.
+- The test suite never reads `sources/run.sh` and never embeds a grader answer.
+- Tests write their own input files to temporary directories.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT VERIFICATION.md ===
+# FEATURE: Release Verification
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Terminal assembly story that passes the supplied grader `sources/run.sh` with every one of its 22 checks. |
+| Depends On  | FEATURE-TestGate.md, FEATURE-ColumnProfile.md, FEATURE-FreqMode.md, FEATURE-UnreadableFile.md |
+| Provides    | sh sources/run.sh |
+| Consumes    | csvstat command, bin/test.sh |
+
+## Questions
+
+- None.
+
+## Purpose
+
+This is the terminal story. After every member story has closed, the supplied grader runs unfiltered. The grader builds `./cmd/csvstat` with `go build`, makes 22 checks of exit code and standard output against five supplied CSV files, and exits zero only when the build succeeds and every check passes.
+
+## Behavior
+
+- The grader is run exactly as supplied: `sh sources/run.sh` from the application root.
+- Its exit status is the whole verdict.
+- A failure is repaired in the owning application package, never in `sources/`.
+
+## Programmatic Acceptance
+
+=== AC release-grader-passes ===
+Intent: The supplied grader sources/run.sh, run unfiltered, exits zero.
+Suite: full
+Requires: executable=go; scope=test
+
+import subprocess
+
+result = subprocess.run([&quot;sh&quot;, &quot;sources/run.sh&quot;], capture_output=True, text=True)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0, result.returncode
+=== END AC release-grader-passes ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Do not modify, rewrite, regenerate, or substitute any file under `sources/`.
+- Application code never reads `sources/run.sh` or any supplied data file, and never hardcodes a statistic, a type, or a value list.
+=== END ARTIFACT ===</pre></article>
+</main>
+</body>
+</html>

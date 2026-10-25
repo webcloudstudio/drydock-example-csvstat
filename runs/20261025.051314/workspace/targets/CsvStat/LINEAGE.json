@@ -1,0 +1,424 @@
+{
+  "version": 1,
+  "import": {
+    "root": "/mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/sources",
+    "format": "markdown"
+  },
+  "sources": {
+    "INSTRUCTIONS.md": {
+      "state": "current",
+      "versions": [
+        {
+          "commit": "6cb8320",
+          "date": "2026-10-25",
+          "hash": "a4a0357965923ada8afb3528e85c937802a26eb02db8685900dbe0e9566c7a57",
+          "release": "",
+          "state": "consumed",
+          "via": "plan",
+          "ticket": null,
+          "requirements": [
+            {
+              "name": "profile-csv-file",
+              "text": "Build a command-line tool that profiles a CSV file. For every column it infers a type and reports\nrow, null, and distinct counts, the minimum and maximum, and for numeric columns the sum, mean, and\nmedian.",
+              "stories": [
+                "profile-output",
+                "row-counts"
+              ]
+            },
+            {
+              "name": "list-frequent-values",
+              "text": "It also lists the most frequent values of one column.",
+              "stories": [
+                "freq-count",
+                "freq-mode"
+              ]
+            },
+            {
+              "name": "go-stdlib-module",
+              "text": "Implement in Go 1.22 or newer using only the standard library. The application root is a Go\nmodule, and its executable is the main package at `./cmd/csvstat`.",
+              "stories": [
+                "foundation"
+              ]
+            },
+            {
+              "name": "tests-under-go-test",
+              "text": "Tests run under `go test`.",
+              "stories": [
+                "test-gate"
+              ]
+            },
+            {
+              "name": "run-harness",
+              "text": "The harness runs `go build -o <temporary path> ./cmd/csvstat` and then runs 22 checks. Each check\ncompares one command's exit code and standard output with a known answer.",
+              "stories": [
+                "release-verification"
+              ]
+            },
+            {
+              "name": "command-syntax",
+              "text": "Options precede the file. Exactly one file is required.",
+              "stories": [
+                "executable",
+                "args-parsing"
+              ]
+            },
+            {
+              "name": "column-option",
+              "text": "| `--column <name>` | Profile only the named column. |",
+              "stories": [
+                "column-profile"
+              ]
+            },
+            {
+              "name": "freq-option",
+              "text": "| `--freq <name>` | List the most frequent values of the named column instead of profiling. |",
+              "stories": [
+                "freq-mode"
+              ]
+            },
+            {
+              "name": "top-option",
+              "text": "| `--top <n>` | With `--freq`, list at most `<n>` values. A positive integer; default `5`. |",
+              "stories": [
+                "freq-limit"
+              ]
+            },
+            {
+              "name": "option-combinations",
+              "text": "`--column` and `--freq` cannot be combined. `--top` is valid only with `--freq`.",
+              "stories": [
+                "usage-errors"
+              ]
+            },
+            {
+              "name": "csv-parsing",
+              "text": "The file is UTF-8 CSV as RFC 4180 defines it, read with Go's `encoding/csv`. The first record\nis the header.",
+              "stories": [
+                "csv-reading"
+              ]
+            },
+            {
+              "name": "trim-values",
+              "text": "Every header name and every value is trimmed of leading and trailing spaces before any other\nrule applies.",
+              "stories": [
+                "value-trimming"
+              ]
+            },
+            {
+              "name": "reject-bad-files",
+              "text": "The file is **rejected** when it is empty, when a header name is empty or repeated, or when any\nrecord has a different number of fields from the header.",
+              "stories": [
+                "input-rejection"
+              ]
+            },
+            {
+              "name": "null-detection",
+              "text": "**Null.** A value is null when it is empty, or when it equals `NA`, `N/A`, or `NULL` ignoring\ncase. All other values are non-null.",
+              "stories": [
+                "null-values"
+              ]
+            },
+            {
+              "name": "numeric-type-inference",
+              "text": "| `integer` | matches `-?[0-9]+` |\n| `number` | matches `-?[0-9]+(\\.[0-9]+)?` |",
+              "stories": [
+                "numeric-types"
+              ]
+            },
+            {
+              "name": "date-type-inference",
+              "text": "| `date` | matches `YYYY-MM-DD` and is a real calendar date (`2025-02-30` is not) |",
+              "stories": [
+                "date-type"
+              ]
+            },
+            {
+              "name": "boolean-text-empty-inference",
+              "text": "| `boolean` | equals `true` or `false`, ignoring case |\n| `text` | anything |\n\nA column with no non-null values has type `empty`.",
+              "stories": [
+                "boolean-text-types"
+              ]
+            },
+            {
+              "name": "count-fields",
+              "text": "| `rows` | Number of data records. |\n| `nulls` | Number of null values. |\n| `distinct` | Number of different non-null values, compared as exact strings after trimming. |",
+              "stories": [
+                "row-counts"
+              ]
+            },
+            {
+              "name": "min-max-by-type",
+              "text": "| `min`, `max` | `integer`: the smallest and largest value as an integer. `number`: as a decimal. `date`: earliest and latest. `boolean`: `false` if any value is false, else `true`; `true` if any value is true, else `false`. `text`: smallest and largest by byte value. `empty`: empty. |",
+              "stories": [
+                "min-max"
+              ]
+            },
+            {
+              "name": "sum-field",
+              "text": "| `sum` | `integer`: the integer total. `number`: the decimal total. Otherwise empty. |",
+              "stories": [
+                "sum-mean"
+              ]
+            },
+            {
+              "name": "mean-field",
+              "text": "| `mean` | `integer` and `number`: total divided by non-null count. Otherwise empty. |",
+              "stories": [
+                "sum-mean"
+              ]
+            },
+            {
+              "name": "median-field",
+              "text": "| `median` | `integer` and `number`: the middle value of the sorted non-null values, or the mean of the two middle values when the count is even. Otherwise empty. |",
+              "stories": [
+                "median"
+              ]
+            },
+            {
+              "name": "decimal-formatting",
+              "text": "**Decimals.** Every `number` `min`, `max`, and `sum`, and every `mean` and `median`, is written with\nexactly two decimal places, rounded half away from zero from the exact value, with a leading `-`\nwhen negative and no thousands separator: `1012.50`, `-12.21`, `0.00`. Integer `min`, `max`, and\n`sum` are written as plain integers.",
+              "stories": [
+                "decimal-format"
+              ]
+            },
+            {
+              "name": "profile-output-format",
+              "text": "Header `column,type,rows,nulls,distinct,min,max,sum,mean,median`, then one row per column in file\norder (or the one named by `--column`).",
+              "stories": [
+                "profile-output"
+              ]
+            },
+            {
+              "name": "frequency-output",
+              "text": "Header `value,count`, then one row per distinct non-null value of the column, ordered by count\ndescending, then value ascending by byte value, at most `--top` rows. Null values are not listed. A\ncolumn with no non-null values writes only the header.",
+              "stories": [
+                "freq-count",
+                "freq-limit"
+              ]
+            },
+            {
+              "name": "csv-output-format",
+              "text": "CSV on standard output with `\\n` line endings. A field that contains a comma, a double quote, or a\nnewline is quoted as RFC 4180 specifies; Go's `encoding/csv` writer produces this format.",
+              "stories": [
+                "profile-output"
+              ]
+            },
+            {
+              "name": "failure-output",
+              "text": "A failing command writes nothing to standard output and one diagnostic line to standard error naming\nthe file and, for a rejected record, its line number.",
+              "stories": [
+                "failure-diagnostics"
+              ]
+            },
+            {
+              "name": "exit-operational-failure",
+              "text": "| `1` | Operational failure: the file cannot be opened or read. |",
+              "stories": [
+                "unreadable-file"
+              ]
+            },
+            {
+              "name": "exit-usage-error",
+              "text": "| `2` | Usage error: missing or extra file, unknown option, missing option value, `--top` not a positive integer, `--top` without `--freq`, `--column` with `--freq`. |",
+              "stories": [
+                "usage-errors",
+                "args-parsing"
+              ]
+            },
+            {
+              "name": "exit-rejected",
+              "text": "| `3` | Rejected: empty file, empty or repeated header name, ragged record, or a column name that is not in the header. |",
+              "stories": [
+                "input-rejection",
+                "column-profile"
+              ]
+            },
+            {
+              "name": "test-script",
+              "text": "The completed application provides a POSIX-compatible `bin/test.sh` that runs `go vet ./...` and\n`go test ./...` from the application root and exits zero only when both pass. The suite covers\neach type, each statistic, null handling, rounding, each output form, and each exit code using\nfiles written by the tests.",
+              "stories": [
+                "test-gate"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "employees.csv": {
+      "state": "current",
+      "versions": [
+        {
+          "commit": "6cb8320",
+          "date": "2026-10-25",
+          "hash": "057f30060e45647dbb5773a0f2cef7fa541bbd462f5a65746083d7a169222ee0",
+          "release": "",
+          "state": "consumed",
+          "via": "plan",
+          "ticket": null,
+          "requirements": []
+        }
+      ]
+    },
+    "header_only.csv": {
+      "state": "current",
+      "versions": [
+        {
+          "commit": "6cb8320",
+          "date": "2026-10-25",
+          "hash": "428b2fe8db619499f227e2ce2a56cebcf5149c161e680c5a65d792d74211f449",
+          "release": "",
+          "state": "consumed",
+          "via": "plan",
+          "ticket": null,
+          "requirements": [
+            {
+              "name": "header-only-input",
+              "text": "sku,price,in_stock",
+              "stories": [
+                "csv-reading",
+                "boolean-text-types",
+                "row-counts",
+                "profile-output"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "orders.csv": {
+      "state": "current",
+      "versions": [
+        {
+          "commit": "6cb8320",
+          "date": "2026-10-25",
+          "hash": "93026827c46e9b0eab4a7e4e4eefc7518265dc56712f044061006b85adeb6ae8",
+          "release": "",
+          "state": "consumed",
+          "via": "plan",
+          "ticket": null,
+          "requirements": []
+        }
+      ]
+    },
+    "ragged.csv": {
+      "state": "current",
+      "versions": [
+        {
+          "commit": "6cb8320",
+          "date": "2026-10-25",
+          "hash": "fd838208607b5e74d69d29662bd4961928d69fdd80a5e2752ece90f78b333465",
+          "release": "",
+          "state": "consumed",
+          "via": "plan",
+          "ticket": null,
+          "requirements": [
+            {
+              "name": "reject-ragged-record",
+              "text": "sku,price,in_stock\nA1,9.99,true\nA2,4.50,false\nA3,1.25,true,extra\nA4,3.00,false",
+              "stories": [
+                "input-rejection",
+                "failure-diagnostics"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "run.sh": {
+      "state": "current",
+      "versions": [
+        {
+          "commit": "6cb8320",
+          "date": "2026-10-25",
+          "hash": "8f598aabc017377364ec4a99f5c34bb81e06d68c9ef7b191513c6e9d3999bcbb",
+          "release": "",
+          "state": "consumed",
+          "via": "plan",
+          "ticket": null,
+          "requirements": [
+            {
+              "name": "build-csvstat",
+              "text": "Builds ./cmd/csvstat with `go build` and compares every command's exit code and standard output",
+              "stories": [
+                "executable"
+              ]
+            },
+            {
+              "name": "profile-every-column",
+              "text": "# \u2500\u2500 A. Every column of each data file \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+              "stories": [
+                "csv-reading",
+                "value-trimming",
+                "null-values",
+                "numeric-types",
+                "date-type",
+                "boolean-text-types",
+                "row-counts",
+                "sum-mean",
+                "median",
+                "min-max",
+                "decimal-format",
+                "profile-output"
+              ]
+            },
+            {
+              "name": "profile-one-column",
+              "text": "# \u2500\u2500 B. One column \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+              "stories": [
+                "column-profile"
+              ]
+            },
+            {
+              "name": "frequencies",
+              "text": "# \u2500\u2500 C. Frequencies \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+              "stories": [
+                "freq-count",
+                "freq-limit",
+                "freq-mode"
+              ]
+            },
+            {
+              "name": "reject-input-and-failures",
+              "text": "# \u2500\u2500 E. Rejected input and operational failures \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+              "stories": [
+                "input-rejection",
+                "unreadable-file",
+                "failure-diagnostics"
+              ]
+            },
+            {
+              "name": "usage-errors",
+              "text": "# \u2500\u2500 U. Usage errors \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+              "stories": [
+                "usage-errors",
+                "args-parsing"
+              ]
+            },
+            {
+              "name": "pass-grader",
+              "text": "Exit 0 only when the build succeeds and every check passes.",
+              "stories": [
+                "release-verification"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "sensors.csv": {
+      "state": "current",
+      "versions": [
+        {
+          "commit": "6cb8320",
+          "date": "2026-10-25",
+          "hash": "159d38499f5e2df7e2bfe5245c20e7f76c9d5f091aa497567b47bf707bde3c20",
+          "release": "",
+          "state": "consumed",
+          "via": "plan",
+          "ticket": null,
+          "requirements": []
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,141 @@
+[
+  {
+    "id": "Q-001",
+    "type": "choice",
+    "severity": "low",
+    "origin": "plan",
+    "blueprint": "FEATURE-Executable.md",
+    "story": "executable",
+    "status": "recommended",
+    "archived": false,
+    "title": "Owner of FOUND-001 and FOUND-002",
+    "description": "A foundational story carries no covers, so FOUND-001 is covered by the executable service story and FOUND-002 by the test-gate story.",
+    "options": [
+      {
+        "value": "service-owned",
+        "label": "Service stories cover FOUND-001 and FOUND-002"
+      },
+      {
+        "value": "foundation-owned",
+        "label": "Foundation story covers them"
+      }
+    ],
+    "system_choice": "service-owned"
+  },
+  {
+    "id": "Q-002",
+    "type": "choice",
+    "severity": "low",
+    "origin": "plan",
+    "blueprint": "FEATURE-Arguments.md",
+    "story": "args-parsing",
+    "status": "recommended",
+    "archived": false,
+    "title": "Option syntax",
+    "description": "Options take a separate value (--top 3). The --top=3 form is not required; a repeated option is a usage error exit 2.",
+    "options": [
+      {
+        "value": "space-separated",
+        "label": "Only --opt value"
+      },
+      {
+        "value": "both",
+        "label": "Also accept --opt=value"
+      }
+    ],
+    "system_choice": "space-separated"
+  },
+  {
+    "id": "Q-003",
+    "type": "choice",
+    "severity": "low",
+    "origin": "plan",
+    "blueprint": "FEATURE-ColumnProfile.md",
+    "story": "column-profile",
+    "status": "recommended",
+    "archived": false,
+    "title": "Column name matching",
+    "description": "Column names for --column and --freq match the trimmed header exactly and case-sensitively; no match exits 3.",
+    "options": [
+      {
+        "value": "exact",
+        "label": "Exact, case-sensitive"
+      },
+      {
+        "value": "case-insensitive",
+        "label": "Case-insensitive"
+      }
+    ],
+    "system_choice": "exact"
+  },
+  {
+    "id": "build-architecture.md-stub-behavior-of-cli.run",
+    "type": "text",
+    "severity": "low",
+    "origin": "build",
+    "blueprint": "ARCHITECTURE.md",
+    "story": null,
+    "status": "recommended",
+    "archived": false,
+    "title": "Stub behavior of cli.Run",
+    "description": "The foundation has no argument parsing yet, so cli.Run writes 'csvstat: not implemented' to stderr and returns 1. I chose 1 over 0 so the stub cannot pass as a successful run. Replace it when the CLI story lands. Is that acceptable?",
+    "options": [],
+    "system_choice": "The foundation has no argument parsing yet, so cli.Run writes 'csvstat: not implemented' to stderr and returns 1. I chose 1 over 0 so the stub cannot pass as a successful run. Replace it when the CLI story lands. Is that acceptable?"
+  },
+  {
+    "id": "build-feature-csvreading.md-where-empty-input-rejection-happens",
+    "type": "text",
+    "severity": "low",
+    "origin": "build",
+    "blueprint": "FEATURE-CsvReading.md",
+    "story": null,
+    "status": "recommended",
+    "archived": false,
+    "title": "Where empty-input rejection happens",
+    "description": "Read returns a nil Header with no error for empty or blank-only input, as the spec requires. Rejection is a separate csvdata.Validate, called by cli after Read and Trim, which returns ErrRejected. Reading and rejecting stay separate, and the input-rejection story still holds. Is that acceptable?",
+    "options": [],
+    "system_choice": "Read returns a nil Header with no error for empty or blank-only input, as the spec requires. Rejection is a separate csvdata.Validate, called by cli after Read and Trim, which returns ErrRejected. Reading and rejecting stay separate, and the input-rejection story still holds. Is that acceptable?"
+  },
+  {
+    "id": "build-feature-freqcount.md-unknown---freq-column-name",
+    "type": "text",
+    "severity": "low",
+    "origin": "build",
+    "blueprint": "FEATURE-FreqCount.md",
+    "story": null,
+    "status": "recommended",
+    "archived": false,
+    "title": "Unknown --freq column name",
+    "description": "The specs do not say what happens when the --freq column is not in the header. I exit 2 (usage) with empty stdout and a diagnostic on stderr. Exit 3 would also be defensible as rejected input. Is 2 acceptable, or should this be 3?",
+    "options": [],
+    "system_choice": "The specs do not say what happens when the --freq column is not in the header. I exit 2 (usage) with empty stdout and a diagnostic on stderr. Exit 3 would also be defensible as rejected input. Is 2 acceptable, or should this be 3?"
+  },
+  {
+    "id": "build-feature-freqlimit.md-non-positive---top-with---freq",
+    "type": "text",
+    "severity": "low",
+    "origin": "build",
+    "blueprint": "FEATURE-FreqLimit.md",
+    "story": null,
+    "status": "recommended",
+    "archived": false,
+    "title": "Non-positive --top with --freq",
+    "description": "Validation of --top belongs to the usage-errors story, which is not in this block. Until then --top 0 or a negative value lists no rows with exit 0. Confirm that the usage-errors story will reject these with exit 2.",
+    "options": [],
+    "system_choice": "Validation of --top belongs to the usage-errors story, which is not in this block. Until then --top 0 or a negative value lists no rows with exit 0. Confirm that the usage-errors story will reject these with exit 2."
+  },
+  {
+    "id": "build-feature-profileoutput.md---column-without---freq",
+    "type": "text",
+    "severity": "low",
+    "origin": "build",
+    "blueprint": "FEATURE-ProfileOutput.md",
+    "story": null,
+    "status": "recommended",
+    "archived": false,
+    "title": "--column without --freq",
+    "description": "Column output is not part of this block, so --column keeps the prior behaviour: exit 0 with no output. The profile is written only when neither --column nor --freq is given, as the spec says. Confirm this is acceptable until the column story lands.",
+    "options": [],
+    "system_choice": "Column output is not part of this block, so --column keeps the prior behaviour: exit 0 with no output. The profile is written only when neither --column nor --freq is given, as the spec says. Confirm this is acceptable until the column story lands."
+  }
+]

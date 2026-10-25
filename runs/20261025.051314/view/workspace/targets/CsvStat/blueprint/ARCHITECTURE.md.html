@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/ARCHITECTURE.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/ARCHITECTURE.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/ARCHITECTURE.md">Raw file</a></div></header>
+<article class="doc"><h1>ARCHITECTURE: CsvStat</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Module layout, package ownership, entry contract, and exit-code policy for the csvstat command-line CSV profiler.</td></tr><tr><td>Depends On</td><td>None</td></tr><tr><td>Provides</td><td>go.mod, internal/cli, internal/csvdata, internal/profile, internal/freq, cmd/csvstat</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>csvstat is a single Go command-line executable. It reads one CSV file, infers a type for each column, and writes either a column profile or a frequency listing to standard output as CSV. Failures write one diagnostic line to standard error and nothing to standard output.</p>
+<h2>Technology Stack</h2>
+<p>Derived from <code>TECHNOLOGY_STACK.md</code>; that file remains the decision of record.</p>
+<div class="scroll"><table><thead><tr><th>Technology</th><th>Where it applies</th></tr></thead><tbody><tr><td>Go 1.22 or newer, standard library only</td><td>The whole application; <code>go.mod</code> declares no third-party requirement</td></tr><tr><td><code>go test</code> with <code>go vet</code></td><td>Project test suite behind <code>bin/test.sh</code></td></tr><tr><td>CSV (RFC 4180, <code>encoding/csv</code>)</td><td>Input reading and output writing</td></tr><tr><td>POSIX shell</td><td><code>bin/test.sh</code> and the supplied grader <code>sources/run.sh</code></td></tr></tbody></table></div>
+<h2>Module Layout</h2>
+<pre><code>go.mod                    module csvstat, go 1.22 or newer, no require directive
+cmd/csvstat/main.go       package main; calls cli.Run and passes the result to os.Exit
+internal/cli              argument parsing, dispatch, exit-code mapping, diagnostics
+internal/csvdata          CSV reading, trimming, null recognition, input rejection
+internal/profile          type inference, counts, min/max, sum/mean/median, decimal formatting
+internal/freq             frequency counting, ordering, limiting
+bin/test.sh               POSIX test gate (go vet ./... then go test ./...)
+sources/                  read-only scoring assets; never modified</code></pre>
+<p>Each <code>internal/</code> package carries a <code>doc.go</code> declaring its package so the layout exists before any behavior is built.</p>
+<h2>Entry Contract</h2>
+<p><code>cli.Run(args []string, stdout, stderr io.Writer) int</code> is the single entry point. <code>args</code> excludes the program name. Only <code>cmd/csvstat/main.go</code> calls <code>os.Exit</code>; no package under <code>internal/</code> does. Tests call <code>Run</code> with <code>bytes.Buffer</code> writers.</p>
+<p>Standard output is written only on success: output is built in memory and flushed after every check has passed.</p>
+<h2>Exit Codes</h2>
+<div class="scroll"><table><thead><tr><th>Code</th><th>Meaning</th></tr></thead><tbody><tr><td>0</td><td>Success</td></tr><tr><td>1</td><td>Operational failure: the file cannot be opened or read</td></tr><tr><td>2</td><td>Usage error: missing or extra file, unknown option, missing option value, non-positive or malformed <code>--top</code>, <code>--top</code> without <code>--freq</code>, <code>--column</code> with <code>--freq</code></td></tr><tr><td>3</td><td>Rejected input: empty file, empty or repeated header name, ragged or malformed record, or a column name absent from the header</td></tr></tbody></table></div>
+<h2>Package Ownership</h2>
+<div class="scroll"><table><thead><tr><th>Boundary</th><th>Owning package</th><th>Allowed low-level access</th></tr></thead><tbody><tr><td>Command line, exit codes, stderr diagnostics</td><td><code>internal/cli</code></td><td><code>flag</code>, <code>io</code>, <code>os.Open</code> for the input file</td></tr><tr><td>CSV parsing, trimming, null spellings, rejection</td><td><code>internal/csvdata</code></td><td><code>encoding/csv</code>, <code>io</code>, <code>strings</code></td></tr><tr><td>Type inference and statistics</td><td><code>internal/profile</code></td><td><code>math/big</code>, <code>time</code>, <code>regexp</code>, <code>sort</code></td></tr><tr><td>Frequency counting</td><td><code>internal/freq</code></td><td><code>sort</code></td></tr><tr><td>Configuration, file stores, external services, persistence</td><td>None; the application has no persistent state, no database, and no network access</td><td>Not applicable</td></tr></tbody></table></div>
+<h2>Technical Decisions</h2>
+<ul><li>Sums, means, and medians are computed exactly with <code>math/big</code> and rounded once, half away from zero,</li></ul>
+<p>when written.</p>
+<ul><li>Application code never reads <code>sources/run.sh</code> or any supplied data file and never embeds a statistic,</li></ul>
+<p>a type, or a value list. Every value comes from the file examined.</p>
+<ul><li>Diagnostics go to standard error and are never compared by the grader.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC arch-go-mod ===<br>Intent: The root go.mod declares a module, Go 1.22 or newer, and no third-party requirement.<br>Requires: executable=go; scope=test</p>
+<p>import re from pathlib import Path</p>
+<p>text = Path(&quot;go.mod&quot;).read_text(encoding=&quot;utf-8&quot;) lines = [line.strip() for line in text.splitlines()] modules = [line for line in lines if line.startswith(&quot;module &quot;)] assert len(modules) == 1, lines assert modules[0].split(None, 1)[1].strip() != &quot;&quot; goline = [line for line in lines if re.match(r&quot;^go\s+\d+\.\d+&quot;, line)] assert len(goline) == 1, lines match = re.match(r&quot;^go\s+(\d+)\.(\d+)&quot;, goline[0]) assert (int(match.group(1)), int(match.group(2))) &gt;= (1, 22) assert not any(line.startswith(&quot;require&quot;) for line in lines), lines === END AC arch-go-mod ===</p>
+<p>=== AC arch-layout ===<br>Intent: The application packages exist under internal/ and the command directory exists under cmd/.</p>
+<p>from pathlib import Path</p>
+<p>for package in (&quot;cli&quot;, &quot;csvdata&quot;, &quot;profile&quot;, &quot;freq&quot;): directory = Path(&quot;internal&quot;) / package assert directory.is_dir(), directory assert list(directory.glob(&quot;*.go&quot;)), directory assert Path(&quot;cmd/csvstat&quot;).is_dir() === END AC arch-layout ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Do not modify, rewrite, regenerate, or substitute any file under <code>sources/</code>.</li><li>Application code never reads <code>sources/run.sh</code> or any supplied data file and never embeds an answer.</li><li>Use only the Go standard library; add no third-party module.</li><li>Only <code>cmd/csvstat/main.go</code> calls <code>os.Exit</code>.</li></ul></article>
+</main>
+</body>
+</html>

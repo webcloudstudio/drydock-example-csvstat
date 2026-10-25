@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-UnreadableFile.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-UnreadableFile.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-UnreadableFile.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Unreadable File</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Exits 1 with an empty standard output when the named file cannot be opened or read.</td></tr><tr><td>Depends On</td><td>FEATURE-FailureDiagnostics.md</td></tr><tr><td>Provides</td><td>exit code 1</td></tr><tr><td>Consumes</td><td>cli.Run, csvdata.Read</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>Exit code 1 is the operational-failure code. It is used when the file named on the command line does not exist, is not permitted to be read, or fails while being read. It is distinct from exit 3, which means the file was read but its content was rejected.</p>
+<h2>Behavior</h2>
+<ul><li>An open or read error from the operating system maps to exit 1, not exit 3.</li><li>Standard output stays empty.</li><li>One diagnostic line naming the file is written to standard error.</li><li>This applies to every invocation form: profile, <code>--column</code>, and <code>--freq</code>.</li><li>Usage errors (exit 2) take precedence over file access, because argument parsing completes before the file is opened.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC unreadable-missing-file ===<br>Intent: A path that does not exist exits 1 and writes nothing to standard output.<br>Requires: executable=go; scope=test</p>
+<p>import os import tempfile from drydock_go import cli_runner</p>
+<p>with tempfile.TemporaryDirectory() as tmp: missing = os.path.join(tmp, &quot;no-such-file.csv&quot;) assert not os.path.exists(missing) code, out, err = cli_runner(missing) print(out) print(err) assert code == 1, code assert out == &quot;&quot;, out lines = [ln for ln in err.splitlines() if ln.strip()] assert len(lines) == 1, lines === END AC unreadable-missing-file ===</p>
+<p>=== AC unreadable-missing-file-freq ===<br>Intent: A missing file under --freq also exits 1 with nothing on standard output.<br>Requires: executable=go; scope=test</p>
+<p>import os import tempfile from drydock_go import cli_runner</p>
+<p>with tempfile.TemporaryDirectory() as tmp: missing = os.path.join(tmp, &quot;absent.csv&quot;) code, out, err = cli_runner(&quot;--freq&quot;, &quot;anything&quot;, missing) print(out) print(err) assert code == 1, code assert out == &quot;&quot;, out === END AC unreadable-missing-file-freq ===</p>
+<p>=== AC unreadable-missing-file-column ===<br>Intent: A missing file under --column also exits 1 with nothing on standard output.<br>Requires: executable=go; scope=test</p>
+<p>import os import tempfile from drydock_go import cli_runner</p>
+<p>with tempfile.TemporaryDirectory() as tmp: missing = os.path.join(tmp, &quot;absent.csv&quot;) code, out, err = cli_runner(&quot;--column&quot;, &quot;anything&quot;, missing) print(out) print(err) assert code == 1, code assert out == &quot;&quot;, out === END AC unreadable-missing-file-column ===</p>
+<p>=== AC unreadable-directory-as-file ===<br>Intent: A directory named as the file cannot be read and exits 1 with nothing on standard output.<br>Requires: executable=go; scope=test</p>
+<p>import tempfile from drydock_go import cli_runner</p>
+<p>with tempfile.TemporaryDirectory() as tmp: code, out, err = cli_runner(tmp) print(out) print(err) assert code == 1, code assert out == &quot;&quot;, out === END AC unreadable-directory-as-file ===</p>
+<p>=== AC unreadable-readable-file-still-succeeds ===<br>Intent: A readable fixture is not treated as unreadable and exits 0.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import cli_runner</p>
+<p>code, out, err = cli_runner(&quot;sources/header_only.csv&quot;) print(out) print(err) assert code == 0, code assert out != &quot;&quot; === END AC unreadable-readable-file-still-succeeds ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Exit 1 is reserved for files that cannot be opened or read; rejected content is exit 3.</li><li>A failing command writes nothing to standard output.</li></ul></article>
+</main>
+</body>
+</html>

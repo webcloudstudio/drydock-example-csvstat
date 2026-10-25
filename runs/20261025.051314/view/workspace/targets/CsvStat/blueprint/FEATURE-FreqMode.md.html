@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-FreqMode.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-FreqMode.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-FreqMode.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Frequency Mode</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Dispatches <code>csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</code> to the frequency listing instead of the profile.</td></tr><tr><td>Depends On</td><td>FEATURE-FreqLimit.md, FEATURE-UsageErrors.md</td></tr><tr><td>Provides</td><td>csvstat --freq, csvstat --freq --top</td></tr><tr><td>Consumes</td><td>freq.Count, freq.Top, cli.ParseArgs</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>When <code>--freq &lt;name&gt;</code> is given, <code>cli.Run</code> writes the frequency listing for that column and never the profile. <code>--top &lt;n&gt;</code> limits the rows and defaults to 5. The listing is CSV with header <code>value,count</code>, rows ordered by count descending and then value ascending by byte value, using trimmed non-null values only.</p>
+<h2>Behavior</h2>
+<ul><li>The column name is matched exactly and case-sensitively against the trimmed header.</li><li>A column name absent from the header exits 3 with nothing on standard output and one diagnostic line on standard error.</li><li>Combinations that are usage errors (<code>--column</code> with <code>--freq</code>, <code>--top</code> without <code>--freq</code>, a non-positive <code>--top</code>) are rejected with exit 2 by the usage-errors story before this dispatch runs.</li><li>Output is built in memory and written to standard output only on success, so a failing command writes nothing to standard output.</li><li>A column with no non-null values writes only the header.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC freq-default-matches-fixture ===<br>Intent: The default frequency listing for a named column equals the top five counts computed independently from the fixture.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io from collections import Counter from drydock_go import cli_runner</p>
+<p>path = &quot;sources/employees.csv&quot; column = &quot;department&quot; with open(path, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as fh: records = list(csv.reader(fh)) header = [h.strip() for h in records[0]] idx = header.index(column) values = [r[idx].strip() for r in records[1:] if r[idx].strip() != &quot;&quot;] counts = Counter(values) ordered = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0].encode(&quot;utf-8&quot;))) expected = [[v, str(c)] for v, c in ordered][:5]</p>
+<p>code, out, err = cli_runner(&quot;--freq&quot;, column, path) print(out) print(err) assert code == 0, code rows = list(csv.reader(io.StringIO(out))) assert rows[0] == [&quot;value&quot;, &quot;count&quot;], rows[0] assert rows[1:] == expected, (rows[1:], expected) === END AC freq-default-matches-fixture ===</p>
+<p>=== AC freq-top-limits-rows ===<br>Intent: With --top 2 exactly the first two ordered rows are listed.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io from collections import Counter from drydock_go import cli_runner</p>
+<p>path = &quot;sources/sensors.csv&quot; column = &quot;sensor&quot; top = 2 with open(path, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as fh: records = list(csv.reader(fh)) header = [h.strip() for h in records[0]] idx = header.index(column) values = [r[idx].strip() for r in records[1:] if r[idx].strip() != &quot;&quot;] counts = Counter(values) ordered = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0].encode(&quot;utf-8&quot;))) expected = [[v, str(c)] for v, c in ordered][:top]</p>
+<p>code, out, err = cli_runner(&quot;--freq&quot;, column, &quot;--top&quot;, str(top), path) print(out) print(err) assert code == 0, code rows = list(csv.reader(io.StringIO(out))) assert len(rows) - 1 == top, rows assert rows[1:] == expected, (rows[1:], expected) === END AC freq-top-limits-rows ===</p>
+<p>=== AC freq-omits-null-spellings ===<br>Intent: Null values (empty, NA, N/A, NULL in any case) are not listed in a frequency listing.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io from collections import Counter from drydock_go import cli_runner</p>
+<p>path = &quot;sources/employees.csv&quot; column = &quot;manager_id&quot; top = 3 nulls = {&quot;&quot;, &quot;na&quot;, &quot;n/a&quot;, &quot;null&quot;} with open(path, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as fh: records = list(csv.reader(fh)) header = [h.strip() for h in records[0]] idx = header.index(column) values = [r[idx].strip() for r in records[1:] if r[idx].strip().lower() not in nulls] counts = Counter(values) ordered = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0].encode(&quot;utf-8&quot;))) expected = [[v, str(c)] for v, c in ordered][:top]</p>
+<p>code, out, err = cli_runner(&quot;--freq&quot;, column, &quot;--top&quot;, str(top), path) print(out) print(err) assert code == 0, code rows = list(csv.reader(io.StringIO(out))) listed = {r[0].lower() for r in rows[1:]} assert listed.isdisjoint(nulls), listed assert rows[1:] == expected, (rows[1:], expected) === END AC freq-omits-null-spellings ===</p>
+<p>=== AC freq-values-are-trimmed ===<br>Intent: Padded values are trimmed before counting, so padded and unpadded spellings count together.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io from collections import Counter from drydock_go import cli_runner</p>
+<p>path = &quot;sources/orders.csv&quot; column = &quot;customer&quot; with open(path, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as fh: records = list(csv.reader(fh)) header = [h.strip() for h in records[0]] idx = header.index(column) values = [r[idx].strip() for r in records[1:] if r[idx].strip() != &quot;&quot;] counts = Counter(values) ordered = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0].encode(&quot;utf-8&quot;))) expected = [[v, str(c)] for v, c in ordered][:5]</p>
+<p>code, out, err = cli_runner(&quot;--freq&quot;, column, path) print(out) print(err) assert code == 0, code rows = list(csv.reader(io.StringIO(out))) assert rows[1:] == expected, (rows[1:], expected) === END AC freq-values-are-trimmed ===</p>
+<p>=== AC freq-all-null-column-header-only ===<br>Intent: A column with no non-null values lists only the header.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io from drydock_go import cli_runner</p>
+<p>code, out, err = cli_runner(&quot;--freq&quot;, &quot;battery&quot;, &quot;sources/sensors.csv&quot;) print(out) print(err) assert code == 0, code rows = list(csv.reader(io.StringIO(out))) assert rows == [[&quot;value&quot;, &quot;count&quot;]], rows === END AC freq-all-null-column-header-only ===</p>
+<p>=== AC freq-unknown-column-rejected ===<br>Intent: A column name absent from the header exits 3 and writes nothing to standard output.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import cli_runner</p>
+<p>code, out, err = cli_runner(&quot;--freq&quot;, &quot;nosuch&quot;, &quot;sources/orders.csv&quot;) print(out) print(err) assert code == 3, code assert out == &quot;&quot;, out === END AC freq-unknown-column-rejected ===</p>
+<p>=== AC freq-name-is-case-sensitive ===<br>Intent: A column name differing only in case from a header name is not found and exits 3.<br>Requires: executable=go; scope=test</p>
+<p>import csv from drydock_go import cli_runner</p>
+<p>path = &quot;sources/employees.csv&quot; with open(path, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as fh: header = [h.strip() for h in next(csv.reader(fh))] name = header[2] swapped = name.upper() if name != name.upper() else name.lower() assert swapped not in header</p>
+<p>code, out, err = cli_runner(&quot;--freq&quot;, swapped, path) print(out) print(err) assert code == 3, code assert out == &quot;&quot;, out === END AC freq-name-is-case-sensitive ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Frequency mode never writes the profile header or any profile row.</li><li>Application code never reads <code>sources/run.sh</code> or embeds a count or value list; every row comes from the file examined.</li><li>A failing command writes nothing to standard output.</li></ul></article>
+</main>
+</body>
+</html>

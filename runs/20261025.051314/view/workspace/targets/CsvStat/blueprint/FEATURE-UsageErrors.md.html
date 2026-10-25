@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-UsageErrors.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-UsageErrors.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-UsageErrors.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Usage Errors</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Reject malformed command-line arguments with exit status 2 and a single usage line on standard error.</td></tr><tr><td>Depends On</td><td>FEATURE-Arguments.md</td></tr><tr><td>Provides</td><td>exit code 2</td></tr><tr><td>Consumes</td><td>cli.ParseArgs</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>Malformed invocations exit 2, write nothing to standard output, and write one diagnostic line to standard error that shows the two command forms:</p>
+<pre><code>csvstat [--column &lt;name&gt;] &lt;file&gt;
+csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;</code></pre>
+<h2>Behavior</h2>
+<p>Exit 2 for each of:</p>
+<ul><li>no file argument</li><li>more than one file argument</li><li>an unknown option</li><li>an option given without its value</li><li><code>--top</code> that is not a positive integer (zero, negative, or non-numeric)</li><li><code>--top</code> without <code>--freq</code></li><li><code>--column</code> together with <code>--freq</code></li><li>a repeated option</li></ul>
+<p>Usage errors are decided from the arguments alone, before the file is opened, and exit 2 even when the file exists and is valid.</p>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC usage-errors-exit-two ===<br>Intent: Every malformed argument form exits 2 and writes nothing to standard output.<br>Requires: executable=go; scope=test</p>
+<p>import csv import os import tempfile from drydock_go import cli_runner</p>
+<p>rows = [[&quot;qty&quot;, &quot;sensor&quot;], [&quot;1&quot;, &quot;east&quot;], [&quot;2&quot;, &quot;west&quot;]] with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) other = os.path.join(d, &quot;other.csv&quot;) for p in (path, other): with open(p, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f: csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows) cases = [ [], [path, other], [&quot;--frobnicate&quot;, path], [&quot;--column&quot;], [&quot;--freq&quot;], [&quot;--freq&quot;, &quot;sensor&quot;, &quot;--top&quot;], [&quot;--freq&quot;, &quot;sensor&quot;, &quot;--top&quot;, &quot;0&quot;, path], [&quot;--freq&quot;, &quot;sensor&quot;, &quot;--top&quot;, &quot;-1&quot;, path], [&quot;--freq&quot;, &quot;sensor&quot;, &quot;--top&quot;, &quot;abc&quot;, path], [&quot;--top&quot;, &quot;3&quot;, path], [&quot;--column&quot;, &quot;qty&quot;, &quot;--freq&quot;, &quot;qty&quot;, path], ] for args in cases: code, out, err = cli_runner(*args) print(args, code) print(err) assert code == 2, (args, code) assert out == &quot;&quot;, (args, out) === END AC usage-errors-exit-two ===</p>
+<p>=== AC usage-errors-single-stderr-line ===<br>Intent: A usage error writes exactly one non-blank diagnostic line to standard error.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import cli_runner</p>
+<p>code, out, err = cli_runner() print(err) assert code == 2, code assert out == &quot;&quot; lines = [ln for ln in err.splitlines() if ln.strip()] assert len(lines) == 1, lines === END AC usage-errors-single-stderr-line ===</p>
+<p>=== AC usage-errors-before-file-open ===<br>Intent: A usage error is reported as 2 even when the named file does not exist.<br>Requires: executable=go; scope=test</p>
+<p>import os import tempfile from drydock_go import cli_runner</p>
+<p>with tempfile.TemporaryDirectory() as d: missing = os.path.join(d, &quot;no-such-file.csv&quot;) code, out, err = cli_runner(&quot;--top&quot;, &quot;3&quot;, missing) print(err) assert code == 2, code assert out == &quot;&quot; === END AC usage-errors-before-file-open ===</p>
+<p>=== AC usage-errors-valid-forms-accepted ===<br>Intent: Well-formed invocations are not rejected as usage errors.<br>Requires: executable=go; scope=test</p>
+<p>import csv import os import tempfile from drydock_go import cli_runner</p>
+<p>rows = [[&quot;qty&quot;, &quot;sensor&quot;], [&quot;1&quot;, &quot;east&quot;], [&quot;2&quot;, &quot;west&quot;]] with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f: csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows) for args in ([path], [&quot;--column&quot;, &quot;qty&quot;, path], [&quot;--freq&quot;, &quot;sensor&quot;, path], [&quot;--freq&quot;, &quot;sensor&quot;, &quot;--top&quot;, &quot;2&quot;, path]): code, out, err = cli_runner(*args) print(args, code) print(err) assert code == 0, (args, code) === END AC usage-errors-valid-forms-accepted ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>A usage error never writes to standard output.</li><li>Usage errors never depend on the contents of the file.</li></ul></article>
+</main>
+</body>
+</html>

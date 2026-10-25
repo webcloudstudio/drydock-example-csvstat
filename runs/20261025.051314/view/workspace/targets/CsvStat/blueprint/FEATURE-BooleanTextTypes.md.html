@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-BooleanTextTypes.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-BooleanTextTypes.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-BooleanTextTypes.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Boolean and Text Types</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Infer boolean, text, and empty column types, completing the type order.</td></tr><tr><td>Depends On</td><td>FEATURE-DateType.md</td></tr><tr><td>Provides</td><td>profile.InferType (boolean, text, empty)</td></tr><tr><td>Consumes</td><td>csvdata.IsNull, profile.InferType</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>Complete <code>profile.InferType</code> so every column receives exactly one type: the first of <code>integer</code>, <code>number</code>, <code>date</code>, <code>boolean</code>, <code>text</code> that every non-null value satisfies, or <code>empty</code> when there is no non-null value.</p>
+<h2>Behavior</h2>
+<ul><li>A column is <code>boolean</code> when every non-null value equals <code>true</code> or <code>false</code> ignoring case</li></ul>
+<p>(<code>True</code>, <code>TRUE</code>, <code>false</code>, <code>False</code>). Values such as <code>yes</code>, <code>1</code>, <code>0</code>, and <code>t</code> are not boolean.</p>
+<ul><li><code>text</code> is the fallback for any column that satisfies none of the earlier types.</li><li>A column with no non-null value (every value null, or zero data rows) is <code>empty</code>.</li><li>The order of evaluation is: empty check, integer, number, date, boolean, text.</li><li>A column of <code>0</code> and <code>1</code> is <code>integer</code>, not boolean.</li><li>Original value case is preserved for distinct counting; only classification ignores case. The</li></ul>
+<p>min and max statistics later render booleans as lowercase <code>true</code> or <code>false</code> regardless of input case; that rendering belongs to the min/max feature.</p>
+<ul><li>Null values are ignored during classification.</li></ul>
+<h2>Tests the build must write</h2>
+<p>In <code>internal/profile</code>:</p>
+<ul><li><code>TestInferBooleanColumnMixedCase</code></li><li><code>TestInferTextFallback</code></li><li><code>TestInferEmptyWhenAllNull</code></li><li><code>TestInferEmptyWhenNoRows</code></li><li><code>TestBooleanLookalikesAreText</code></li><li><code>TestTypeOrderPrecedence</code></li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC type-boolean-mixed-case ===<br>Intent: Values true and false in any letter case form a boolean column.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestInferBooleanColumnMixedCase&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC type-boolean-mixed-case ===</p>
+<p>=== AC type-text-fallback ===<br>Intent: A column matching no earlier type is text.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestInferTextFallback&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC type-text-fallback ===</p>
+<p>=== AC type-empty-all-null ===<br>Intent: A column whose values are all null spellings is typed empty.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestInferEmptyWhenAllNull&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC type-empty-all-null ===</p>
+<p>=== AC type-empty-no-rows ===<br>Intent: A column with zero data rows is typed empty.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestInferEmptyWhenNoRows&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC type-empty-no-rows ===</p>
+<p>=== AC type-boolean-lookalikes ===<br>Intent: Values such as yes, 1 or t do not make a boolean column.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestBooleanLookalikesAreText&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC type-boolean-lookalikes ===</p>
+<p>=== AC type-order-precedence ===<br>Intent: Earlier types win over later ones when several would match.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestTypeOrderPrecedence&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC type-order-precedence ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>No column name, file name, or value list is hardcoded to decide a type.</li><li>Booleans are classified case-insensitively but the stored value is never rewritten here.</li><li>Only the standard library is used.</li></ul></article>
+</main>
+</body>
+</html>

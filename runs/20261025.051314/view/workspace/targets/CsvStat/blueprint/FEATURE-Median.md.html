@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-Median.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-Median.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-Median.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Median</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Compute the exact median of integer and number columns.</td></tr><tr><td>Depends On</td><td>FEATURE-SumMean.md</td></tr><tr><td>Provides</td><td>profile.Median</td></tr><tr><td>Consumes</td><td>profile.SumMean</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>Numeric columns report a <code>median</code>. It is computed exactly and rounded once at output time by the decimal formatting story.</p>
+<h2>Interface</h2>
+<pre><code>// Median takes the column type and the trimmed non-null values of the column. ok is false when
+// the type is not integer or number, or when there are no values.
+func Median(typ string, values []string) (median *big.Rat, ok bool)</code></pre>
+<h2>Behavior</h2>
+<ul><li>Parse values into <code>big.Rat</code> and sort them numerically (<code>9</code> before <code>10</code>, <code>-3</code> before <code>2.5</code>),</li></ul>
+<p>never lexically.</p>
+<ul><li>With an odd count the median is the middle value.</li><li>With an even count the median is the exact mean of the two middle values.</li><li>Null values are excluded before counting.</li><li>Non-numeric types and columns with no non-null value give <code>ok</code> false.</li><li>The input slice is not reordered for the caller.</li></ul>
+<h2>Required Tests</h2>
+<p>The project suite in <code>internal/profile</code> includes these tests by exact name:</p>
+<ul><li><code>TestMedianOddCount</code> — the middle of an unsorted odd-length list.</li><li><code>TestMedianEvenCountExact</code> — the exact mean of the two middle values, including a case whose</li></ul>
+<p>result is not representable in binary floating point.</p>
+<ul><li><code>TestMedianNumericOrder</code> — numeric rather than lexical ordering.</li><li><code>TestMedianIgnoresNulls</code> — nulls are excluded from the count.</li><li><code>TestMedianNonNumeric</code> — non-numeric and empty columns give <code>ok</code> false.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC median-odd ===<br>Intent: An odd count yields the middle value of the sorted values.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestMedianOddCount&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC median-odd ===</p>
+<p>=== AC median-even ===<br>Intent: An even count yields the exact mean of the two middle values.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestMedianEvenCountExact&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC median-even ===</p>
+<p>=== AC median-numeric-order ===<br>Intent: Values are sorted numerically, not lexically.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestMedianNumericOrder&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC median-numeric-order ===</p>
+<p>=== AC median-ignores-nulls ===<br>Intent: Null values do not count toward the median.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestMedianIgnoresNulls&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC median-ignores-nulls ===</p>
+<p>=== AC median-non-numeric ===<br>Intent: Non-numeric and empty columns have no median.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestMedianNonNumeric&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC median-non-numeric ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>No <code>float64</code> arithmetic in the median.</li><li>The median is never rounded before output.</li><li>No median is embedded in code or read from <code>sources/</code>.</li></ul></article>
+</main>
+</body>
+</html>

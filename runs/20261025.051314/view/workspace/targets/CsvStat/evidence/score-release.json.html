@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/evidence/score-release.json</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/evidence/score-release.json</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/evidence/score-release.json">Raw file</a></div></header>
+<article class="doc"><pre>{
+  &quot;schema_version&quot;: 5,
+  &quot;recorded_at&quot;: &quot;2026-10-25T06:09:35+00:00&quot;,
+  &quot;target&quot;: &quot;CsvStat&quot;,
+  &quot;verdict&quot;: &quot;PASSED&quot;,
+  &quot;verdict_line&quot;: &quot;CsvStat: PASSED \u2014 8 of 8&quot;,
+  &quot;statement&quot;: &quot;CsvStat: PASSED \u2014 8 of 8\n\n  st-001  MET       [\&quot;sh\&quot;, \&quot;sources/run.sh\&quot;] exited 0; governed_gate full: outcome PASS, return_code 0, stdout &#x27;CsvStat: 22 passed, 0 failed (of 22)&#x27;; sources/run.sh:44-50 builds ./cmd/csvstat and exits 1 on build failure; it exits 0 only when every check passes\n  st-002  MET       bin/test.sh:1-6 is a POSIX sh script (set -eu, go vet, go test) and `sh -n` parses it; go vet ./... exited 0; go test ./...: ok csvstat/internal/cli, csvdata, freq, profile; cmd/csvstat has no test files; script exit 0\n  st-003  MET       go.mod:1-3 &#x27;module csvstat&#x27;, &#x27;go 1.22&#x27;, no require directives; go build ./cmd/csvstat exited 0; grep of all Go imports: only stdlib packages and csvstat/internal/*\n  st-004  MET       internal/profile/infer.go:31-47 ordered switch: empty, integer, number, date, boolean, text; nulls filtered via csvdata.IsNull; probe: [1,2,-3] -&gt; integer; [1,2.5] -&gt; number; [1.0,2] -&gt; number; [1,NA,&#x27;&#x27;,2] -&gt; integer; [2025-01-01,NA,2024-02-29] -&gt; date; [2025-01-01,2025-02-30] -&gt; text (invalid calendar date); [true,FALSE,True] -&gt; boolean; [true,1] -&gt; text; [1e3,2] -&gt; text; [&#x27; 7 &#x27;,8] -&gt; integer; [NA,&#x27;&#x27;,N/A] -&gt; empty; grader A1-A4 and B1-B3 also match the expected type column for every column of the supplied files\n  st-005  MET       governed_gate: PASS A1 (employees.csv), A2 (sensors.csv), A3 (orders.csv), A4 (header_only.csv), B1-B3 (single-column runs); sources/run.sh:58-103 expected outputs are cmp-compared against actual stdout, exit codes included\n  st-006  MET       internal/freq/count.go:27-35 sorts by count desc then value asc; null values skipped before counting; internal/freq/top.go:7-16 keeps the first n entries; grader PASS C1-C5 (including --top 2 and --top 3); probe: values b,a,b,a,c,c,c,NA x5,B,&#x27;&#x27; -&gt; c 3, a 2, b 2, B 1 (NA and empty excluded, &#x27;B&#x27; before &#x27;a&#x27; by byte order); --top 2 -&gt; c,a; --top 99 -&gt; all rows\n  st-007  MET       internal/csvdata/validate.go:23-50 rejects nil header, empty name, repeated name, and field count mismatch; internal/cli/cli.go:38-42 returns exitRejected on Validate failure before any output is written; grader PASS E1 (ragged, exit 3), E2 and E3 (absent column, exit 3), with empty expected stdout; probe: empty file, &#x27;\\n\\n\\n&#x27;, &#x27;a,,c&#x27;, &#x27;a,a&#x27;, &#x27;a, a&#x27;, &#x27;a,b / 1,2,3&#x27;, plus absent column and ragged under --freq and --column: all rc=3, stdout empty\n  st-008  MET       internal/cli/cli.go:31-33 usage errors return exitUsage (2); cli.go:44-47 open failures return exitOperational (1); grader PASS E4 (missing file, exit 1) and U1-U6 (usage errors, exit 2), each with empty stdout; probe: nonexistent path -&gt; rc 1, empty stdout; directory path -&gt; rc 1, empty stdout; no args, --column without value, --top abc, --top without --freq, --top 0, --column with --freq, repeated --column, unknown flag, two files -&gt; rc 2, empty stdout&quot;,
+  &quot;complete&quot;: true,
+  &quot;governed_gate&quot;: {
+    &quot;name&quot;: &quot;full&quot;,
+    &quot;outcome&quot;: &quot;PASS&quot;,
+    &quot;argv&quot;: [
+      &quot;sh&quot;,
+      &quot;sources/run.sh&quot;
+    ],
+    &quot;return_code&quot;: 0,
+    &quot;duration_ms&quot;: 2314,
+    &quot;detail&quot;: &quot;&quot;,
+    &quot;timed_out&quot;: false,
+    &quot;build_identity&quot;: &quot;b9243296ef9bf7fd&quot;,
+    &quot;stdout&quot;: &quot;PASS A1: csvstat /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/employees.csv\nPASS A2: csvstat /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/sensors.csv\nPASS A3: csvstat /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/orders.csv\nPASS A4: csvstat /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/header_only.csv\nPASS B1: csvstat --column salary /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/employees.csv\nPASS B2: csvstat --column notes /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/employees.csv\nPASS B3: csvstat --column temp_c /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/sensors.csv\nPASS C1: csvstat --freq department /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/employees.csv\nPASS C2: csvstat --freq sensor --top 2 /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/sensors.csv\nPASS C3: csvstat --freq customer /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/orders.csv\nPASS C4: csvstat --freq manager_id --top 3 /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/employees.csv\nPASS C5: csvstat --freq battery /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/sensors.csv\nPASS E1: csvstat /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/ragged.csv\nPASS E2: csvstat --column nosuch /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/orders.csv\nPASS E3: csvstat --freq nosuch /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/orders.csv\nPASS E4: csvstat /tmp/tmp.NKWcTlAMGD/no-such-file.csv\nPASS U1: csvstat \nPASS U2: csvstat /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/orders.csv /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/sensors.csv\nPASS U3: csvstat --freq sensor --top 0 /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/sensors.csv\nPASS U4: csvstat --top 3 /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/sensors.csv\nPASS U5: csvstat --column qty --freq qty /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/orders.csv\nPASS U6: csvstat --frobnicate /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/orders.csv\nCsvStat: 22 passed, 0 failed (of 22)\n&quot;,
+    &quot;stderr&quot;: &quot;&quot;
+  },
+  &quot;criteria&quot;: [
+    {
+      &quot;criterion_id&quot;: &quot;st-001&quot;,
+      &quot;verdict&quot;: &quot;MET&quot;,
+      &quot;rationale&quot;: &quot;The governed gate `sh sources/run.sh` exited 0 against this tree, with 22 of 22 checks passing.&quot;,
+      &quot;evidence&quot;: [
+        &quot;[\&quot;sh\&quot;, \&quot;sources/run.sh\&quot;] exited 0&quot;,
+        &quot;governed_gate full: outcome PASS, return_code 0, stdout &#x27;CsvStat: 22 passed, 0 failed (of 22)&#x27;&quot;,
+        &quot;sources/run.sh:44-50 builds ./cmd/csvstat and exits 1 on build failure; it exits 0 only when every check passes&quot;
+      ]
+    },
+    {
+      &quot;criterion_id&quot;: &quot;st-002&quot;,
+      &quot;verdict&quot;: &quot;MET&quot;,
+      &quot;rationale&quot;: &quot;`sh bin/test.sh` ran `go vet ./...` and `go test ./...` and exited 0; vet and all four test packages passed.&quot;,
+      &quot;evidence&quot;: [
+        &quot;bin/test.sh:1-6 is a POSIX sh script (set -eu, go vet, go test) and `sh -n` parses it&quot;,
+        &quot;go vet ./... exited 0&quot;,
+        &quot;go test ./...: ok csvstat/internal/cli, csvdata, freq, profile; cmd/csvstat has no test files; script exit 0&quot;
+      ]
+    },
+    {
+      &quot;criterion_id&quot;: &quot;st-003&quot;,
+      &quot;verdict&quot;: &quot;MET&quot;,
+      &quot;rationale&quot;: &quot;go.mod declares module csvstat at the root, `go build ./cmd/csvstat` exits 0, and every import is in the standard library or the module&#x27;s own internal packages.&quot;,
+      &quot;evidence&quot;: [
+        &quot;go.mod:1-3 &#x27;module csvstat&#x27;, &#x27;go 1.22&#x27;, no require directives&quot;,
+        &quot;go build ./cmd/csvstat exited 0&quot;,
+        &quot;grep of all Go imports: only stdlib packages and csvstat/internal/*&quot;
+      ]
+    },
+    {
+      &quot;criterion_id&quot;: &quot;st-004&quot;,
+      &quot;verdict&quot;: &quot;MET&quot;,
+      &quot;rationale&quot;: &quot;InferType returns the first of integer, number, date, boolean, text that every non-null value satisfies, and empty when none exists; 14 probe cases matched the spec.&quot;,
+      &quot;evidence&quot;: [
+        &quot;internal/profile/infer.go:31-47 ordered switch: empty, integer, number, date, boolean, text; nulls filtered via csvdata.IsNull&quot;,
+        &quot;probe: [1,2,-3] -&gt; integer; [1,2.5] -&gt; number; [1.0,2] -&gt; number; [1,NA,&#x27;&#x27;,2] -&gt; integer; [2025-01-01,NA,2024-02-29] -&gt; date; [2025-01-01,2025-02-30] -&gt; text (invalid calendar date); [true,FALSE,True] -&gt; boolean; [true,1] -&gt; text; [1e3,2] -&gt; text; [&#x27; 7 &#x27;,8] -&gt; integer; [NA,&#x27;&#x27;,N/A] -&gt; empty&quot;,
+        &quot;grader A1-A4 and B1-B3 also match the expected type column for every column of the supplied files&quot;
+      ]
+    },
+    {
+      &quot;criterion_id&quot;: &quot;st-005&quot;,
+      &quot;verdict&quot;: &quot;MET&quot;,
+      &quot;rationale&quot;: &quot;The grader&#x27;s byte-for-byte comparison of every column&#x27;s rows, nulls, distinct, min, max, sum, mean and median against the known answers passed for all four data files.&quot;,
+      &quot;evidence&quot;: [
+        &quot;governed_gate: PASS A1 (employees.csv), A2 (sensors.csv), A3 (orders.csv), A4 (header_only.csv), B1-B3 (single-column runs)&quot;,
+        &quot;sources/run.sh:58-103 expected outputs are cmp-compared against actual stdout, exit codes included&quot;
+      ]
+    },
+    {
+      &quot;criterion_id&quot;: &quot;st-006&quot;,
+      &quot;verdict&quot;: &quot;MET&quot;,
+      &quot;rationale&quot;: &quot;--freq lists non-null values by count descending then value ascending by byte, capped at --top; the grader&#x27;s C1-C5 and my probe confirmed ordering, tie-breaking, null exclusion and the limit.&quot;,
+      &quot;evidence&quot;: [
+        &quot;internal/freq/count.go:27-35 sorts by count desc then value asc; null values skipped before counting&quot;,
+        &quot;internal/freq/top.go:7-16 keeps the first n entries&quot;,
+        &quot;grader PASS C1-C5 (including --top 2 and --top 3)&quot;,
+        &quot;probe: values b,a,b,a,c,c,c,NA x5,B,&#x27;&#x27; -&gt; c 3, a 2, b 2, B 1 (NA and empty excluded, &#x27;B&#x27; before &#x27;a&#x27; by byte order); --top 2 -&gt; c,a; --top 99 -&gt; all rows&quot;
+      ]
+    },
+    {
+      &quot;criterion_id&quot;: &quot;st-007&quot;,
+      &quot;verdict&quot;: &quot;MET&quot;,
+      &quot;rationale&quot;: &quot;Empty, blank-only, empty-header, repeated-header, repeated-after-trim and ragged inputs all exit 3 with empty stdout, and so do absent-column requests.&quot;,
+      &quot;evidence&quot;: [
+        &quot;internal/csvdata/validate.go:23-50 rejects nil header, empty name, repeated name, and field count mismatch&quot;,
+        &quot;internal/cli/cli.go:38-42 returns exitRejected on Validate failure before any output is written&quot;,
+        &quot;grader PASS E1 (ragged, exit 3), E2 and E3 (absent column, exit 3), with empty expected stdout&quot;,
+        &quot;probe: empty file, &#x27;\\n\\n\\n&#x27;, &#x27;a,,c&#x27;, &#x27;a,a&#x27;, &#x27;a, a&#x27;, &#x27;a,b / 1,2,3&#x27;, plus absent column and ragged under --freq and --column: all rc=3, stdout empty&quot;
+      ]
+    },
+    {
+      &quot;criterion_id&quot;: &quot;st-008&quot;,
+      &quot;verdict&quot;: &quot;MET&quot;,
+      &quot;rationale&quot;: &quot;Missing files and directories exit 1 with empty stdout; malformed arguments exit 2 with empty stdout.&quot;,
+      &quot;evidence&quot;: [
+        &quot;internal/cli/cli.go:31-33 usage errors return exitUsage (2); cli.go:44-47 open failures return exitOperational (1)&quot;,
+        &quot;grader PASS E4 (missing file, exit 1) and U1-U6 (usage errors, exit 2), each with empty stdout&quot;,
+        &quot;probe: nonexistent path -&gt; rc 1, empty stdout; directory path -&gt; rc 1, empty stdout; no args, --column without value, --top abc, --top without --freq, --top 0, --column with --freq, repeated --column, unknown flag, two files -&gt; rc 2, empty stdout&quot;
+      ]
+    }
+  ],
+  &quot;guardrail_ids&quot;: [],
+  &quot;observations&quot;: [
+    {
+      &quot;criterion_id&quot;: &quot;st-001&quot;,
+      &quot;kind&quot;: &quot;command&quot;,
+      &quot;source&quot;: &quot;[\&quot;sh\&quot;, \&quot;sources/run.sh\&quot;]&quot;,
+      &quot;return_code&quot;: 0,
+      &quot;pinned&quot;: &quot;MET&quot;,
+      &quot;detail&quot;: &quot;[\&quot;sh\&quot;, \&quot;sources/run.sh\&quot;] exited 0&quot;,
+      &quot;output&quot;: &quot;PASS A4: csvstat /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/header_only.csv\nPASS B1: csvstat --column salary /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/employees.csv\nPASS B2: csvstat --column notes /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/employees.csv\nPASS B3: csvstat --column temp_c /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/sensors.csv\nPASS C1: csvstat --freq department /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/employees.csv\nPASS C2: csvstat --freq sensor --top 2 /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/sensors.csv\nPASS C3: csvstat --freq customer /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/orders.csv\nPASS C4: csvstat --freq manager_id --top 3 /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/employees.csv\nPASS C5: csvstat --freq battery /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/sensors.csv\nPASS E1: csvstat /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/ragged.csv\nPASS E2: csvstat --column nosuch /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/orders.csv\nPASS E3: csvstat --freq nosuch /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/orders.csv\nPASS E4: csvstat /tmp/tmp.88tBNA5mcJ/no-such-file.csv\nPASS U1: csvstat \nPASS U2: csvstat /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/orders.csv /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/sensors.csv\nPASS U3: csvstat --freq sensor --top 0 /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/sensors.csv\nPASS U4: csvstat --top 3 /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/sensors.csv\nPASS U5: csvstat --column qty --freq qty /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/orders.csv\nPASS U6: csvstat --frobnicate /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/build/CsvStat/sources/orders.csv\nCsvStat: 22 passed, 0 failed (of 22)&quot;
+    }
+  ],
+  &quot;blockers&quot;: [],
+  &quot;attestations&quot;: [],
+  &quot;kit_faults&quot;: [],
+  &quot;warnings&quot;: [],
+  &quot;improvements&quot;: [
+    &quot;Add grader checks for the st-007 cases the grader does not cover today: empty file, blank-only input, empty header name, and repeated header name. Those rules currently rest only on probes, and a future change could break them without the gate noticing.&quot;,
+    &quot;Add grader checks for the st-004 inference edge cases: an impossible calendar date such as 2025-02-30 must be text, a mix of integer and date must be text, and a column of only nulls must be empty.&quot;,
+    &quot;Add a grader check for an unreadable directory path (exit 1, empty stdout) so the st-008 read-failure branch is covered by the gate.&quot;
+  ],
+  &quot;identities&quot;: {
+    &quot;code&quot;: &quot;53ac47242b6e2e41300ca1f5ce12565aab19809d&quot;,
+    &quot;sea_trials&quot;: &quot;f9d3ac243b214c5e663519ff9eba8eaa455e14eb9f9094d0197ab4bdaf9bed68&quot;,
+    &quot;blueprint&quot;: {
+      &quot;ARCHITECTURE.md&quot;: &quot;e12f94e5c90e8e9b4581c3d4e02add14222bb76448d04c486ee6d71e88a43bf6&quot;,
+      &quot;ARCHITECTURE_compact.md&quot;: &quot;7cfe515f9a57eff34b031e503fa114c640a1bd985c53bba108277ff174501356&quot;,
+      &quot;FEATURE-Arguments.md&quot;: &quot;9a953f3bc7cea1d5d09ee74930eab235304c0c2cce1b56415ae02a85b0a85633&quot;,
+      &quot;FEATURE-BooleanTextTypes.md&quot;: &quot;99d5d9e9678ded2142bb56301acb85a36eb03c8257a973e5d3880165ea0353fc&quot;,
+      &quot;FEATURE-ColumnProfile.md&quot;: &quot;f22a1f086a66d407ec5d7aeb466f02c03727d79a8182a025a7c46ce99e333728&quot;,
+      &quot;FEATURE-CsvReading.md&quot;: &quot;71d95738575ab19b3deb8dc6e0b1c851898e4366d4643d02ca1ba45e8122ba5e&quot;,
+      &quot;FEATURE-DateType.md&quot;: &quot;44aa097f757fa79e16249e524a4b64e0d8ed49a36056de7fc783060f7818c695&quot;,
+      &quot;FEATURE-DecimalFormat.md&quot;: &quot;109c0508d8abeeb49b1ed3343b85198184a4d8285c00123967a35401dcc420d2&quot;,
+      &quot;FEATURE-Executable.md&quot;: &quot;59259545271cfe01a39df84ddc49b5dc74cdad084bc0204f885d93e3f8fedd64&quot;,
+      &quot;FEATURE-FailureDiagnostics.md&quot;: &quot;de12d876e427503a0498c8a36753e2cee77059e4647e2f63ec3a07b7b89ad177&quot;,
+      &quot;FEATURE-FreqCount.md&quot;: &quot;1f7104b9cee064d941af8db099fb686c7b3cfa2b6c5960060a9ba370e23abd9b&quot;,
+      &quot;FEATURE-FreqLimit.md&quot;: &quot;bb241d5e6e51728130ef0566fd9e2637271d0d96e5e2530600e15de37e6474f6&quot;,
+      &quot;FEATURE-FreqMode.md&quot;: &quot;b963091cedf7c073e18d2fd57ce10028f1860e1be7137a520a684d33b8c750a2&quot;,
+      &quot;FEATURE-InputRejection.md&quot;: &quot;d4482d2d5ab4f3f5e0ca46192fa2016b8f066f142603a827925623f692a87572&quot;,
+      &quot;FEATURE-Median.md&quot;: &quot;224ab7e008018a11e1c0ec4ca4c7b9c0c23f09325db2c231f86251852645fe23&quot;,
+      &quot;FEATURE-MinMax.md&quot;: &quot;9bb09a367200cedddc7dfcbd1ce40aa4162397965993c1f4e4d1258f59fb37d9&quot;,
+      &quot;FEATURE-NullValues.md&quot;: &quot;6c396e64753ed2a4380ea4a7ab6c6f5fed6a8a93939a526be9665b0a12b5d2f8&quot;,
+      &quot;FEATURE-NumericTypes.md&quot;: &quot;d1f6d599a6e5a99be40b6643e8418dc043f1bbd73a65350287c76006431bc200&quot;,
+      &quot;FEATURE-ProfileOutput.md&quot;: &quot;53ada49722304e16ad8f871161f474ce1b6cf33de48c73e9b6a1026eb600b26f&quot;,
+      &quot;FEATURE-RowCounts.md&quot;: &quot;8464549c0bb1d22b7d07a655f60be7e4dce548a389709d33d5eacd350d4b07b1&quot;,
+      &quot;FEATURE-SumMean.md&quot;: &quot;32216f91f19592c5cd59a19cf06f6e1bad94ebb5096db597e77b676c3b890656&quot;,
+      &quot;FEATURE-TestGate.md&quot;: &quot;6406879939a6153b5a4e476ecf1e8aa83162a2b56ee23711b542b955faf8cfc0&quot;,
+      &quot;FEATURE-Trimming.md&quot;: &quot;934339d983dbe8db155f319ed7be59bb593aeefbff95b6f0616faf8b9ef981f0&quot;,
+      &quot;FEATURE-UnreadableFile.md&quot;: &quot;295ba43f8d54cb5e1194a2cef34bce8dbf1f9d42c77a1bae77b1c7d12ed24356&quot;,
+      &quot;FEATURE-UsageErrors.md&quot;: &quot;39441830f6f6f9f080e230ce4c98feacea338ddc1fd3900c53f6ac21083bbd2e&quot;,
+      &quot;VERIFICATION.md&quot;: &quot;1012f095f2c4698eb266878c0fc3909a9bce812c97324ce4d88268d848122c7f&quot;
+    }
+  },
+  &quot;execution_id&quot;: &quot;20261025.060820.111Z-ddbe246e&quot;
+}
+</pre></article>
+</main>
+</body>
+</html>

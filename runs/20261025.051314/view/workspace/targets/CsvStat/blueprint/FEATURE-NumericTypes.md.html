@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-NumericTypes.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-NumericTypes.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-NumericTypes.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Numeric Types</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Infer integer and number column types from the non-null values of a column.</td></tr><tr><td>Depends On</td><td>FEATURE-NullValues.md</td></tr><tr><td>Provides</td><td>profile.InferType (integer, number)</td></tr><tr><td>Consumes</td><td>csvdata.IsNull</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>Column typing decides which statistics apply. This feature starts <code>profile.InferType</code> in <code>internal/profile</code> with the two numeric types. Later features extend the same function with <code>date</code>, <code>boolean</code>, <code>text</code>, and <code>empty</code>.</p>
+<h2>Behavior</h2>
+<ul><li><code>func InferType(values []string) string</code> in package <code>profile</code> receives the trimmed values of one</li></ul>
+<p>column and returns the type name.</p>
+<ul><li>Null values (per <code>csvdata.IsNull</code>) are ignored.</li><li>A column is <code>integer</code> when every non-null value matches <code>-?[0-9]+</code>.</li><li>Otherwise it is <code>number</code> when every non-null value matches <code>-?[0-9]+(\.[0-9]+)?</code>.</li><li>Integer is tested before number, so a column of whole numbers is <code>integer</code>; a single decimal</li></ul>
+<p>value makes the column <code>number</code>.</p>
+<ul><li>Matching is anchored over the whole value and uses no float parsing. Values such as <code>+1</code>, <code>1.</code>,</li></ul>
+<p><code>.5</code>, <code>1e3</code>, <code>1,5</code>, <code>0x10</code>, and <code>-</code> are not numeric.</p>
+<ul><li>When a column has at least one non-null value that is not numeric, this feature returns the</li></ul>
+<p>fallback <code>text</code> until later features add the remaining types.</p>
+<ul><li>A column whose non-null values are all null returns <code>empty</code>.</li></ul>
+<h2>Tests the build must write</h2>
+<p>In <code>internal/profile</code>:</p>
+<ul><li><code>TestInferIntegerColumn</code></li><li><code>TestInferNumberColumn</code></li><li><code>TestIntegerPreferredOverNumber</code></li><li><code>TestNullsIgnoredWhenInferringNumeric</code></li><li><code>TestMalformedNumericsAreNotNumeric</code></li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC numeric-integer ===<br>Intent: A column of integer-shaped values, including negatives, is typed integer.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestInferIntegerColumn&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC numeric-integer ===</p>
+<p>=== AC numeric-number ===<br>Intent: A column with a decimal value among integers is typed number.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestInferNumberColumn&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC numeric-number ===</p>
+<p>=== AC numeric-integer-preferred ===<br>Intent: Integer is chosen over number when both patterns match every value.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestIntegerPreferredOverNumber&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC numeric-integer-preferred ===</p>
+<p>=== AC numeric-nulls-ignored ===<br>Intent: Null spellings among numeric values do not change the inferred type.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestNullsIgnoredWhenInferringNumeric&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC numeric-nulls-ignored ===</p>
+<p>=== AC numeric-malformed ===<br>Intent: Values such as +1, 1., .5, 1e3 and 1,5 are not numeric.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestMalformedNumericsAreNotNumeric&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC numeric-malformed ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Classification never uses float parsing; values stay exact strings for later exact arithmetic.</li><li>No type is hardcoded for any column or file; every type comes from the values examined.</li><li>Only the standard library is used.</li></ul></article>
+</main>
+</body>
+</html>

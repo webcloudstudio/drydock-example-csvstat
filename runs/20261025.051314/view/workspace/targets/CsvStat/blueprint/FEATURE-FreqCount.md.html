@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-FreqCount.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-FreqCount.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-FreqCount.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Frequency Count</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Count and order the distinct non-null values of one column for frequency output.</td></tr><tr><td>Depends On</td><td>FEATURE-NullValues.md, FEATURE-InputRejection.md</td></tr><tr><td>Provides</td><td>freq.Count</td></tr><tr><td>Consumes</td><td>csvdata.Read, csvdata.IsNull</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p><code>internal/freq</code> counts the trimmed non-null values of a named column and returns them in listing order. The listing is CSV with header <code>value,count</code>.</p>
+<h2>Behavior</h2>
+<ul><li>Values are trimmed before counting, so padded spellings count together. Comparison is by exact</li></ul>
+<p>string after trimming.</p>
+<ul><li>Null values (empty, <code>NA</code>, <code>N/A</code>, <code>NULL</code> ignoring case) are not listed and not counted.</li><li>Order is count descending, then value ascending by byte value.</li><li>A column with no non-null values produces only the header row.</li><li>A header-only file produces only the header row.</li><li>Output is written with <code>encoding/csv</code>, so a value containing a comma or quote is quoted.</li><li>Rejected input (ragged, empty, bad header) exits 3 with empty standard output.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC freq-count-ordering ===<br>Intent: Values are listed by count descending then by byte value ascending, with counts matching the input.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile from collections import Counter from drydock_go import cli_runner</p>
+<p>values = [&quot;b&quot;, &quot;a&quot;, &quot;b&quot;, &quot;c&quot;, &quot;a&quot;, &quot;b&quot;, &quot;z&quot;, &quot;c&quot;, &quot;B&quot;, &quot;B&quot;] rows = [[&quot;v&quot;]] + [[x] for x in values] with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f: csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows) code, out, err = cli_runner(&quot;--freq&quot;, &quot;v&quot;, path) print(out) print(err) assert code == 0, code parsed = list(csv.reader(io.StringIO(out))) assert parsed[0] == [&quot;value&quot;, &quot;count&quot;] counts = Counter(values) ordered = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0].encode(&quot;utf-8&quot;))) assert parsed[1:] == [[k, str(n)] for k, n in ordered] === END AC freq-count-ordering ===</p>
+<p>=== AC freq-count-nulls-and-trim ===<br>Intent: Null spellings are omitted and padded values count with their trimmed form.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile from collections import Counter from drydock_go import cli_runner</p>
+<p>values = [&quot;&quot;, &quot;NA&quot;, &quot;n/a&quot;, &quot;NULL&quot;, &quot;null&quot;, &quot;x&quot;, &quot; x &quot;, &quot;y&quot;] rows = [[&quot;v&quot;]] + [[x] for x in values] with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f: csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows) code, out, err = cli_runner(&quot;--freq&quot;, &quot;v&quot;, path) print(out) print(err) assert code == 0, code parsed = list(csv.reader(io.StringIO(out))) nulls = {&quot;&quot;, &quot;na&quot;, &quot;n/a&quot;, &quot;null&quot;} counts = Counter(v.strip() for v in values if v.strip().lower() not in nulls) ordered = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0].encode(&quot;utf-8&quot;))) assert parsed[1:] == [[k, str(n)] for k, n in ordered] === END AC freq-count-nulls-and-trim ===</p>
+<p>=== AC freq-count-all-null ===<br>Intent: A column with no non-null value lists only the header.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile from drydock_go import cli_runner</p>
+<p>rows = [[&quot;id&quot;, &quot;gap&quot;], [&quot;1&quot;, &quot;&quot;], [&quot;2&quot;, &quot;NA&quot;], [&quot;3&quot;, &quot; &quot;]] with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f: csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows) code, out, err = cli_runner(&quot;--freq&quot;, &quot;gap&quot;, path) print(out) print(err) assert code == 0, code parsed = list(csv.reader(io.StringIO(out))) assert parsed == [[&quot;value&quot;, &quot;count&quot;]] === END AC freq-count-all-null ===</p>
+<p>=== AC freq-count-header-only ===<br>Intent: A header-only file lists only the header for any of its columns.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile from drydock_go import cli_runner</p>
+<p>rows = [[&quot;sku&quot;, &quot;price&quot;]] with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f: csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows) code, out, err = cli_runner(&quot;--freq&quot;, &quot;sku&quot;, path) print(out) print(err) assert code == 0, code assert list(csv.reader(io.StringIO(out))) == [[&quot;value&quot;, &quot;count&quot;]] === END AC freq-count-header-only ===</p>
+<p>=== AC freq-count-quoted-value ===<br>Intent: A value containing a comma is written quoted and parses back to the original value.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile from drydock_go import cli_runner</p>
+<p>value = &quot;relocating, TX&quot; rows = [[&quot;notes&quot;], [value], [value], [&quot;other&quot;]] with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f: csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows) code, out, err = cli_runner(&quot;--freq&quot;, &quot;notes&quot;, path) print(out) print(err) assert code == 0, code parsed = list(csv.reader(io.StringIO(out))) assert parsed[1] == [value, str(2)] assert parsed[2] == [&quot;other&quot;, str(1)] === END AC freq-count-quoted-value ===</p>
+<p>=== AC freq-count-rejected-input ===<br>Intent: A ragged file in frequency mode exits 3 and writes nothing to standard output.<br>Requires: executable=go; scope=test</p>
+<p>import csv import os import tempfile from drydock_go import cli_runner</p>
+<p>rows = [[&quot;a&quot;, &quot;b&quot;], [&quot;1&quot;, &quot;2&quot;], [&quot;3&quot;]] with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;ragged.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f: csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows) code, out, err = cli_runner(&quot;--freq&quot;, &quot;a&quot;, path) print(err) assert code == 3, code assert out == &quot;&quot; === END AC freq-count-rejected-input ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Null values are never listed.</li><li>Ordering is by byte value, not locale collation.</li><li>No frequency value is embedded in application code.</li></ul></article>
+</main>
+</body>
+</html>

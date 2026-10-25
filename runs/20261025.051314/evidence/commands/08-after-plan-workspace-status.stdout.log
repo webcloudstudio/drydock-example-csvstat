@@ -1,0 +1,16 @@
+Drydock 0.8.0  Copyright (c) 2026 Web Cloud Studio. All rights reserved.
+Drydock status — workspace
+
+Target: CsvStat
+   Phase:     Implement
+   State:     25 pending
+   Detail:    7 imported · 25 authored · metadata planned
+   Analysis:  Ready · 24 stories · 0 questions · 0 blockers
+   Plan:      25 pending
+   Next Step: drydock build CsvStat  (frontier: Stand up the Go module, directory layout, and architecture for csvstat.)
+   10-25:     ✅  drydock build status CsvStat
+   10-25:     ✅  drydock plan verify CsvStat --plan-override-model sonnet
+   10-25:     ✅  drydock plan CsvStat --override --plan-override-model sonnet
+   10-25:     ✅  drydock analyze CsvStat
+   10-25:     ✅  drydock import CsvStat /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/sources --format markdown
+

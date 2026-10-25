@@ -1,0 +1,35 @@
+The gate script already exists from an earlier block. I'll run it and the ACs before changing anything.The gate passes from the root and from another directory. Next I'll check the test suite against the spec's coverage list.Coverage looks complete against the spec list. Last check: the tests should write their own inputs to temp dirs and never touch `sources/`.RESULT: SUCCESS
+
+FILES CHANGED:
+- none
+
+SUMMARY:
+`bin/test.sh` already satisfies FEATURE-TestGate, so I made no edits. It was added in block-1 (commit dcb0bc4) and matches the spec: a POSIX `sh` script with `set -eu` that changes to the application root from its own path, runs `go vet ./...`, then `go test ./...`, and exits non-zero if either fails.
+
+Checks run:
+- `sh bin/test.sh` from the application root: exit 0. `go vet` passed, and `go test` passed for `internal/cli`, `csvdata`, `freq`, and `profile`.
+- `sh <absolute path>/bin/test.sh` from `/tmp`: exit 0.
+- `go vet ./...` run directly: exit 0.
+- `go test -count=1 -v ./...`: all packages `ok`. Test counts from this run: 17 `*_test.go` files, and the `go test` run reported no failures.
+- `sh -n bin/test.sh`: syntax OK.
+
+Acceptance assertions, all passing:
+- `testgate-script-exits-zero`
+- `testgate-runs-from-other-directory`
+- `testgate-go-test-and-vet-pass`
+- `testgate-suite-has-tests`: test files are in four packages, so the `len(packages) > 1` check holds.
+
+Coverage against the spec list, by test function name:
+- Types: integer, number, date, boolean, text, and empty.
+- Statistics: rows, nulls, distinct, min, max, sum, mean, and median.
+- Null handling and trimming.
+- Rounding: half-away-from-zero, and no negative zero.
+- Output forms: profile, `--column`, and `--freq`.
+- Exit codes 0, 1, 2, and 3.
+
+The tests do not reference `sources/`, and the three test files that write inputs use temp directories.
+
+I did not run `sources/run.sh`. It is the terminal story, and this block is not the terminal step.
+
+BLOCKERS:
+- none

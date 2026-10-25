@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-TestGate.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-TestGate.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-TestGate.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Test Gate</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Provides the POSIX <code>bin/test.sh</code> that runs <code>go vet ./...</code> and <code>go test ./...</code> and exits zero only when both pass.</td></tr><tr><td>Depends On</td><td>FEATURE-ColumnProfile.md, FEATURE-FreqMode.md, FEATURE-UnreadableFile.md</td></tr><tr><td>Provides</td><td>bin/test.sh</td></tr><tr><td>Consumes</td><td>csvstat command, go vet, go test</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p><code>bin/test.sh</code> is the project&#x27;s single test entry point. It is a POSIX <code>sh</code> script that changes to the application root, runs <code>go vet ./...</code>, then <code>go test ./...</code>, and exits non-zero if either fails. The project suite, written beside the code, covers each type, each statistic, null handling, rounding, each output form, and each exit code, using files the tests write to temporary directories.</p>
+<h2>Behavior</h2>
+<ul><li>The script uses only POSIX <code>sh</code> constructs and resolves the application root from its own location, so it works from any current directory.</li><li>It runs <code>go vet ./...</code> first and stops with a non-zero status if vet fails.</li><li>It then runs <code>go test ./...</code> and exits with that command&#x27;s status.</li><li>It never modifies files under <code>sources/</code>.</li><li>The suite covers:<ul><li>every column type (integer, number, date, boolean, text, empty);</li><li>rows, nulls, distinct, min, max, sum, mean, and median;</li><li>null spellings and trimming;</li><li>half-away-from-zero rounding and no negative zero;</li><li>the profile form, the <code>--column</code> form, and the <code>--freq</code> form;</li><li>exit codes 0, 1, 2, and 3.</li></ul></li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC testgate-script-exits-zero ===<br>Intent: Running bin/test.sh from the application root exits zero.<br>Requires: executable=go; scope=test</p>
+<p>import subprocess</p>
+<p>result = subprocess.run([&quot;sh&quot;, &quot;bin/test.sh&quot;], capture_output=True, text=True) print(result.stdout) print(result.stderr) assert result.returncode == 0, result.returncode === END AC testgate-script-exits-zero ===</p>
+<p>=== AC testgate-runs-from-other-directory ===<br>Intent: bin/test.sh locates the application root itself and exits zero when started from another directory.<br>Requires: executable=go; scope=test</p>
+<p>import os import subprocess import tempfile</p>
+<p>script = os.path.abspath(&quot;bin/test.sh&quot;) with tempfile.TemporaryDirectory() as tmp: result = subprocess.run([&quot;sh&quot;, script], capture_output=True, text=True, cwd=tmp) print(result.stdout) print(result.stderr) assert result.returncode == 0, result.returncode === END AC testgate-runs-from-other-directory ===</p>
+<p>=== AC testgate-go-test-and-vet-pass ===<br>Intent: go vet and go test pass directly at the application root, the two commands the script wraps.<br>Requires: executable=go; scope=test</p>
+<p>import subprocess</p>
+<p>vet = subprocess.run([&quot;go&quot;, &quot;vet&quot;, &quot;./...&quot;], capture_output=True, text=True) print(vet.stdout) print(vet.stderr) assert vet.returncode == 0, vet.returncode</p>
+<p>tests = subprocess.run([&quot;go&quot;, &quot;test&quot;, &quot;./...&quot;], capture_output=True, text=True) print(tests.stdout) print(tests.stderr) assert tests.returncode == 0, tests.returncode === END AC testgate-go-test-and-vet-pass ===</p>
+<p>=== AC testgate-suite-has-tests ===<br>Intent: The project ships Go test files in more than one internal package, so the gate is not vacuous.<br>Requires: executable=go; scope=test</p>
+<p>import pathlib</p>
+<p>root = pathlib.Path(&quot;internal&quot;) test_files = sorted(root.rglob(&quot;*_test.go&quot;)) packages = {p.parent for p in test_files} print([str(p) for p in test_files]) assert len(test_files) &gt; 0 assert len(packages) &gt; 1, packages === END AC testgate-suite-has-tests ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li><code>bin/test.sh</code> never edits, regenerates, or substitutes any file under <code>sources/</code>.</li><li>The test suite never reads <code>sources/run.sh</code> and never embeds a grader answer.</li><li>Tests write their own input files to temporary directories.</li></ul></article>
+</main>
+</body>
+</html>

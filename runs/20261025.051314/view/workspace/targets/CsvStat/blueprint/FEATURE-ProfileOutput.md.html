@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-ProfileOutput.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-ProfileOutput.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-ProfileOutput.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Profile Output</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Write the per-column profile of a CSV file as RFC 4180 CSV when neither --column nor --freq is given.</td></tr><tr><td>Depends On</td><td>FEATURE-DecimalFormat.md, FEATURE-RowCounts.md, FEATURE-Arguments.md, FEATURE-CsvReading.md</td></tr><tr><td>Provides</td><td>csvstat &lt;file&gt;</td></tr><tr><td>Consumes</td><td>csvdata.Read, profile.InferType, profile.Counts, profile.FormatDecimal, cli.ParseArgs</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p><code>csvstat &lt;file&gt;</code> profiles every column of the file. The output is CSV on standard output with the header <code>column,type,rows,nulls,distinct,min,max,sum,mean,median</code>, followed by one row per column in file order. Line endings are <code>\n</code>.</p>
+<h2>Behavior</h2>
+<ul><li>The command reads the file, trims, rejects malformed input, infers each column&#x27;s type, and</li></ul>
+<p>computes the counts and statistics defined by the stories it consumes.</p>
+<ul><li>The output is built in memory and written to standard output only after every column has been</li></ul>
+<p>computed, so a failing command writes nothing to standard output.</p>
+<ul><li>Output uses Go&#x27;s <code>encoding/csv</code> writer with <code>UseCRLF</code> off, so a field containing a comma, a</li></ul>
+<p>double quote, or a newline is quoted as RFC 4180 specifies.</p>
+<ul><li>A header-only file produces one row per header column with type <code>empty</code>, <code>rows</code> 0, and every</li></ul>
+<p>other field zero or blank.</p>
+<ul><li>Integer <code>min</code>, <code>max</code>, and <code>sum</code> are plain integers. Number <code>min</code>, <code>max</code>, and <code>sum</code>, and every</li></ul>
+<p><code>mean</code> and <code>median</code>, carry exactly two decimals produced by <code>profile.FormatDecimal</code>.</p>
+<ul><li>Exit status is 0 on success; a rejected file exits 3 with empty standard output.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC profile-output-columns ===<br>Intent: The profile has the declared header and one row per column in file order, with types, counts, integer sum, and decimal sum and mean derived from the input.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile from decimal import Decimal, ROUND_HALF_UP from drydock_go import cli_runner</p>
+<p>rows = [[&quot;id&quot;, &quot;label&quot;, &quot;price&quot;], [&quot;1&quot;, &quot;a&quot;, &quot;1.50&quot;], [&quot;2&quot;, &quot;b&quot;, &quot;2.25&quot;], [&quot;4&quot;, &quot;c&quot;, &quot;3.00&quot;]] with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f: csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows) code, out, err = cli_runner(path) print(out) print(err) assert code == 0, code parsed = list(csv.reader(io.StringIO(out))) header = [&quot;column&quot;, &quot;type&quot;, &quot;rows&quot;, &quot;nulls&quot;, &quot;distinct&quot;, &quot;min&quot;, &quot;max&quot;, &quot;sum&quot;, &quot;mean&quot;, &quot;median&quot;] assert parsed[0] == header body = parsed[1:] assert [r[0] for r in body] == rows[0] data = rows[1:] assert all(r[2] == str(len(data)) for r in body) assert all(r[3] == str(0) for r in body) assert [r[1] for r in body] == [&quot;integer&quot;, &quot;text&quot;, &quot;number&quot;] ids = [int(r[0]) for r in data] assert body[0][7] == str(sum(ids)) assert body[0][5] == str(min(ids)) and body[0][6] == str(max(ids)) q = Decimal(&quot;0.01&quot;) mean = (Decimal(sum(ids)) / len(ids)).quantize(q, rounding=ROUND_HALF_UP) assert body[0][8] == str(mean) prices = [Decimal(r[2]) for r in data] assert body[2][7] == str(sum(prices).quantize(q, rounding=ROUND_HALF_UP)) assert body[1][7] == &quot;&quot; and body[1][8] == &quot;&quot; and body[1][9] == &quot;&quot; === END AC profile-output-columns ===</p>
+<p>=== AC profile-output-quoting ===<br>Intent: A field containing a comma and a double quote is written quoted so the parsed value equals the trimmed input value.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile from drydock_go import cli_runner</p>
+<p>value = &#x27;  x, &quot;y&quot;  &#x27; rows = [[&quot;note&quot;], [value]] with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f: csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows) code, out, err = cli_runner(path) print(out) print(err) assert code == 0, code parsed = list(csv.reader(io.StringIO(out))) assert len(parsed) == 2 row = parsed[1] assert row[0] == &quot;note&quot; and row[1] == &quot;text&quot; assert row[5] == value.strip() assert row[6] == value.strip() assert row[4] == &quot;1&quot; === END AC profile-output-quoting ===</p>
+<p>=== AC profile-output-line-endings ===<br>Intent: Output uses newline line endings with one line per column plus the header and a trailing newline.<br>Requires: executable=go; scope=test</p>
+<p>import csv import os import tempfile from drydock_go import cli_runner</p>
+<p>rows = [[&quot;a&quot;, &quot;b&quot;, &quot;c&quot;], [&quot;1&quot;, &quot;x&quot;, &quot;true&quot;], [&quot;2&quot;, &quot;y&quot;, &quot;false&quot;]] with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f: csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows) code, out, err = cli_runner(path) print(out) print(err) assert code == 0, code assert &quot;\r&quot; not in out assert out.endswith(&quot;\n&quot;) assert len(out.splitlines()) == 1 + len(rows[0]) === END AC profile-output-line-endings ===</p>
+<p>=== AC profile-output-header-only ===<br>Intent: A header-only file yields one empty-typed row per column with zero rows.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile from drydock_go import cli_runner</p>
+<p>rows = [[&quot;sku&quot;, &quot;price&quot;, &quot;in_stock&quot;]] with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f: csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows) code, out, err = cli_runner(path) print(out) print(err) assert code == 0, code body = list(csv.reader(io.StringIO(out)))[1:] assert [r[0] for r in body] == rows[0] assert all(r[1] == &quot;empty&quot; for r in body) assert all(r[2] == str(0) for r in body) assert all(r[3] == str(0) and r[4] == str(0) for r in body) assert all(r[5:] == [&quot;&quot;] * 5 for r in body) === END AC profile-output-header-only ===</p>
+<p>=== AC profile-output-rounding ===<br>Intent: Number results round half away from zero once, and a total or mean that rounds to zero carries no minus sign.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile from decimal import Decimal, ROUND_HALF_UP from drydock_go import cli_runner</p>
+<p>rows = [[&quot;pos&quot;, &quot;neg&quot;, &quot;tiny&quot;], [&quot;0.125&quot;, &quot;-0.125&quot;, &quot;0.001&quot;], [&quot;0.125&quot;, &quot;-0.125&quot;, &quot;-0.002&quot;]] with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;in.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f: csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows) code, out, err = cli_runner(path) print(out) print(err) assert code == 0, code body = list(csv.reader(io.StringIO(out)))[1:] q = Decimal(&quot;0.01&quot;) pos_mean = Decimal(&quot;0.125&quot;).quantize(q, rounding=ROUND_HALF_UP) neg_mean = Decimal(&quot;-0.125&quot;).quantize(q, rounding=ROUND_HALF_UP) assert body[0][8] == str(pos_mean) assert body[1][8] == str(neg_mean) zero = f&quot;{0:.2f}&quot; assert body[2][7] == zero assert body[2][8] == zero === END AC profile-output-rounding ===</p>
+<p>=== AC profile-output-rejected-input ===<br>Intent: A ragged file exits 3 and writes nothing to standard output.<br>Requires: executable=go; scope=test</p>
+<p>import csv import os import tempfile from drydock_go import cli_runner</p>
+<p>rows = [[&quot;a&quot;, &quot;b&quot;], [&quot;1&quot;, &quot;2&quot;], [&quot;3&quot;, &quot;4&quot;, &quot;5&quot;]] with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;ragged.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as f: csv.writer(f, lineterminator=&quot;\n&quot;).writerows(rows) code, out, err = cli_runner(path) print(err) assert code == 3, code assert out == &quot;&quot; === END AC profile-output-rejected-input ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Standard output is written only on success; a failing command leaves it empty.</li><li>Application code never reads <code>sources/run.sh</code> or embeds a statistic, a type, or a value list.</li><li>Nothing under <code>sources/</code> is modified.</li></ul></article>
+</main>
+</body>
+</html>

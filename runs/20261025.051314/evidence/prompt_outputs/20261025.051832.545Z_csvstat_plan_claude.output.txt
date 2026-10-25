@@ -1,0 +1,687 @@
+=== BEGIN ARTIFACT FEATURE-NullValues.md ===
+# FEATURE: Null Values
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Recognise null spellings (empty, NA, N/A, NULL ignoring case) on trimmed values. |
+| Depends On  | FEATURE-Trimming.md, FEATURE-CsvReading.md |
+| Provides    | csvdata.IsNull |
+| Consumes    | csvdata.Read |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Statistics, type inference and frequency counting all need one shared definition of "null". This
+feature provides it as a function in `internal/csvdata` so no other package re-implements it.
+
+## Behavior
+
+- `func IsNull(value string) bool` in package `csvdata` receives a value that has already been
+  trimmed of leading and trailing spaces.
+- A value is null when it is the empty string, or equals `NA`, `N/A`, or `NULL` ignoring case
+  (`na`, `n/a`, `Null` and `null` are null).
+- Every other value is non-null, including `0`, `false`, `NAN`, `N/B`, `NULLS` and `NA ` is not
+  an input (trimming precedes this rule), so only exact spellings match.
+- A quoted empty field (`""`) is read by `encoding/csv` as an empty string, so it is null.
+- A field made only of spaces is empty after trimming and is therefore null.
+- `IsNull` is pure: it never reads files and never allocates state.
+
+## Tests the build must write
+
+The project's own suite in `internal/csvdata` contains these test functions (names are fixed so
+acceptance can run them):
+
+- `TestIsNullEmpty`
+- `TestIsNullSpellings`
+- `TestIsNullNonNullValues`
+- `TestQuotedEmptyFieldIsNull`
+- `TestSpacesOnlyFieldIsNull`
+
+## Programmatic Acceptance
+
+=== AC null-empty ===
+Intent: The empty string is reported null by csvdata.IsNull.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/csvdata", "TestIsNullEmpty")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC null-empty ===
+
+=== AC null-spellings ===
+Intent: NA, N/A and NULL are null in any letter case.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/csvdata", "TestIsNullSpellings")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC null-spellings ===
+
+=== AC null-non-null-values ===
+Intent: Ordinary values such as 0, false and near-miss spellings are not null.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/csvdata", "TestIsNullNonNullValues")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC null-non-null-values ===
+
+=== AC null-quoted-empty ===
+Intent: A quoted empty field read from a CSV file is null.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/csvdata", "TestQuotedEmptyFieldIsNull")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC null-quoted-empty ===
+
+=== AC null-spaces-only ===
+Intent: A field of only spaces is null once trimmed.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/csvdata", "TestSpacesOnlyFieldIsNull")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC null-spaces-only ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- `IsNull` never reads `sources/run.sh` or any supplied data file and embeds no answer.
+- Only the standard library is used.
+- Null spellings are exactly those named in the source; no other token is treated as null.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-InputRejection.md ===
+# FEATURE: Input Rejection
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Reject empty files, blank-only files, empty or repeated header names, and ragged records with exit 3. |
+| Depends On  | FEATURE-Trimming.md, FEATURE-CsvReading.md, FEATURE-Arguments.md |
+| Provides    | csvdata.ErrRejected |
+| Consumes    | csvdata.Read, cli.ParseArgs |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Malformed input must never produce partial output. Rejection is detected in `internal/csvdata`
+and mapped to exit code 3 by `internal/cli`.
+
+## Behavior
+
+- `csvdata` exposes a rejection error type (sentinel or typed error matched with `errors.Is` /
+  `errors.As`) named `ErrRejected`. For a ragged record it carries the 1-based line number.
+- The file is rejected when:
+  - it is empty (zero bytes);
+  - it contains only blank lines;
+  - any header name is empty after trimming;
+  - any header name repeats (compared exactly after trimming);
+  - any record has a different number of fields from the header.
+- A header-only file is valid and yields zero data records.
+- A trailing line ending after the last record creates no extra record.
+- `cli.Run` reads the file named by the parsed arguments. On a rejection error it writes nothing
+  to standard output, writes one diagnostic line to standard error naming the file (and the line
+  number for a ragged record), and returns exit code 3.
+- A CSV syntax error from `encoding/csv` (for example a bare quote) is also a rejection, exit 3.
+
+## Tests the build must write
+
+In `internal/csvdata`:
+
+- `TestRejectEmptyFile`
+- `TestRejectBlankLinesOnly`
+- `TestRejectEmptyHeaderName`
+- `TestRejectRepeatedHeaderName`
+- `TestRejectRaggedRecord`
+- `TestHeaderOnlyFileAccepted`
+- `TestTrailingNewlineAddsNoRecord`
+
+## Programmatic Acceptance
+
+=== AC reject-unit-empty-and-blank ===
+Intent: Empty files and files of only blank lines are rejected by the reader.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+for name in ("TestRejectEmptyFile", "TestRejectBlankLinesOnly"):
+    result = run_test("./internal/csvdata", name)
+    print(result.stdout)
+    print(result.stderr)
+    assert result.passed, (name, result.status, result.stdout, result.stderr)
+=== END AC reject-unit-empty-and-blank ===
+
+=== AC reject-unit-headers ===
+Intent: Empty and repeated header names are rejected by the reader.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+for name in ("TestRejectEmptyHeaderName", "TestRejectRepeatedHeaderName"):
+    result = run_test("./internal/csvdata", name)
+    print(result.stdout)
+    print(result.stderr)
+    assert result.passed, (name, result.status, result.stdout, result.stderr)
+=== END AC reject-unit-headers ===
+
+=== AC reject-unit-ragged-and-valid ===
+Intent: Ragged records are rejected while header-only and newline-terminated files are accepted.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+for name in (
+    "TestRejectRaggedRecord",
+    "TestHeaderOnlyFileAccepted",
+    "TestTrailingNewlineAddsNoRecord",
+):
+    result = run_test("./internal/csvdata", name)
+    print(result.stdout)
+    print(result.stderr)
+    assert result.passed, (name, result.status, result.stdout, result.stderr)
+=== END AC reject-unit-ragged-and-valid ===
+
+=== AC reject-cli-ragged ===
+Intent: The executable exits 3 with empty standard output for a ragged record.
+Requires: executable=go; scope=test
+
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as tmp:
+    path = os.path.join(tmp, "ragged.csv")
+    with open(path, "w", newline="") as handle:
+        handle.write("a,b\n1,2\n3,4,5\n6,7\n")
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 3, (code, out, err)
+assert out == "", out
+=== END AC reject-cli-ragged ===
+
+=== AC reject-cli-empty-file ===
+Intent: The executable exits 3 with empty standard output for a zero-byte file.
+Requires: executable=go; scope=test
+
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as tmp:
+    path = os.path.join(tmp, "empty.csv")
+    with open(path, "w", newline="") as handle:
+        handle.write("")
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 3, (code, out, err)
+assert out == "", out
+=== END AC reject-cli-empty-file ===
+
+=== AC reject-cli-blank-lines-only ===
+Intent: The executable exits 3 with empty standard output for a file holding only blank lines.
+Requires: executable=go; scope=test
+
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as tmp:
+    path = os.path.join(tmp, "blank.csv")
+    with open(path, "w", newline="") as handle:
+        handle.write("\n\n\n")
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 3, (code, out, err)
+assert out == "", out
+=== END AC reject-cli-blank-lines-only ===
+
+=== AC reject-cli-repeated-header ===
+Intent: The executable exits 3 with empty standard output when a header name repeats.
+Requires: executable=go; scope=test
+
+import csv
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as tmp:
+    path = os.path.join(tmp, "dup.csv")
+    with open(path, "w", newline="") as handle:
+        writer = csv.writer(handle, lineterminator="\n")
+        writer.writerow(["id", "name", "id"])
+        writer.writerow(["1", "x", "2"])
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 3, (code, out, err)
+assert out == "", out
+=== END AC reject-cli-repeated-header ===
+
+=== AC reject-cli-empty-header-name ===
+Intent: The executable exits 3 with empty standard output when a header name is empty.
+Requires: executable=go; scope=test
+
+import csv
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as tmp:
+    path = os.path.join(tmp, "emptyname.csv")
+    with open(path, "w", newline="") as handle:
+        writer = csv.writer(handle, lineterminator="\n")
+        writer.writerow(["id", "", "name"])
+        writer.writerow(["1", "x", "y"])
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 3, (code, out, err)
+assert out == "", out
+=== END AC reject-cli-empty-header-name ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- A rejected command never writes anything to standard output.
+- The diagnostic goes to standard error only and is never part of any contract.
+- Rejection logic lives in `internal/csvdata`; `internal/cli` only maps it to exit 3.
+- Only the standard library is used; supplied files under `sources/` are never modified.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-NumericTypes.md ===
+# FEATURE: Numeric Types
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Infer integer and number column types from the non-null values of a column. |
+| Depends On  | FEATURE-NullValues.md |
+| Provides    | profile.InferType (integer, number) |
+| Consumes    | csvdata.IsNull |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Column typing decides which statistics apply. This feature starts `profile.InferType` in
+`internal/profile` with the two numeric types. Later features extend the same function with
+`date`, `boolean`, `text`, and `empty`.
+
+## Behavior
+
+- `func InferType(values []string) string` in package `profile` receives the trimmed values of one
+  column and returns the type name.
+- Null values (per `csvdata.IsNull`) are ignored.
+- A column is `integer` when every non-null value matches `-?[0-9]+`.
+- Otherwise it is `number` when every non-null value matches `-?[0-9]+(\.[0-9]+)?`.
+- Integer is tested before number, so a column of whole numbers is `integer`; a single decimal
+  value makes the column `number`.
+- Matching is anchored over the whole value and uses no float parsing. Values such as `+1`, `1.`,
+  `.5`, `1e3`, `1,5`, `0x10`, and `-` are not numeric.
+- When a column has at least one non-null value that is not numeric, this feature returns the
+  fallback `text` until later features add the remaining types.
+- A column whose non-null values are all null returns `empty`.
+
+## Tests the build must write
+
+In `internal/profile`:
+
+- `TestInferIntegerColumn`
+- `TestInferNumberColumn`
+- `TestIntegerPreferredOverNumber`
+- `TestNullsIgnoredWhenInferringNumeric`
+- `TestMalformedNumericsAreNotNumeric`
+
+## Programmatic Acceptance
+
+=== AC numeric-integer ===
+Intent: A column of integer-shaped values, including negatives, is typed integer.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestInferIntegerColumn")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC numeric-integer ===
+
+=== AC numeric-number ===
+Intent: A column with a decimal value among integers is typed number.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestInferNumberColumn")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC numeric-number ===
+
+=== AC numeric-integer-preferred ===
+Intent: Integer is chosen over number when both patterns match every value.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestIntegerPreferredOverNumber")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC numeric-integer-preferred ===
+
+=== AC numeric-nulls-ignored ===
+Intent: Null spellings among numeric values do not change the inferred type.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestNullsIgnoredWhenInferringNumeric")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC numeric-nulls-ignored ===
+
+=== AC numeric-malformed ===
+Intent: Values such as +1, 1., .5, 1e3 and 1,5 are not numeric.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestMalformedNumericsAreNotNumeric")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC numeric-malformed ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Classification never uses float parsing; values stay exact strings for later exact arithmetic.
+- No type is hardcoded for any column or file; every type comes from the values examined.
+- Only the standard library is used.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-DateType.md ===
+# FEATURE: Date Type
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Infer date columns whose non-null values are real YYYY-MM-DD calendar dates. |
+| Depends On  | FEATURE-NumericTypes.md |
+| Provides    | profile.InferType (date) |
+| Consumes    | csvdata.IsNull, profile.InferType |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Extend `profile.InferType` so date columns are recognised and sort chronologically in later
+statistics.
+
+## Behavior
+
+- After integer and number are ruled out, a column is `date` when every non-null value has the
+  shape `YYYY-MM-DD` (four digits, hyphen, two digits, hyphen, two digits) and is a real calendar
+  date.
+- Real-date validation uses `time.Parse` with layout `2006-01-02` in addition to the digit-shape
+  check, so `2025-02-30`, `2025-13-01`, and `2025-02-29` are not dates while `2024-02-29` is.
+- Shapes such as `2025-2-3`, `2025/02/03`, `20250203`, and `2025-02-03T10:00` are not dates.
+- Null values are ignored.
+- One non-date value makes the column fall through to later types (`boolean`, then `text`).
+  Integer and number take precedence, but no YYYY-MM-DD value can match them.
+
+## Tests the build must write
+
+In `internal/profile`:
+
+- `TestInferDateColumn`
+- `TestInvalidCalendarDateIsNotDate`
+- `TestLeapDayHandling`
+- `TestDateShapeIsStrict`
+- `TestNullsIgnoredWhenInferringDate`
+
+## Programmatic Acceptance
+
+=== AC date-column ===
+Intent: A column of valid YYYY-MM-DD values is typed date.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestInferDateColumn")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC date-column ===
+
+=== AC date-invalid-calendar ===
+Intent: A column containing an impossible date such as 2025-02-30 is not typed date.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestInvalidCalendarDateIsNotDate")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC date-invalid-calendar ===
+
+=== AC date-leap-day ===
+Intent: A leap-year February 29 is a date and a non-leap-year February 29 is not.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestLeapDayHandling")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC date-leap-day ===
+
+=== AC date-shape-strict ===
+Intent: Values with the wrong shape (unpadded, slashes, timestamps) are not dates.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestDateShapeIsStrict")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC date-shape-strict ===
+
+=== AC date-nulls-ignored ===
+Intent: Null spellings among dates do not change the inferred date type.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestNullsIgnoredWhenInferringDate")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC date-nulls-ignored ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Date validity is computed from the value, never from a list of known dates.
+- Only the standard library (`time`, `regexp`) is used.
+- The numeric rules from FEATURE-NumericTypes.md are not altered.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-BooleanTextTypes.md ===
+# FEATURE: Boolean and Text Types
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Infer boolean, text, and empty column types, completing the type order. |
+| Depends On  | FEATURE-DateType.md |
+| Provides    | profile.InferType (boolean, text, empty) |
+| Consumes    | csvdata.IsNull, profile.InferType |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Complete `profile.InferType` so every column receives exactly one type: the first of `integer`,
+`number`, `date`, `boolean`, `text` that every non-null value satisfies, or `empty` when there is
+no non-null value.
+
+## Behavior
+
+- A column is `boolean` when every non-null value equals `true` or `false` ignoring case
+  (`True`, `TRUE`, `false`, `False`). Values such as `yes`, `1`, `0`, and `t` are not boolean.
+- `text` is the fallback for any column that satisfies none of the earlier types.
+- A column with no non-null value (every value null, or zero data rows) is `empty`.
+- The order of evaluation is: empty check, integer, number, date, boolean, text.
+- A column of `0` and `1` is `integer`, not boolean.
+- Original value case is preserved for distinct counting; only classification ignores case. The
+  min and max statistics later render booleans as lowercase `true` or `false` regardless of input
+  case; that rendering belongs to the min/max feature.
+- Null values are ignored during classification.
+
+## Tests the build must write
+
+In `internal/profile`:
+
+- `TestInferBooleanColumnMixedCase`
+- `TestInferTextFallback`
+- `TestInferEmptyWhenAllNull`
+- `TestInferEmptyWhenNoRows`
+- `TestBooleanLookalikesAreText`
+- `TestTypeOrderPrecedence`
+
+## Programmatic Acceptance
+
+=== AC type-boolean-mixed-case ===
+Intent: Values true and false in any letter case form a boolean column.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestInferBooleanColumnMixedCase")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC type-boolean-mixed-case ===
+
+=== AC type-text-fallback ===
+Intent: A column matching no earlier type is text.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestInferTextFallback")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC type-text-fallback ===
+
+=== AC type-empty-all-null ===
+Intent: A column whose values are all null spellings is typed empty.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestInferEmptyWhenAllNull")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC type-empty-all-null ===
+
+=== AC type-empty-no-rows ===
+Intent: A column with zero data rows is typed empty.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestInferEmptyWhenNoRows")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC type-empty-no-rows ===
+
+=== AC type-boolean-lookalikes ===
+Intent: Values such as yes, 1 or t do not make a boolean column.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestBooleanLookalikesAreText")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC type-boolean-lookalikes ===
+
+=== AC type-order-precedence ===
+Intent: Earlier types win over later ones when several would match.
+Requires: executable=go; scope=test
+
+from drydock_go import run_test
+
+result = run_test("./internal/profile", "TestTypeOrderPrecedence")
+print(result.stdout)
+print(result.stderr)
+assert result.passed, (result.status, result.stdout, result.stderr)
+=== END AC type-order-precedence ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- No column name, file name, or value list is hardcoded to decide a type.
+- Booleans are classified case-insensitively but the stored value is never rewritten here.
+- Only the standard library is used.
+=== END ARTIFACT ===

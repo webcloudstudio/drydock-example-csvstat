@@ -1,0 +1,6 @@
+#!/bin/sh
+# Test gate: vet, then run the Go test suite. Exits non-zero on any failure.
+set -eu
+cd "$(dirname "$0")/.."
+go vet ./...
+go test ./...

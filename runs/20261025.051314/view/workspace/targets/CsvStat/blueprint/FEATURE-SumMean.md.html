@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-SumMean.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-SumMean.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-SumMean.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Sum and Mean</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Compute the exact sum and mean of integer and number columns.</td></tr><tr><td>Depends On</td><td>FEATURE-BooleanTextTypes.md</td></tr><tr><td>Provides</td><td>profile.SumMean</td></tr><tr><td>Consumes</td><td>profile.InferType</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>Numeric columns report <code>sum</code> and <code>mean</code>. Exactness matters because the output is rounded once, at write time, from the exact value. This story computes the exact values; formatting belongs to the decimal formatting story.</p>
+<h2>Interface</h2>
+<pre><code>// SumMean takes the column type and the trimmed non-null values of the column. ok is false when
+// the type is not integer or number, or when there are no values.
+func SumMean(typ string, values []string) (sum, mean *big.Rat, ok bool)</code></pre>
+<h2>Behavior</h2>
+<ul><li>Only <code>integer</code> and <code>number</code> columns have a sum and mean. For every other type, including <code>empty</code>,</li></ul>
+<p><code>ok</code> is false.</p>
+<ul><li>Parse every value into a <code>big.Rat</code> and accumulate exactly with <code>math/big</code>. No <code>float64</code> is used</li></ul>
+<p>at any step, so <code>0.1</code> plus <code>0.2</code> is exactly three tenths.</p>
+<ul><li><code>sum</code> is the exact total of the non-null values.</li><li><code>mean</code> is the exact total divided by the non-null count. Null values are neither summed nor</li></ul>
+<p>counted.</p>
+<ul><li>The returned values are exact rationals. They are not rounded here.</li></ul>
+<h2>Required Tests</h2>
+<p>The project suite in <code>internal/profile</code> includes these tests by exact name:</p>
+<ul><li><code>TestSumIntegerExact</code> — an integer total, including negatives, equals the big-integer total.</li><li><code>TestSumNumberNoFloatDrift</code> — decimals such as <code>0.1</code> and <code>0.2</code> sum exactly to their rational total.</li><li><code>TestMeanExactRational</code> — total over count is an exact rational, for example a repeating third.</li><li><code>TestSumMeanIgnoresNulls</code> — the divisor is the non-null count, not the row count.</li><li><code>TestSumMeanNonNumeric</code> — text, date, boolean, and empty columns give <code>ok</code> false.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC summean-integer-sum ===<br>Intent: Integer sums are exact, including negative values.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestSumIntegerExact&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC summean-integer-sum ===</p>
+<p>=== AC summean-number-no-drift ===<br>Intent: Decimal sums carry no floating-point drift.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestSumNumberNoFloatDrift&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC summean-number-no-drift ===</p>
+<p>=== AC summean-mean-exact ===<br>Intent: The mean is the exact total divided by the non-null count.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestMeanExactRational&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC summean-mean-exact ===</p>
+<p>=== AC summean-ignores-nulls ===<br>Intent: The mean divisor is the non-null count.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestSumMeanIgnoresNulls&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC summean-ignores-nulls ===</p>
+<p>=== AC summean-non-numeric ===<br>Intent: Non-numeric column types have no sum or mean.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/profile&quot;, &quot;TestSumMeanNonNumeric&quot;) print(result.stdout) print(result.stderr) assert result.passed, (result.status, result.stdout, result.stderr) === END AC summean-non-numeric ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>No <code>float64</code> arithmetic in sum or mean.</li><li>Values are rounded once, at output time, never here.</li><li>No total is embedded in code or read from <code>sources/</code>.</li></ul></article>
+</main>
+</body>
+</html>

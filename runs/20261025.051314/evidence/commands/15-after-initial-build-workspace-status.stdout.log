@@ -1,0 +1,16 @@
+Drydock 0.8.0  Copyright (c) 2026 Web Cloud Studio. All rights reserved.
+Drydock status — workspace
+
+Target: CsvStat
+   Phase:     Loop
+   State:     25 closed/implemented
+   Detail:    7 imported · 25 authored · metadata built
+   Analysis:  Ready · 24 stories · 0 questions · 0 blockers
+   Plan:      25 closed/implemented
+   Next Step: drydock refit CsvStat BOTH <Scope> <Change>
+   10-25:     ✅  drydock build status CsvStat
+   10-25:     ✅  drydock build CsvStat --override --repair-attempts 6
+   10-25:     ✅  drydock build status CsvStat
+   10-25:     ✅  drydock plan verify CsvStat --plan-override-model sonnet
+   10-25:     ✅  drydock plan CsvStat --override --plan-override-model sonnet
+

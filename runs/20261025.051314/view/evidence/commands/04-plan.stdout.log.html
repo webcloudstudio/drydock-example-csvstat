@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/commands/04-plan.stdout.log</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/commands/04-plan.stdout.log</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/commands/04-plan.stdout.log">Raw file</a></div></header>
+<article class="doc"><pre>Drydock 0.8.0  Copyright (c) 2026 Web Cloud Studio. All rights reserved.
+2026-10-25 01:15:36 EDT  Calling CLAUDE/sonnet (plan · topology)...
+  Claude session: start id=417e9fa2-d0ec-4408-963f-448f475686d8
+  Completed CLAUDE/claude-sonnet-5-5 (plan · topology)  rc=0
+========================================================================
+PLAN PROGRESS  ·  STAGE 1 · TOPOLOGY
+========================================================================
+Topology Created:  True
+Blueprints Created: 0 / 25
+Manifest Created:  False
+Blueprints Remaining: 25
+Batch Result:       Topology accepted
+========================================================================
+2026-10-25 01:16:57 EDT  Calling CLAUDE/sonnet (plan · blueprint batch 1)...
+  Claude session: start id=3c8981db-749b-4675-8ee1-72f634d345d8
+  Completed CLAUDE/claude-sonnet-5-5 (plan · blueprint batch 1)  rc=0
+========================================================================
+PLAN PROGRESS  ·  STAGE 2 · BLUEPRINT BATCH 1
+========================================================================
+Topology Created:  True
+Blueprints Created: 5 / 25
+Manifest Created:  False
+Blueprints Remaining: 20
+Batch Result:       Accepted 5 Blueprint(s)
+========================================================================
+2026-10-25 01:18:32 EDT  Calling CLAUDE/sonnet (plan · blueprint batch 2)...
+  Claude session: start id=b779f836-2b38-487d-aafb-7c8b84d63970
+  Completed CLAUDE/claude-sonnet-5-5 (plan · blueprint batch 2)  rc=0
+========================================================================
+PLAN PROGRESS  ·  STAGE 2 · BLUEPRINT BATCH 2
+========================================================================
+Topology Created:  True
+Blueprints Created: 10 / 25
+Manifest Created:  False
+Blueprints Remaining: 15
+Batch Result:       Accepted 5 Blueprint(s)
+========================================================================
+2026-10-25 01:19:41 EDT  Calling CLAUDE/sonnet (plan · blueprint batch 3)...
+  Claude session: start id=06393d6b-eee1-4a1d-8109-e876c5d97568
+  Completed CLAUDE/claude-sonnet-5-5 (plan · blueprint batch 3)  rc=0
+========================================================================
+PLAN PROGRESS  ·  STAGE 2 · BLUEPRINT BATCH 3
+========================================================================
+Topology Created:  True
+Blueprints Created: 15 / 25
+Manifest Created:  False
+Blueprints Remaining: 10
+Batch Result:       Accepted 5 Blueprint(s)
+========================================================================
+2026-10-25 01:20:50 EDT  Calling CLAUDE/sonnet (plan · blueprint batch 4)...
+  Claude session: start id=a48d2497-24af-4d0c-b678-3ce4c4602f03
+  Completed CLAUDE/claude-sonnet-5-5 (plan · blueprint batch 4)  rc=0
+========================================================================
+PLAN PROGRESS  ·  STAGE 2 · BLUEPRINT BATCH 4
+========================================================================
+Topology Created:  True
+Blueprints Created: 20 / 25
+Manifest Created:  False
+Blueprints Remaining: 5
+Batch Result:       Accepted 5 Blueprint(s)
+========================================================================
+2026-10-25 01:22:19 EDT  Calling CLAUDE/sonnet (plan · blueprint batch 5)...
+  Claude session: start id=b8d3e610-80d5-43a9-bb8c-9981d93026b8
+  Completed CLAUDE/claude-sonnet-5-5 (plan · blueprint batch 5)  rc=0
+========================================================================
+PLAN PROGRESS  ·  STAGE 2 · BLUEPRINT BATCH 5
+========================================================================
+Topology Created:  True
+Blueprints Created: 25 / 25
+Manifest Created:  False
+Blueprints Remaining: 0
+Batch Result:       Accepted 5 Blueprint(s)
+========================================================================
+========================================================================
+PLAN PROGRESS  ·  STAGE 3 · MANIFEST
+========================================================================
+Topology Created:  True
+Blueprints Created: 25 / 25
+Manifest Created:  True
+Blueprints Remaining: 0
+Batch Result:       Manifest validated and serialized
+========================================================================
+2026-10-25 01:23:41 EDT  Calling CLAUDE/sonnet (lineage_attribute)...
+  Completed CLAUDE/claude-sonnet-5-5 (lineage_attribute)  rc=0
+2026-10-25 01:23:57 EDT  Calling CLAUDE/sonnet (lineage_attribute)...
+  Completed CLAUDE/claude-sonnet-5-5 (lineage_attribute)  rc=0
+2026-10-25 01:24:05 EDT  Calling CLAUDE/sonnet (lineage_attribute)...
+  Completed CLAUDE/claude-sonnet-5-5 (lineage_attribute)  rc=0
+2026-10-25 01:24:15 EDT  Calling CLAUDE/sonnet (lineage_attribute)...
+  Completed CLAUDE/claude-sonnet-5-5 (lineage_attribute)  rc=0
+2026-10-25 01:24:24 EDT  Calling CLAUDE/sonnet (lineage_attribute)...
+  Completed CLAUDE/claude-sonnet-5-5 (lineage_attribute)  rc=0
+2026-10-25 01:24:34 EDT  Calling CLAUDE/sonnet (lineage_attribute)...
+  Completed CLAUDE/claude-sonnet-5-5 (lineage_attribute)  rc=0
+2026-10-25 01:24:46 EDT  Calling CLAUDE/sonnet (lineage_attribute)...
+  Completed CLAUDE/claude-sonnet-5-5 (lineage_attribute)  rc=0
+
+Mode: OVERWRITE (Blueprint specs regenerated from analysis)
+Provider: claude / sonnet
+Graph: 0 features, 25 stories, 0 spikes, 0 acceptance gates
+Warnings: 3
+Outcome: updated
+Execution: 20261025.051536.146Z-09e245fc
+Elapsed: 12 minutes 9 seconds
+Review: /mnt/c/Users/barlo/projects/drydock/uat/CsvStat/runs/20261025.051314/workspace/targets/CsvStat/QuarterDeck
+
+Planning warnings:
+  - FEATURE-TestGate.md [testgate-script-exits-zero] uses undeclared executable=sh; consider declaring it in Rigging or TECHNOLOGY_STACK.md
+  - FEATURE-TestGate.md [testgate-runs-from-other-directory] uses undeclared executable=sh; consider declaring it in Rigging or TECHNOLOGY_STACK.md
+  - VERIFICATION.md [release-grader-passes] uses undeclared executable=sh; consider declaring it in Rigging or TECHNOLOGY_STACK.md
+Target - committed project workspace git store
+</pre></article>
+</main>
+</body>
+</html>
