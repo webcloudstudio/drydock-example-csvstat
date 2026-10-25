@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-Profile-Rows.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-Profile-Rows.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-Profile-Rows.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Profile Rows</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Emit the profile header and one row per column in file order, filling column and rows.</td></tr><tr><td>Depends On</td><td>ARCHITECTURE.md, FEATURE-CSV-Reading.md, FEATURE-Null-Values.md, FEATURE-CSV-Rejection.md, FEATURE-CLI-Option-Validation.md</td></tr><tr><td>Provides</td><td>profile output header</td></tr><tr><td>Consumes</td><td>csvdata.Read, csvdata.IsNull</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>This is the skeleton of the profile output. Later stories fill the remaining fields, so the output shape is fixed here and never changes.</p>
+<h2>Behavior</h2>
+<ul><li>Without <code>--freq</code>, standard output is CSV written by one <code>encoding/csv</code> writer with <code>\n</code> line</li></ul>
+<p>endings.</p>
+<ul><li>The first row is the header <code>column,type,rows,nulls,distinct,min,max,sum,mean,median</code> (ten fields).</li><li>One row follows for each header column, in file order. Every row has ten fields.</li><li><code>column</code> is the trimmed header name. <code>rows</code> is the number of data records (not counting the</li></ul>
+<p>header), written as a plain integer; a header-only file gives <code>0</code> for every column.</p>
+<ul><li>The fields <code>type</code>, <code>nulls</code>, <code>distinct</code>, <code>min</code>, <code>max</code>, <code>sum</code>, <code>mean</code> and <code>median</code> are owned by</li></ul>
+<p>later stories (Type-*, Profile-Counts, Profile-Extremes, Profile-Numeric-Stats). Until a later story is built, the field is written empty. The final application fills all of them.</p>
+<ul><li>Exit <code>0</code> on success.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC profile-rows-header-and-columns-in-file-order ===<br>Intent: The profile starts with the ten-field header and lists one row per input column in file order.</p>
+<p>import csv import io import os from drydock_go import cli_runner</p>
+<p>data = os.path.abspath(os.path.join(&quot;sources&quot;, &quot;employees.csv&quot;)) with open(data, newline=&quot;&quot;) as f: source = list(csv.reader(f)) names = source[0] code, out, err = cli_runner(data) print(out) print(err) assert code == 0 parsed = list(csv.reader(io.StringIO(out))) assert parsed[0] == [&quot;column&quot;, &quot;type&quot;, &quot;rows&quot;, &quot;nulls&quot;, &quot;distinct&quot;, &quot;min&quot;, &quot;max&quot;, &quot;sum&quot;, &quot;mean&quot;, &quot;median&quot;] assert [row[0] for row in parsed[1:]] == names assert all(len(row) == len(parsed[0]) for row in parsed) === END AC profile-rows-header-and-columns-in-file-order ===</p>
+<p>=== AC profile-rows-count-matches-records ===<br>Intent: The rows field equals the number of data records for every column.</p>
+<p>import csv import io import os from drydock_go import cli_runner</p>
+<p>for name in (&quot;employees.csv&quot;, &quot;sensors.csv&quot;, &quot;orders.csv&quot;): data = os.path.abspath(os.path.join(&quot;sources&quot;, name)) with open(data, newline=&quot;&quot;) as f: source = list(csv.reader(f)) record_count = len(source) - 1 code, out, err = cli_runner(data) print(out) print(err) assert code == 0 parsed = list(csv.reader(io.StringIO(out))) index = parsed[0].index(&quot;rows&quot;) assert len(parsed) - 1 == len(source[0]) for row in parsed[1:]: assert row[index] == str(record_count) === END AC profile-rows-count-matches-records ===</p>
+<p>=== AC profile-rows-header-only-file ===<br>Intent: A header-only file yields one row per column with rows equal to zero.</p>
+<p>import csv import io import os from drydock_go import cli_runner</p>
+<p>data = os.path.abspath(os.path.join(&quot;sources&quot;, &quot;header_only.csv&quot;)) with open(data, newline=&quot;&quot;) as f: source = list(csv.reader(f)) code, out, err = cli_runner(data) print(out) print(err) assert code == 0 parsed = list(csv.reader(io.StringIO(out))) index = parsed[0].index(&quot;rows&quot;) assert [row[0] for row in parsed[1:]] == source[0] for row in parsed[1:]: assert row[index] == str(len(source) - 1) === END AC profile-rows-header-only-file ===</p>
+<p>=== AC profile-rows-unix-line-endings ===<br>Intent: Profile output uses newline line endings only.</p>
+<p>import os from drydock_go import cli_runner</p>
+<p>data = os.path.abspath(os.path.join(&quot;sources&quot;, &quot;sensors.csv&quot;)) code, out, err = cli_runner(data) print(err) assert code == 0 assert &quot;\r&quot; not in out assert out.endswith(&quot;\n&quot;) === END AC profile-rows-unix-line-endings ===</p>
+<p>=== AC profile-rows-trimmed-column-names ===<br>Intent: Padded header names are written trimmed, in file order.</p>
+<p>import csv import io import os import tempfile from drydock_go import cli_runner</p>
+<p>names = [&quot;alpha&quot;, &quot;beta&quot;, &quot;gamma&quot;] with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;padded.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as f: f.write(&quot; &quot; + &quot; , &quot;.join(names) + &quot; \n1,2,3\n4,5,6\n&quot;) code, out, err = cli_runner(path) print(out) print(err) assert code == 0 parsed = list(csv.reader(io.StringIO(out))) assert [row[0] for row in parsed[1:]] == names === END AC profile-rows-trimmed-column-names ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>The header row is fixed; no field is added, removed or reordered by any story.</li><li>Standard output is written only after the whole file has been read and validated.</li><li>Application code never embeds a statistic, a type, or a value list.</li></ul></article>
+</main>
+</body>
+</html>

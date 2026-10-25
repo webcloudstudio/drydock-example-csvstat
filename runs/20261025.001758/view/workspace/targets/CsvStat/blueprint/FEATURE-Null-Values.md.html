@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-Null-Values.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-Null-Values.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-Null-Values.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Null Values</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Classify a trimmed value as null when it is empty or equals NA, N/A, or NULL ignoring case.</td></tr><tr><td>Depends On</td><td>ARCHITECTURE.md, FEATURE-CSV-Reading.md</td></tr><tr><td>Provides</td><td>csvdata.IsNull</td></tr><tr><td>Consumes</td><td>csvdata.Read</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>Null handling is one rule shared by every statistic: nulls count toward <code>rows</code> and <code>nulls</code> but are ignored by <code>distinct</code>, <code>min</code>, <code>max</code>, <code>sum</code>, <code>mean</code>, <code>median</code>, type inference and frequencies.</p>
+<h2>Behavior</h2>
+<ul><li><code>internal/csvdata</code> exposes <code>IsNull(value string) bool</code>, applied to already-trimmed values.</li><li>It returns true for the empty string and for <code>NA</code>, <code>N/A</code> and <code>NULL</code> in any letter case.</li><li>It returns false for every other value, including <code>0</code>, <code>nan</code>, <code>none</code>, <code>n/a/</code> and <code>NAN</code>.</li><li>No other package re-implements the null rule; all call <code>csvdata.IsNull</code>.</li></ul>
+<h2>Required unit tests</h2>
+<p>The build agent writes these tests in <code>internal/csvdata</code> with exactly these names:</p>
+<ul><li><code>TestIsNullEmptyAndSentinels</code> covers the empty string and every case variant of <code>NA</code>, <code>N/A</code>, <code>NULL</code>.</li><li><code>TestIsNullRejectsLookalikes</code> covers <code>0</code>, <code>nan</code>, <code>none</code>, <code>NAN</code>, <code>nul</code> and <code>n/a/</code>.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC null-values-sentinels ===<br>Intent: Empty and the NA, N/A, NULL sentinels in any case are null.</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/csvdata&quot;, &quot;TestIsNullEmptyAndSentinels&quot;) print(result.stdout) assert result.passed, (result.status, result.stdout, result.stderr) === END AC null-values-sentinels ===</p>
+<p>=== AC null-values-lookalikes ===<br>Intent: Values that merely resemble a null sentinel are not null.</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/csvdata&quot;, &quot;TestIsNullRejectsLookalikes&quot;) print(result.stdout) assert result.passed, (result.status, result.stdout, result.stderr) === END AC null-values-lookalikes ===</p>
+<p>=== AC null-values-file-with-nulls-reads ===<br>Intent: A file containing null sentinels of every spelling is read by the built executable without error.</p>
+<p>import os import tempfile from drydock_go import cli_runner</p>
+<p>sentinels = [&quot;&quot;, &quot;NA&quot;, &quot;na&quot;, &quot;N/A&quot;, &quot;n/a&quot;, &quot;NULL&quot;, &quot;null&quot;] with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;nulls.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as f: f.write(&quot;id,v\n&quot;) for i, s in enumerate(sentinels): f.write(f&quot;{i},{s}\n&quot;) code, out, err = cli_runner(path) print(out) print(err) assert code == 0 === END AC null-values-file-with-nulls-reads ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>A value is trimmed before it is tested; a value of only spaces is therefore null.</li><li><code>0</code>, <code>nan</code> and <code>none</code> are never null.</li></ul></article>
+</main>
+</body>
+</html>

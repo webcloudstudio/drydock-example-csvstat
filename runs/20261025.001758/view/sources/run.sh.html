@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>sources/run.sh</title>
+<link rel="stylesheet" href="../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>sources/run.sh</h1><div class="filenav"><a href="../../index.html">&larr; Report</a><a href="../../sources/run.sh">Raw file</a></div></header>
+<article class="doc"><pre>#!/bin/sh
+# run.sh — CsvStat grader. Do not filter, skip, or reinterpret.
+#
+# Builds ./cmd/csvstat with `go build` and compares every command&#x27;s exit code and standard output
+# over the supplied data files with the known answer below. Standard error is never compared.
+#
+#   sh sources/run.sh                    from the application root (how `drydock uat` runs it)
+#   sh uat/CsvStat/bin/run.sh APP        from anywhere, grading the application root APP
+#
+# Exit 0 only when the build succeeds and every check passes.
+set -u
+
+HERE=$(cd &quot;$(dirname &quot;$0&quot;)&quot; &amp;&amp; pwd)
+APP=$(cd &quot;${1:-.}&quot; &amp;&amp; pwd)
+if [ -f &quot;$HERE/employees.csv&quot; ]; then DATA=$HERE; else DATA=$(cd &quot;$HERE/../sources&quot; &amp;&amp; pwd); fi
+WORK=$(mktemp -d)
+trap &#x27;rm -rf &quot;$WORK&quot;&#x27; EXIT INT TERM
+BIN=&quot;$WORK/csvstat&quot;
+MISSING=&quot;$WORK/no-such-file.csv&quot;
+
+if ! (cd &quot;$APP&quot; &amp;&amp; go build -o &quot;$BIN&quot; ./cmd/csvstat); then
+    echo &quot;error: go build ./cmd/csvstat failed at the application root $APP.&quot; &gt;&amp;2
+    echo &quot;The deliverable is a Go module whose main package is ./cmd/csvstat.&quot; &gt;&amp;2
+    exit 1
+fi
+
+PASSED=0
+FAILED=0
+
+# check &lt;id&gt; &lt;expected exit&gt; &lt;csvstat args...&gt;  — expected standard output on stdin.
+check() {
+    id=$1
+    want_rc=$2
+    shift 2
+    cat &gt; &quot;$WORK/want&quot;
+    (cd &quot;$APP&quot; &amp;&amp; &quot;$BIN&quot; &quot;$@&quot;) &gt; &quot;$WORK/got&quot; 2&gt; &quot;$WORK/err&quot;
+    rc=$?
+    if [ &quot;$rc&quot; -eq &quot;$want_rc&quot; ] &amp;&amp; cmp -s &quot;$WORK/want&quot; &quot;$WORK/got&quot;; then
+        PASSED=$((PASSED + 1))
+        echo &quot;PASS $id: csvstat $*&quot;
+    else
+        FAILED=$((FAILED + 1))
+        echo &quot;FAIL $id: csvstat $*&quot;
+        echo &quot;  exit: expected $want_rc, got $rc&quot;
+        diff &quot;$WORK/want&quot; &quot;$WORK/got&quot; | sed &#x27;s/^/  /&#x27;
+        sed &#x27;s/^/  stderr: /&#x27; &quot;$WORK/err&quot;
+    fi
+}
+
+# ── A. Every column of each data file ──────────────────────────────────────────────────
+check A1 0 &quot;$DATA/employees.csv&quot; &lt;&lt;&#x27;EOF&#x27;
+column,type,rows,nulls,distinct,min,max,sum,mean,median
+id,integer,24,0,24,1001,1024,24300,1012.50,1012.50
+name,text,24,0,23,Ada,Tony,,,
+department,text,24,0,4,Engineering,Support,,,
+hire_date,date,24,0,24,2015-08-27,2025-06-02,,,
+salary,number,24,0,24,43699.25,147150.99,2085635.10,86901.46,79496.68
+remote,boolean,24,0,4,false,true,,,
+manager_id,integer,24,15,4,2,5,30,3.33,4.00
+notes,text,24,10,4,mentor,&quot;remote, part-time&quot;,,,
+EOF
+check A2 0 &quot;$DATA/sensors.csv&quot; &lt;&lt;&#x27;EOF&#x27;
+column,type,rows,nulls,distinct,min,max,sum,mean,median
+reading_id,integer,36,0,36,1,36,666,18.50,18.50
+recorded_at,text,36,0,36,2025-03-01T08:00,2025-03-03T19:00,,,
+sensor,text,36,0,4,east,west,,,
+temp_c,number,36,3,32,-12.21,29.81,207.06,6.27,2.41
+humidity,integer,36,7,25,18,92,1698,58.55,60.00
+ok,boolean,36,0,2,false,true,,,
+battery,empty,36,36,0,,,,,
+EOF
+check A3 0 &quot;$DATA/orders.csv&quot; &lt;&lt;&#x27;EOF&#x27;
+column,type,rows,nulls,distinct,min,max,sum,mean,median
+order_id,integer,30,0,30,5000,5029,150435,5014.50,5014.50
+order_date,date,30,0,19,2025-02-01,2025-02-27,,,
+customer,text,30,0,5,Acme Corp,Umbrella,,,
+qty,integer,30,0,9,1,12,206,6.87,6.00
+unit_price,number,30,0,30,15.27,231.18,4177.97,139.27,131.31
+coupon,text,30,18,2,SAVE10,WELCOME,,,
+ref,text,30,0,5,-3,A7,,,
+shipped,text,30,0,20,2025-02-30,2025-03-27,,,
+EOF
+check A4 0 &quot;$DATA/header_only.csv&quot; &lt;&lt;&#x27;EOF&#x27;
+column,type,rows,nulls,distinct,min,max,sum,mean,median
+sku,empty,0,0,0,,,,,
+price,empty,0,0,0,,,,,
+in_stock,empty,0,0,0,,,,,
+EOF
+
+# ── B. One column ────────────────────────────────────────────────────────────────────────
+check B1 0 --column salary &quot;$DATA/employees.csv&quot; &lt;&lt;&#x27;EOF&#x27;
+column,type,rows,nulls,distinct,min,max,sum,mean,median
+salary,number,24,0,24,43699.25,147150.99,2085635.10,86901.46,79496.68
+EOF
+check B2 0 --column notes &quot;$DATA/employees.csv&quot; &lt;&lt;&#x27;EOF&#x27;
+column,type,rows,nulls,distinct,min,max,sum,mean,median
+notes,text,24,10,4,mentor,&quot;remote, part-time&quot;,,,
+EOF
+check B3 0 --column temp_c &quot;$DATA/sensors.csv&quot; &lt;&lt;&#x27;EOF&#x27;
+column,type,rows,nulls,distinct,min,max,sum,mean,median
+temp_c,number,36,3,32,-12.21,29.81,207.06,6.27,2.41
+EOF
+
+# ── C. Frequencies ───────────────────────────────────────────────────────────────────────
+check C1 0 --freq department &quot;$DATA/employees.csv&quot; &lt;&lt;&#x27;EOF&#x27;
+value,count
+Sales,8
+Engineering,7
+Support,7
+Finance,2
+EOF
+check C2 0 --freq sensor --top 2 &quot;$DATA/sensors.csv&quot; &lt;&lt;&#x27;EOF&#x27;
+value,count
+east,9
+north,9
+EOF
+check C3 0 --freq customer &quot;$DATA/orders.csv&quot; &lt;&lt;&#x27;EOF&#x27;
+value,count
+Globex,10
+Acme Corp,9
+Umbrella,7
+Initech,3
+Hooli,1
+EOF
+check C4 0 --freq manager_id --top 3 &quot;$DATA/employees.csv&quot; &lt;&lt;&#x27;EOF&#x27;
+value,count
+4,4
+2,3
+3,1
+EOF
+check C5 0 --freq battery &quot;$DATA/sensors.csv&quot; &lt;&lt;&#x27;EOF&#x27;
+value,count
+EOF
+
+# ── E. Rejected input and operational failures ───────────────────────────────────────────
+check E1 3 &quot;$DATA/ragged.csv&quot; &lt; /dev/null
+check E2 3 --column nosuch &quot;$DATA/orders.csv&quot; &lt; /dev/null
+check E3 3 --freq nosuch &quot;$DATA/orders.csv&quot; &lt; /dev/null
+check E4 1 &quot;$MISSING&quot; &lt; /dev/null
+
+# ── U. Usage errors ──────────────────────────────────────────────────────────────────────
+check U1 2 &lt; /dev/null
+check U2 2 &quot;$DATA/orders.csv&quot; &quot;$DATA/sensors.csv&quot; &lt; /dev/null
+check U3 2 --freq sensor --top 0 &quot;$DATA/sensors.csv&quot; &lt; /dev/null
+check U4 2 --top 3 &quot;$DATA/sensors.csv&quot; &lt; /dev/null
+check U5 2 --column qty --freq qty &quot;$DATA/orders.csv&quot; &lt; /dev/null
+check U6 2 --frobnicate &quot;$DATA/orders.csv&quot; &lt; /dev/null
+
+TOTAL=$((PASSED + FAILED))
+echo &quot;CsvStat: $PASSED passed, $FAILED failed (of $TOTAL)&quot;
+[ &quot;$FAILED&quot; -eq 0 ]
+</pre></article>
+</main>
+</body>
+</html>

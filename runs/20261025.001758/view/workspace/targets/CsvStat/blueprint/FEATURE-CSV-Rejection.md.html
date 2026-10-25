@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-CSV-Rejection.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-CSV-Rejection.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-CSV-Rejection.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: CSV Rejection</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Reject an empty file, an empty or repeated header name, or a ragged record with exit 3, no standard output and one diagnostic line.</td></tr><tr><td>Depends On</td><td>ARCHITECTURE.md, FEATURE-CSV-Reading.md</td></tr><tr><td>Provides</td><td>rejected-input exit 3</td></tr><tr><td>Consumes</td><td>csvdata.Read</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>A malformed file is rejected as a whole. Nothing is profiled and nothing reaches standard output, so a caller never mistakes partial output for a result.</p>
+<h2>Behavior</h2>
+<ul><li>After reading, <code>cli.Run</code> validates the table and exits <code>3</code> with nothing on standard output when:<ul><li>the file has no records at all (zero bytes, or only blank content);</li><li>a header name is empty after trimming (including a header of only spaces);</li><li>a header name appears more than once (exact string comparison after trimming);</li><li>any data record has a field count different from the header;</li><li><code>encoding/csv</code> reports a syntax error (for example a bare quote); this is rejected content, so</li></ul></li></ul>
+<p>it is exit <code>3</code>, not <code>1</code>.</p>
+<ul><li>Exactly one diagnostic line is written to standard error. It names the file and, for a ragged</li></ul>
+<p>record, the record&#x27;s line number (<code>Record.Line</code>).</p>
+<ul><li>A header followed by no data records is valid and is not rejected.</li><li>Exit <code>1</code> (unreadable file) is owned by FEATURE-Read-Failure.md; exit <code>2</code> by the CLI features.</li></ul>
+<h2>Required unit tests</h2>
+<p>The build agent writes this test in <code>internal/cli</code> with exactly this name:</p>
+<ul><li><code>TestRejectionDiagnosticNamesFileAndLine</code> runs <code>Run</code> with <code>bytes.Buffer</code> writers on a ragged file</li></ul>
+<p>and asserts stdout is empty, stderr is a single line, and that line contains the file path and the line number of the ragged record.</p>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC csv-rejection-ragged-supplied-file ===<br>Intent: The supplied ragged file is rejected with exit 3 and nothing on standard output.</p>
+<p>import os from drydock_go import cli_runner</p>
+<p>path = os.path.abspath(os.path.join(&quot;sources&quot;, &quot;ragged.csv&quot;)) code, out, err = cli_runner(path) print(out) print(err) assert code == 3 assert out == &quot;&quot; === END AC csv-rejection-ragged-supplied-file ===</p>
+<p>=== AC csv-rejection-empty-file ===<br>Intent: A zero-byte file is rejected with exit 3 and nothing on standard output.</p>
+<p>import os import tempfile from drydock_go import cli_runner</p>
+<p>with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;empty.csv&quot;) open(path, &quot;w&quot;).close() code, out, err = cli_runner(path) print(out) print(err) assert code == 3 assert out == &quot;&quot; === END AC csv-rejection-empty-file ===</p>
+<p>=== AC csv-rejection-empty-header-name ===<br>Intent: A header name that is empty or only spaces after trimming is rejected with exit 3.</p>
+<p>import os import tempfile from drydock_go import cli_runner</p>
+<p>with tempfile.TemporaryDirectory() as d: for i, header in enumerate([&quot;a,,c&quot;, &quot;a,   ,c&quot;]): path = os.path.join(d, f&quot;h{i}.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as f: f.write(header + &quot;\n1,2,3\n&quot;) code, out, err = cli_runner(path) print(out) print(err) assert code == 3 assert out == &quot;&quot; === END AC csv-rejection-empty-header-name ===</p>
+<p>=== AC csv-rejection-repeated-header-name ===<br>Intent: A repeated header name, including one that repeats only after trimming, is rejected with exit 3.</p>
+<p>import os import tempfile from drydock_go import cli_runner</p>
+<p>with tempfile.TemporaryDirectory() as d: for i, header in enumerate([&quot;a,b,a&quot;, &quot;a, a ,b&quot;]): path = os.path.join(d, f&quot;r{i}.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as f: f.write(header + &quot;\n1,2,3\n&quot;) code, out, err = cli_runner(path) print(out) print(err) assert code == 3 assert out == &quot;&quot; === END AC csv-rejection-repeated-header-name ===</p>
+<p>=== AC csv-rejection-short-and-long-records ===<br>Intent: A record with too few or too many fields is rejected with exit 3 and nothing on standard output.</p>
+<p>import os import tempfile from drydock_go import cli_runner</p>
+<p>with tempfile.TemporaryDirectory() as d: for i, row in enumerate([&quot;1,2&quot;, &quot;1,2,3,4&quot;]): path = os.path.join(d, f&quot;w{i}.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as f: f.write(&quot;a,b,c\n&quot; + row + &quot;\n&quot;) code, out, err = cli_runner(path) print(out) print(err) assert code == 3 assert out == &quot;&quot; === END AC csv-rejection-short-and-long-records ===</p>
+<p>=== AC csv-rejection-header-only-is-valid ===<br>Intent: A header with no data records is not rejected.</p>
+<p>import os from drydock_go import cli_runner</p>
+<p>path = os.path.abspath(os.path.join(&quot;sources&quot;, &quot;header_only.csv&quot;)) code, out, err = cli_runner(path) print(out) print(err) assert code == 0 === END AC csv-rejection-header-only-is-valid ===</p>
+<p>=== AC csv-rejection-diagnostic-names-file-and-line ===<br>Intent: The single diagnostic line names the file and the ragged record&#x27;s line number.</p>
+<p>from drydock_go import run_test</p>
+<p>result = run_test(&quot;./internal/cli&quot;, &quot;TestRejectionDiagnosticNamesFileAndLine&quot;) print(result.stdout) assert result.passed, (result.status, result.stdout, result.stderr) === END AC csv-rejection-diagnostic-names-file-and-line ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>A rejected file never produces partial standard output.</li><li>Only one diagnostic line is written to standard error per failing command.</li><li>Rejected content is exit 3; it is never reported as exit 1 or 2.</li></ul></article>
+</main>
+</body>
+</html>

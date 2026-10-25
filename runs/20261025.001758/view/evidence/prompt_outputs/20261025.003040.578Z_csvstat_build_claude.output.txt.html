@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/prompt_outputs/20261025.003040.578Z_csvstat_build_claude.output.txt</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/prompt_outputs/20261025.003040.578Z_csvstat_build_claude.output.txt</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/prompt_outputs/20261025.003040.578Z_csvstat_build_claude.output.txt">Raw file</a></div></header>
+<article class="doc"><pre>The build directory is empty apart from `sources/` and Go 1.24.6 is installed, which meets the 1.22 floor. I&#x27;ll create the module, the package layout, the CLI entry contract with usage validation, a launcher, and tests.Files are written. Next I&#x27;ll make the launcher executable, then run the gate, the formatting check, and the build that the architecture&#x27;s acceptance checks depend on.Gate, build, and smoke checks pass. I&#x27;ll run the four declared architecture acceptance checks directly, since they are this step&#x27;s Definition of Done.All four declared checks pass. I&#x27;ll write the reusable compact and close with the result.
+
+&lt;reusable-compact filename=&quot;ARCHITECTURE.md&quot;&gt;
+Module: `csvstat` (go 1.22, no requires, no go.sum).
+Packages: cmd/csvstat (main only, os.Exit), internal/cli (Run(args []string, stdout, stderr io.Writer) int), internal/csvdata, internal/infer, internal/profile, internal/freq, internal/decimal. bin/test.sh = go vet ./... then go test ./....
+Exit codes: 0 success; 1 operational (file cannot be opened/read); 2 usage (missing/extra FILE, unknown option, missing option value, --top not positive, --top without --freq, --column with --freq); 3 rejected input (empty file, empty/repeated header, ragged record, column absent from header).
+Failure contract: nothing on stdout; exactly one stderr line naming the file (and line number for ragged records). Stderr is never graded.
+Rules: stdlib only; no floating point for sum/mean/median; only cmd/csvstat calls os.Exit; usage validated before file open; app code never reads sources/ data.
+&lt;/reusable-compact&gt;
+
+&lt;blueprint-decisions&gt;
+[{&quot;spec&quot;:&quot;ARCHITECTURE.md&quot;,&quot;severity&quot;:&quot;Low&quot;,&quot;subject&quot;:&quot;Option placement and help handling&quot;,&quot;decision&quot;:&quot;Options are parsed with the standard library flag package, so they must precede FILE (for example `csvstat --freq --top 3 f.csv`). Options after the file are rejected as an extra argument with exit 2. -h prints usage to stdout and exits 0, which is outside the 0/1/2/3 table. Is that acceptable, or should interleaved options or help exit 2 be adopted on replan?&quot;},{&quot;spec&quot;:&quot;ARCHITECTURE.md&quot;,&quot;severity&quot;:&quot;Low&quot;,&quot;subject&quot;:&quot;Profiling stub in the foundation step&quot;,&quot;decision&quot;:&quot;Valid usage reaches a stub in internal/cli that writes one stderr line and returns exit 1, without opening the file. This is a placeholder for the profiling stories, not a real operational failure. Later blocks replace it.&quot;}]
+&lt;/blue-prints-decisions&gt;
+
+RESULT: SUCCESS
+
+FILES CHANGED:
+- go.mod
+- cmd/csvstat/main.go
+- internal/cli/cli.go
+- internal/cli/cli_test.go
+- internal/csvdata/doc.go
+- internal/infer/doc.go
+- internal/profile/doc.go
+- internal/freq/doc.go
+- internal/decimal/doc.go
+- bin/test.sh
+
+SUMMARY:
+- Module `csvstat` on go 1.22 with no requires. No go.sum is produced. Toolchain is go1.24.6, which meets the 1.22 floor.
+- `cmd/csvstat/main.go` is the only caller of `os.Exit`. It delegates to `cli.Run(args, stdout, stderr) int`.
+- `internal/cli` defines the exit codes 0/1/2/3 and parses options with a local `flag.FlagSet` (ContinueOnError, output discarded). Usage rules are enforced before any file access: exactly one FILE, `--top` requires `--freq` and must be positive, `--column` conflicts with `--freq`. Usage errors write one stderr line and exit 2, with nothing on stdout.
+- Packages `csvdata`, `infer`, `profile`, `freq`, and `decimal` exist as documented placeholders for later stories.
+- `bin/test.sh` is a POSIX launcher that runs `go vet ./...` then `go test ./...`. It is executable.
+- Tests: `internal/cli/cli_test.go` covers each usage error (exit 2, empty stdout, one stderr line), help (exit 0), valid usage not returning 2, and option capture. Every test checks the returned code and the state of the output writers.
+- Verification: `sh bin/test.sh` exits 0 (cli tests pass). `gofmt -l .` prints nothing. `go build ./internal/...` and `go build ./cmd/csvstat` succeed. Smoke checks return exit 2 for no arguments and for `--top 0`. The four declared architecture checks (go-mod-stdlib-only, package-layout, cli-run-compiles, run-signature) all pass when run directly.
+- I did not run `sources/run.sh`. The terminal story runs it once at the end, and profiling is not implemented yet.
+- Choices for you to review are in the blueprint-decisions payload: options must precede FILE, `-h` exits 0, and valid usage reaches a stub that exits 1.
+
+BLOCKERS:
+- None.</pre></article>
+</main>
+</body>
+</html>

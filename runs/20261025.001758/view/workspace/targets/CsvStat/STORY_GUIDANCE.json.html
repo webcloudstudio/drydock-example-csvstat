@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/STORY_GUIDANCE.json</title>
+<link rel="stylesheet" href="../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/STORY_GUIDANCE.json</h1><div class="filenav"><a href="../../../../index.html">&larr; Report</a><a href="../../../../workspace/targets/CsvStat/STORY_GUIDANCE.json">Raw file</a></div></header>
+<article class="doc"><pre>{
+  &quot;stories&quot;: [
+    {
+      &quot;id&quot;: &quot;CSV-002&quot;,
+      &quot;provenance&quot;: &quot;plan&quot;,
+      &quot;gate&quot;: [
+        &quot;sh&quot;,
+        &quot;sources/run.sh&quot;
+      ],
+      &quot;note&quot;: &quot;sources/run.sh checks E1 (ragged.csv rejected with exit 3)&quot;
+    },
+    {
+      &quot;id&quot;: &quot;CLI-002&quot;,
+      &quot;provenance&quot;: &quot;plan&quot;,
+      &quot;gate&quot;: [
+        &quot;sh&quot;,
+        &quot;sources/run.sh&quot;
+      ],
+      &quot;note&quot;: &quot;sources/run.sh checks U1\u2013U6 (usage errors, exit 2)&quot;
+    },
+    {
+      &quot;id&quot;: &quot;FRQ-001&quot;,
+      &quot;provenance&quot;: &quot;plan&quot;,
+      &quot;gate&quot;: [
+        &quot;sh&quot;,
+        &quot;sources/run.sh&quot;
+      ],
+      &quot;note&quot;: &quot;sources/run.sh checks C1\u2013C5 (frequency output)&quot;
+    }
+  ]
+}
+</pre></article>
+</main>
+</body>
+</html>

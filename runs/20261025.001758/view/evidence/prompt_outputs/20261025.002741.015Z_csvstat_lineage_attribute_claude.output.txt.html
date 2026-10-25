@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/prompt_outputs/20261025.002741.015Z_csvstat_lineage_attribute_claude.output.txt</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/prompt_outputs/20261025.002741.015Z_csvstat_lineage_attribute_claude.output.txt</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/prompt_outputs/20261025.002741.015Z_csvstat_lineage_attribute_claude.output.txt">Raw file</a></div></header>
+<article class="doc"><pre>&lt;requirement name=&quot;profile-csv-file&quot; stories=&quot;PRF-001,PRF-006&quot;&gt;
+Build a command-line tool that profiles a CSV file. For every column it infers a type and reports
+row, null, and distinct counts, the minimum and maximum, and for numeric columns the sum, mean, and
+median.
+&lt;/requirement&gt;
+&lt;requirement name=&quot;list-frequent-values&quot; stories=&quot;FRQ-001,FRQ-002,FRQ-003&quot;&gt;
+It also lists the most frequent values of one column.
+&lt;/requirement&gt;
+&lt;requirement name=&quot;go-stdlib-build&quot; stories=&quot;foundation,MOD-001&quot;&gt;
+Implement in Go 1.22 or newer using only the standard library. The application root is a Go
+module, and its executable is the main package at `./cmd/csvstat`.
+&lt;/requirement&gt;
+&lt;requirement name=&quot;test-entry&quot; stories=&quot;MOD-002&quot;&gt;
+The completed application provides a POSIX-compatible `bin/test.sh` that runs `go vet ./...` and
+`go test ./...` from the application root and exits zero only when both pass.
+&lt;/requirement&gt;
+&lt;requirement name=&quot;run-harness-scoring&quot; stories=&quot;verification&quot;&gt;
+`drydock uat` runs `sh sources/run.sh` from the completed application root and takes its exit code and output as the score.
+&lt;/requirement&gt;
+&lt;requirement name=&quot;command-arguments&quot; stories=&quot;CLI-001,CLI-002&quot;&gt;
+Options precede the file. Exactly one file is required.
+&lt;/requirement&gt;
+&lt;requirement name=&quot;column-option&quot; stories=&quot;PRF-006,CLI-003&quot;&gt;
+Profile only the named column.
+&lt;/requirement&gt;
+&lt;requirement name=&quot;read-csv-file&quot; stories=&quot;CSV-001&quot;&gt;
+The file is UTF-8 CSV as RFC 4180 defines it, read with Go&#x27;s `encoding/csv`. The first record
+is the header.
+&lt;/requirement&gt;
+&lt;requirement name=&quot;trim-values&quot; stories=&quot;CSV-001&quot;&gt;
+Every header name and every value is trimmed of leading and trailing spaces before any other
+rule applies.
+&lt;/requirement&gt;
+&lt;requirement name=&quot;reject-malformed-file&quot; stories=&quot;CSV-002&quot;&gt;
+The file is **rejected** when it is empty, when a header name is empty or repeated, or when any
+record has a different number of fields from the header.
+&lt;/requirement&gt;
+&lt;requirement name=&quot;null-values&quot; stories=&quot;CSV-003&quot;&gt;
+**Null.** A value is null when it is empty, or when it equals `NA`, `N/A`, or `NULL` ignoring
+case. All other values are non-null.
+&lt;/requirement&gt;
+&lt;requirement name=&quot;type-inference&quot; stories=&quot;TYP-001,TYP-002,TYP-003,TYP-004,TYP-005&quot;&gt;
+A column&#x27;s type is the first of these that every non-null value satisfies:
+&lt;/requirement&gt;
+&lt;requirement name=&quot;empty-column-type&quot; stories=&quot;TYP-005&quot;&gt;
+A column with no non-null values has type `empty`.
+&lt;/requirement&gt;
+&lt;requirement name=&quot;profile-output-rows&quot; stories=&quot;PRF-001&quot;&gt;
+Header `column,type,rows,nulls,distinct,min,max,sum,mean,median`, then one row per column in file
+order (or the one named by `--column`).
+&lt;/requirement&gt;
+&lt;requirement name=&quot;profile-counts&quot; stories=&quot;PRF-002&quot;&gt;
+`rows` | Number of data records. | `nulls` | Number of null values. | `distinct` | Number of different non-null values, compared as exact strings after trimming.
+&lt;/requirement&gt;
+&lt;requirement name=&quot;profile-min-max&quot; stories=&quot;PRF-003&quot;&gt;
+`min`, `max` | `integer`: the smallest and largest value as an integer. `number`: as a decimal. `date`: earliest and latest. `boolean`: `false` if any value is false, else `true`; `true` if any value is true, else `false`. `text`: smallest and largest by byte value. `empty`: empty.
+&lt;/requirement&gt;
+&lt;requirement name=&quot;numeric-stats&quot; stories=&quot;PRF-004&quot;&gt;
+`sum` | `integer`: the integer total. `number`: the decimal total. Otherwise empty. | `mean` | `integer` and `number`: total divided by non-null count. Otherwise empty. | `median` | `integer` and `number`: the middle value of the sorted non-null values, or the mean of the two middle values when the count is even. Otherwise empty.
+&lt;/requirement&gt;
+&lt;requirement name=&quot;decimal-formatting&quot; stories=&quot;PRF-005&quot;&gt;
+**Decimals.** Every `number` `min`, `max`, and `sum`, and every `mean` and `median`, is written with
+exactly two decimal places, rounded half away from zero from the exact value, with a leading `-`
+when negative and no thousands separator: `1012.50`, `-12.21`, `0.00`. Integer `min`, `max`, and
+`sum` are written as plain integers.
+&lt;/requirement&gt;
+&lt;requirement name=&quot;frequency-output&quot; stories=&quot;FRQ-001,FRQ-002,FRQ-003&quot;&gt;
+Header `value,count`, then one row per distinct non-null value of the column, ordered by count
+descending, then value ascending by byte value, at most `--top` rows. Null values are not listed. A
+column with no non-null values writes only the header.
+&lt;/requirement&gt;
+&lt;requirement name=&quot;csv-output-format&quot; stories=&quot;CLI-004&quot;&gt;
+CSV on standard output with `\n` line endings. A field that contains a comma, a double quote, or a
+newline is quoted as RFC 4180 specifies; Go&#x27;s `encoding/csv` writer produces this format.
+&lt;/requirement&gt;
+&lt;requirement name=&quot;failure-output&quot; stories=&quot;CSV-004,CSV-002,CLI-003&quot;&gt;
+A failing command writes nothing to standard output and one diagnostic line to standard error naming
+the file and, for a rejected record, its line number.
+&lt;/requirement&gt;
+&lt;requirement name=&quot;exit-codes&quot; stories=&quot;CSV-004,CLI-002,CSV-002,CLI-003&quot;&gt;
+| `0` | Success. | `1` | Operational failure: the file cannot be opened or read. | `2` | Usage error: missing or extra file, unknown option, missing option value, `--top` not a positive integer, `--top` without `--freq`, `--column` with `--freq`. | `3` | Rejected: empty file, empty or repeated header name, ragged record, or a column name that is not in the header.
+&lt;/requirement&gt;</pre></article>
+</main>
+</body>
+</html>

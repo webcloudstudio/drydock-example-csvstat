@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-Read-Failure.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-Read-Failure.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-Read-Failure.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Read Failure</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Exit 1 with nothing on standard output when the file cannot be opened or read.</td></tr><tr><td>Depends On</td><td>ARCHITECTURE.md, FEATURE-CSV-Rejection.md</td></tr><tr><td>Provides</td><td>operational-failure exit 1</td></tr><tr><td>Consumes</td><td>csvdata.Read</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>An operational failure (the file is unavailable) is distinguished from rejected content so callers can tell a missing input from a malformed one.</p>
+<h2>Behavior</h2>
+<ul><li>When <code>csvdata.Read</code> fails to open or read the path (nonexistent path, a directory, no</li></ul>
+<p>permission), <code>cli.Run</code> exits <code>1</code>.</p>
+<ul><li>Nothing is written to standard output; one diagnostic line naming the file is written to standard</li></ul>
+<p>error.</p>
+<ul><li>Exit <code>1</code> is reserved for this case. Content that was read but rejected is exit <code>3</code></li></ul>
+<p>(FEATURE-CSV-Rejection.md); usage errors are exit <code>2</code> (FEATURE-CLI-Arguments.md and FEATURE-CLI-Option-Validation.md).</p>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC read-failure-missing-file ===<br>Intent: A path that does not exist exits 1 with nothing on standard output.</p>
+<p>import os import tempfile from drydock_go import cli_runner</p>
+<p>with tempfile.TemporaryDirectory() as d: missing = os.path.join(d, &quot;no-such-file.csv&quot;) code, out, err = cli_runner(missing) print(out) print(err) assert code == 1 assert out == &quot;&quot; === END AC read-failure-missing-file ===</p>
+<p>=== AC read-failure-directory ===<br>Intent: A path that is a directory cannot be read and exits 1 with nothing on standard output.</p>
+<p>import tempfile from drydock_go import cli_runner</p>
+<p>with tempfile.TemporaryDirectory() as d: code, out, err = cli_runner(d) print(out) print(err) assert code == 1 assert out == &quot;&quot; === END AC read-failure-directory ===</p>
+<p>=== AC read-failure-distinct-from-rejection ===<br>Intent: A readable but ragged file exits 3 while an unreadable one exits 1, so the two codes are not conflated.</p>
+<p>import os import tempfile from drydock_go import cli_runner</p>
+<p>ragged = os.path.abspath(os.path.join(&quot;sources&quot;, &quot;ragged.csv&quot;)) with tempfile.TemporaryDirectory() as d: missing = os.path.join(d, &quot;absent.csv&quot;) rejected_code, _, _ = cli_runner(ragged) failed_code, out, err = cli_runner(missing) print(out) print(err) assert rejected_code == 3 assert failed_code == 1 assert failed_code != rejected_code === END AC read-failure-distinct-from-rejection ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Exit <code>1</code> never accompanies output on standard output.</li><li>Usage errors are not handled here and keep exit <code>2</code>.</li></ul></article>
+</main>
+</body>
+</html>

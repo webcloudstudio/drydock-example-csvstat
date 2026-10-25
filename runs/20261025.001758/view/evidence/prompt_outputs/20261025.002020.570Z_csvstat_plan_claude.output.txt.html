@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/prompt_outputs/20261025.002020.570Z_csvstat_plan_claude.output.txt</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/prompt_outputs/20261025.002020.570Z_csvstat_plan_claude.output.txt</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/prompt_outputs/20261025.002020.570Z_csvstat_plan_claude.output.txt">Raw file</a></div></header>
+<article class="doc"><pre>=== BEGIN ARTIFACT ARCHITECTURE.md ===
+# ARCHITECTURE: CsvStat
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Module layout, package boundaries, exit-code contract, and technical decisions for the csvstat command-line CSV profiler. |
+| Depends On  | — |
+| Provides    | go.mod, internal/cli.Run |
+| Consumes    | — |
+
+## Questions
+
+- None.
+
+## Purpose
+
+CsvStat is a single Go executable, `./cmd/csvstat`, that profiles one CSV file. It infers each column&#x27;s type, reports counts, extremes, and for numeric columns sum, mean, and median, and lists the most frequent values of one column. There is no database, no network, and no persistent state.
+
+## Technology Stack
+
+Derived from `TECHNOLOGY_STACK.md`, which remains the decision of record.
+
+| Technology | Where it applies |
+|---|---|
+| Go 1.22 or newer, standard library only | All application code; `go.mod` declares no `require` entries |
+| go test and go vet | Test runner behind `bin/test.sh` |
+| CSV via `encoding/csv` | Reading input (RFC 4180) and writing every output form |
+| POSIX sh | `bin/test.sh` and the supplied grader `sources/run.sh` |
+
+## Module Layout
+
+```text
+go.mod
+cmd/csvstat/main.go        package main; calls cli.Run and passes the result to os.Exit
+internal/cli/              Run(args []string, stdout, stderr io.Writer) int; option parsing, dispatch, exit codes
+internal/csvdata/          reading, trimming, null classification, structural validation
+internal/infer/            type inference ladder
+internal/profile/          rows, nulls, distinct, min, max, sum, mean, median
+internal/freq/             frequency listing
+internal/decimal/          exact big.Rat formatting, one rounding, half away from zero
+bin/test.sh                POSIX launcher: go vet ./... then go test ./...
+```
+
+## Module Ownership
+
+| Boundary | Owning module | May access |
+|---|---|---|
+| Process start and exit | `cmd/csvstat` | `os.Args`, `os.Stdout`, `os.Stderr`, `os.Exit` (the only caller of `os.Exit`) |
+| Option parsing, exit codes, diagnostics | `internal/cli` | A local `flag.FlagSet` with `flag.ContinueOnError`, the injected writers |
+| File access and CSV decoding | `internal/csvdata` | `os.Open`, `encoding/csv` reader |
+| Type rules | `internal/infer` | Trimmed non-null values only |
+| Statistics | `internal/profile`, `internal/decimal` | `math/big`; no floating point for sums, means, or medians |
+| Output encoding | `internal/cli` with `encoding/csv` writer | The injected stdout writer |
+| Persistence, configuration, external services | None | The product has none |
+
+## Exit-Code Contract
+
+| Code | Meaning |
+|---|---|
+| 0 | Success |
+| 1 | Operational failure: the file cannot be opened or read |
+| 2 | Usage error: missing or extra file, unknown option, missing option value, `--top` not a positive integer, `--top` without `--freq`, `--column` with `--freq` |
+| 3 | Rejected input: empty file, empty or repeated header name, ragged record, or a column name absent from the header |
+
+A failing command writes nothing to standard output and exactly one diagnostic line to standard error naming the file and, for a rejected record, its line number. Standard error is never compared by the grader.
+
+## Technical Decisions
+
+- Application code never reads `sources/run.sh` or any supplied data file and never embeds a statistic, type, or value list. Every value is computed from the file it is given.
+- Sums, means, and medians are exact (`math/big`) and rounded once, half away from zero, when written.
+- All output goes through one `encoding/csv` writer, so quoting follows RFC 4180 and lines end with `\n`.
+- Usage validation completes before the file is opened, so a usage error outranks a missing file.
+- Only `main` calls `os.Exit`; `cli.Run` returns the exit code so tests drive it with `bytes.Buffer`.
+
+## Programmatic Acceptance
+
+=== AC arch-go-mod-stdlib-only ===
+Intent: The application root is a Go module that declares no third-party requirements.
+Requires: executable=go; scope=test
+
+import pathlib
+
+gomod = pathlib.Path(&quot;go.mod&quot;)
+assert gomod.is_file()
+lines = [ln.strip() for ln in gomod.read_text().splitlines()]
+assert any(ln.startswith(&quot;module &quot;) for ln in lines)
+assert any(ln.startswith(&quot;go &quot;) for ln in lines)
+assert not any(ln.startswith(&quot;require&quot;) for ln in lines)
+assert not pathlib.Path(&quot;go.sum&quot;).exists() or pathlib.Path(&quot;go.sum&quot;).stat().st_size == 0
+=== END AC arch-go-mod-stdlib-only ===
+
+=== AC arch-package-layout ===
+Intent: Each internal package named by the architecture exists and holds Go source.
+
+import pathlib
+
+packages = [&quot;cli&quot;, &quot;csvdata&quot;, &quot;infer&quot;, &quot;profile&quot;, &quot;freq&quot;, &quot;decimal&quot;]
+for name in packages:
+    directory = pathlib.Path(&quot;internal&quot;) / name
+    assert directory.is_dir(), name
+    sources = [p for p in directory.glob(&quot;*.go&quot;) if not p.name.endswith(&quot;_test.go&quot;)]
+    assert sources, name
+assert pathlib.Path(&quot;bin&quot;).is_dir()
+=== END AC arch-package-layout ===
+
+=== AC arch-cli-run-compiles ===
+Intent: The internal packages, including the cli.Run entry contract, compile and vet cleanly.
+Requires: executable=go; scope=test
+
+import subprocess
+
+result = subprocess.run([&quot;go&quot;, &quot;build&quot;, &quot;./internal/...&quot;], capture_output=True, text=True)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0
+=== END AC arch-cli-run-compiles ===
+
+=== AC arch-run-signature ===
+Intent: internal/cli exposes Run taking args and two writers and returning an int exit code.
+
+import pathlib
+
+text = &quot;\n&quot;.join(
+    p.read_text()
+    for p in pathlib.Path(&quot;internal/cli&quot;).glob(&quot;*.go&quot;)
+    if not p.name.endswith(&quot;_test.go&quot;)
+)
+assert &quot;func Run(&quot; in text
+assert &quot;io.Writer&quot; in text
+=== END AC arch-run-signature ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Standard library only; no third-party module may appear in `go.mod`.
+- Do not modify, rewrite, regenerate, or substitute any file under `sources/`.
+- Application code must not read `sources/run.sh` or any supplied data file, and must not hardcode a statistic, type, or value list.
+- Only `cmd/csvstat` calls `os.Exit`.
+- Sums, means, and medians are never computed with floating point.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-Executable-Build.md ===
+# FEATURE: Executable Build
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | The csvstat executable builds from the application root with go build using only the standard library. |
+| Depends On  | ARCHITECTURE.md |
+| Provides    | csvstat executable |
+| Consumes    | internal/cli.Run |
+
+## Questions
+
+- None.
+
+## Purpose
+
+`go build -o &lt;path&gt; ./cmd/csvstat` succeeds from the module root and produces a runnable `csvstat` binary. The main package is a thin shell: it calls `cli.Run(os.Args[1:], os.Stdout, os.Stderr)` and passes the result to `os.Exit`.
+
+## Trigger
+
+A developer or the grader runs `go build -o &lt;temporary path&gt; ./cmd/csvstat` from the application root.
+
+## Behavior
+
+- `cmd/csvstat/main.go` is `package main` and contains the only `os.Exit` call in the module.
+- A minimal `cli.Run` exists so the build succeeds before later stories add behavior.
+- `go.mod` declares no `require` entries.
+
+## Reads
+
+- `go.mod`, `cmd/csvstat/main.go`, `internal/cli`.
+
+## Writes
+
+- The built binary at the path given to `-o`.
+
+## Programmatic Acceptance
+
+=== AC build-produces-binary ===
+Intent: go build of ./cmd/csvstat from the application root exits 0 and writes an executable file.
+Requires: executable=go; scope=test
+
+import os
+import subprocess
+import tempfile
+
+with tempfile.TemporaryDirectory() as work:
+    target = os.path.join(work, &quot;csvstat&quot;)
+    result = subprocess.run(
+        [&quot;go&quot;, &quot;build&quot;, &quot;-o&quot;, target, &quot;./cmd/csvstat&quot;], capture_output=True, text=True
+    )
+    print(result.stdout)
+    print(result.stderr)
+    assert result.returncode == 0
+    assert os.path.isfile(target)
+    assert os.access(target, os.X_OK)
+=== END AC build-produces-binary ===
+
+=== AC build-no-third-party-requires ===
+Intent: go.mod lists no requirements, so the build uses only the standard library.
+
+import pathlib
+
+lines = [ln.strip() for ln in pathlib.Path(&quot;go.mod&quot;).read_text().splitlines()]
+assert not any(ln.startswith(&quot;require&quot;) for ln in lines)
+assert not any(ln.startswith(&quot;replace&quot;) for ln in lines)
+=== END AC build-no-third-party-requires ===
+
+=== AC build-main-is-thin ===
+Intent: Only cmd/csvstat calls os.Exit; no internal package does.
+
+import pathlib
+
+main_text = pathlib.Path(&quot;cmd/csvstat/main.go&quot;).read_text()
+assert &quot;package main&quot; in main_text
+assert &quot;os.Exit(&quot; in main_text
+for path in pathlib.Path(&quot;internal&quot;).rglob(&quot;*.go&quot;):
+    if path.name.endswith(&quot;_test.go&quot;):
+        continue
+    assert &quot;os.Exit(&quot; not in path.read_text(), str(path)
+=== END AC build-main-is-thin ===
+
+=== AC build-vet-clean ===
+Intent: go vet over the whole module exits 0.
+Requires: executable=go; scope=test
+
+import subprocess
+
+result = subprocess.run([&quot;go&quot;, &quot;vet&quot;, &quot;./...&quot;], capture_output=True, text=True)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0
+=== END AC build-vet-clean ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Standard library only.
+- Do not modify anything under `sources/`.
+- `main` contains no CSV logic; behavior lives in `internal/` packages.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-Test-Entry.md ===
+# FEATURE: Test Entry Point
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | A POSIX-compatible bin/test.sh runs go vet and go test and exits zero only when both pass. |
+| Depends On  | ARCHITECTURE.md, FEATURE-Executable-Build.md |
+| Provides    | bin/test.sh |
+| Consumes    | — |
+
+## Questions
+
+- None.
+
+## Purpose
+
+`bin/test.sh` is the single project test command. It runs from the application root regardless of the caller&#x27;s working directory.
+
+## Behavior
+
+- Written in POSIX sh with no bash-only syntax.
+- Changes to the application root, runs `go vet ./...`, then `go test ./...`.
+- Exits non-zero if either command fails; exits zero only when both pass.
+- The Go test suite is non-empty from this story on. Later stories add tests beside their code and cover each type, statistic, null rule, rounding case, output form, and exit code using files the tests write.
+
+## Reads
+
+- The Go module in the application root.
+
+## Writes
+
+- Nothing persistent.
+
+## Programmatic Acceptance
+
+=== AC test-entry-syntax ===
+Intent: bin/test.sh exists and is syntactically valid POSIX sh.
+
+import pathlib
+import subprocess
+
+script = pathlib.Path(&quot;bin/test.sh&quot;)
+assert script.is_file()
+result = subprocess.run([&quot;sh&quot;, &quot;-n&quot;, &quot;bin/test.sh&quot;], capture_output=True, text=True)
+print(result.stderr)
+assert result.returncode == 0
+=== END AC test-entry-syntax ===
+
+=== AC test-entry-passes ===
+Intent: sh bin/test.sh exits 0 when go vet and go test both pass.
+Requires: executable=go; scope=test
+
+import subprocess
+
+result = subprocess.run([&quot;sh&quot;, &quot;bin/test.sh&quot;], capture_output=True, text=True)
+print(result.stdout)
+print(result.stderr)
+assert result.returncode == 0
+=== END AC test-entry-passes ===
+
+=== AC test-entry-runs-from-elsewhere ===
+Intent: bin/test.sh exits 0 when invoked from a different working directory.
+Requires: executable=go; scope=test
+
+import os
+import subprocess
+import tempfile
+
+script = os.path.abspath(&quot;bin/test.sh&quot;)
+with tempfile.TemporaryDirectory() as elsewhere:
+    result = subprocess.run([&quot;sh&quot;, script], cwd=elsewhere, capture_output=True, text=True)
+    print(result.stdout)
+    print(result.stderr)
+    assert result.returncode == 0
+=== END AC test-entry-runs-from-elsewhere ===
+
+=== AC test-entry-suite-nonempty ===
+Intent: The module contains at least one Go test file.
+
+import pathlib
+
+tests = list(pathlib.Path(&quot;.&quot;).rglob(&quot;*_test.go&quot;))
+assert tests
+=== END AC test-entry-suite-nonempty ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- POSIX sh only; no bash-specific features.
+- The script never modifies files under `sources/`.
+- The script must not mask a failing `go vet` or `go test` exit status.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-CLI-Arguments.md ===
+# FEATURE: CLI Arguments
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Parse csvstat options that precede exactly one file argument and reject a missing or extra file with exit 2. |
+| Depends On  | ARCHITECTURE.md, FEATURE-Executable-Build.md |
+| Provides    | csvstat [--column &lt;name&gt;] &lt;file&gt; |
+| Consumes    | internal/cli.Run |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Command forms:
+
+```text
+csvstat [--column &lt;name&gt;] &lt;file&gt;
+csvstat --freq &lt;name&gt; [--top &lt;n&gt;] &lt;file&gt;
+```
+
+Options precede the file. Exactly one file is required.
+
+## Behavior
+
+- `internal/cli` uses a local `flag.FlagSet` with `flag.ContinueOnError`, its output directed to the injected stderr writer, and defines `--column`, `--freq`, and `--top`.
+- Parsing stops at the first non-option argument, so an option placed after the file is an extra positional and is a usage error.
+- No file argument, or more than one file argument, exits 2 with nothing on standard output and one diagnostic line on standard error.
+- A single file with valid options is not a usage error; what happens next is owned by later stories.
+- Validation of option values and combinations is owned by FEATURE-CLI-Option-Validation.md.
+
+## Reads
+
+- The argument list passed to `Run`.
+
+## Writes
+
+- One standard error line on a usage error; nothing on standard output.
+
+## Programmatic Acceptance
+
+=== AC args-no-file ===
+Intent: Running with no arguments exits 2 and writes nothing to standard output.
+Requires: executable=go; scope=test
+
+from drydock_go import cli_runner
+
+code, out, err = cli_runner(package=&quot;./cmd/csvstat&quot;)
+assert code == 2, (code, out, err)
+assert out == &quot;&quot;
+=== END AC args-no-file ===
+
+=== AC args-extra-file ===
+Intent: Two file arguments exit 2 and write nothing to standard output.
+Requires: executable=go; scope=test
+
+from drydock_go import cli_runner
+
+first = &quot;sources/orders.csv&quot;
+second = &quot;sources/sensors.csv&quot;
+code, out, err = cli_runner(first, second, package=&quot;./cmd/csvstat&quot;)
+assert code == 2, (code, out, err)
+assert out == &quot;&quot;
+=== END AC args-extra-file ===
+
+=== AC args-option-after-file ===
+Intent: An option placed after the file is an extra positional and exits 2 with empty standard output.
+Requires: executable=go; scope=test
+
+from drydock_go import cli_runner
+
+path = &quot;sources/orders.csv&quot;
+code, out, err = cli_runner(path, &quot;--column&quot;, &quot;qty&quot;, package=&quot;./cmd/csvstat&quot;)
+assert code == 2, (code, out, err)
+assert out == &quot;&quot;
+=== END AC args-option-after-file ===
+
+=== AC args-option-then-file-accepted ===
+Intent: Options followed by exactly one file are not a usage error.
+Requires: executable=go; scope=test
+
+from drydock_go import cli_runner
+
+path = &quot;sources/orders.csv&quot;
+code, out, err = cli_runner(&quot;--column&quot;, &quot;qty&quot;, path, package=&quot;./cmd/csvstat&quot;)
+print(out)
+print(err)
+assert code != 2, (code, out, err)
+=== END AC args-option-then-file-accepted ===
+
+=== AC args-single-file-accepted ===
+Intent: A single file with no options is not a usage error.
+Requires: executable=go; scope=test
+
+from drydock_go import cli_runner
+
+path = &quot;sources/sensors.csv&quot;
+code, out, err = cli_runner(path, package=&quot;./cmd/csvstat&quot;)
+print(out)
+print(err)
+assert code != 2, (code, out, err)
+=== END AC args-single-file-accepted ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- `Run` never calls `os.Exit`; it returns the exit code.
+- A usage error never writes to standard output.
+- Exactly one diagnostic line is written to standard error per failing command.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-CLI-Option-Validation.md ===
+# FEATURE: CLI Option Validation
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Reject unknown options, missing option values, and invalid option combinations with exit 2 before the file is opened. |
+| Depends On  | ARCHITECTURE.md, FEATURE-CLI-Arguments.md |
+| Provides    | usage-error exit 2 |
+| Consumes    | internal/cli.Run |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Every malformed invocation is a usage error: exit 2, nothing on standard output, one diagnostic line on standard error.
+
+## Usage errors
+
+| Invocation | Reason |
+|---|---|
+| `--frobnicate &lt;file&gt;` | Unknown option |
+| `--column` or `--freq` or `--top` with no value | Missing option value |
+| `--freq &lt;name&gt; --top 0 &lt;file&gt;` | `--top` is not a positive integer |
+| `--freq &lt;name&gt; --top -1 &lt;file&gt;` | `--top` is negative |
+| `--freq &lt;name&gt; --top abc &lt;file&gt;` | `--top` is not an integer |
+| `--top 3 &lt;file&gt;` | `--top` without `--freq` |
+| `--column &lt;name&gt; --freq &lt;name&gt; &lt;file&gt;` | `--column` combined with `--freq` |
+
+## Behavior
+
+- Validation completes before the file is opened, so a usage error outranks a missing or unreadable file.
+- `--top` defaults to 5 when `--freq` is given and `--top` is not.
+- Frequency behavior itself is owned by the Frequency stories; this story owns only the rejection of invalid usage.
+
+## Reads
+
+- The argument list passed to `Run`.
+
+## Writes
+
+- One standard error line on a usage error; nothing on standard output.
+
+## Programmatic Acceptance
+
+=== AC opts-unknown-option ===
+Intent: An unknown option exits 2 and writes nothing to standard output.
+Requires: executable=go; scope=test
+
+from drydock_go import cli_runner
+
+path = &quot;sources/orders.csv&quot;
+code, out, err = cli_runner(&quot;--frobnicate&quot;, path, package=&quot;./cmd/csvstat&quot;)
+assert code == 2, (code, out, err)
+assert out == &quot;&quot;
+=== END AC opts-unknown-option ===
+
+=== AC opts-missing-value ===
+Intent: Each value-taking option given without its value exits 2 with empty standard output.
+Requires: executable=go; scope=test
+
+from drydock_go import cli_runner
+
+path = &quot;sources/orders.csv&quot;
+cases = [
+    [&quot;--column&quot;],
+    [&quot;--freq&quot;],
+    [&quot;--freq&quot;, &quot;qty&quot;, &quot;--top&quot;],
+    [&quot;--column&quot;, &quot;--freq&quot;],
+]
+for args in cases:
+    code, out, err = cli_runner(*args, package=&quot;./cmd/csvstat&quot;)
+    assert code == 2, (args, code, out, err)
+    assert out == &quot;&quot;, args
+code, out, err = cli_runner(path, &quot;--column&quot;, package=&quot;./cmd/csvstat&quot;)
+assert code == 2, (code, out, err)
+assert out == &quot;&quot;
+=== END AC opts-missing-value ===
+
+=== AC opts-top-not-positive-integer ===
+Intent: --top of zero, a negative number, or a non-integer exits 2 with empty standard output.
+Requires: executable=go; scope=test
+
+from drydock_go import cli_runner
+
+path = &quot;sources/sensors.csv&quot;
+for bad in [&quot;0&quot;, &quot;-1&quot;, &quot;abc&quot;, &quot;1.5&quot;, &quot;&quot;]:
+    code, out, err = cli_runner(
+        &quot;--freq&quot;, &quot;sensor&quot;, &quot;--top&quot;, bad, path, package=&quot;./cmd/csvstat&quot;
+    )
+    assert code == 2, (bad, code, out, err)
+    assert out == &quot;&quot;, bad
+=== END AC opts-top-not-positive-integer ===
+
+=== AC opts-top-without-freq ===
+Intent: --top without --freq exits 2 with empty standard output.
+Requires: executable=go; scope=test
+
+from drydock_go import cli_runner
+
+path = &quot;sources/sensors.csv&quot;
+code, out, err = cli_runner(&quot;--top&quot;, &quot;3&quot;, path, package=&quot;./cmd/csvstat&quot;)
+assert code == 2, (code, out, err)
+assert out == &quot;&quot;
+=== END AC opts-top-without-freq ===
+
+=== AC opts-column-with-freq ===
+Intent: --column combined with --freq exits 2 with empty standard output.
+Requires: executable=go; scope=test
+
+from drydock_go import cli_runner
+
+path = &quot;sources/orders.csv&quot;
+name = &quot;qty&quot;
+code, out, err = cli_runner(
+    &quot;--column&quot;, name, &quot;--freq&quot;, name, path, package=&quot;./cmd/csvstat&quot;
+)
+assert code == 2, (code, out, err)
+assert out == &quot;&quot;
+=== END AC opts-column-with-freq ===
+
+=== AC opts-usage-outranks-missing-file ===
+Intent: A usage error is reported as exit 2 even when the named file does not exist.
+Requires: executable=go; scope=test
+
+import os
+import tempfile
+
+from drydock_go import cli_runner
+
+with tempfile.TemporaryDirectory() as work:
+    missing = os.path.join(work, &quot;no-such-file.csv&quot;)
+    code, out, err = cli_runner(
+        &quot;--freq&quot;, &quot;x&quot;, &quot;--top&quot;, &quot;0&quot;, missing, package=&quot;./cmd/csvstat&quot;
+    )
+    assert code == 2, (code, out, err)
+    assert out == &quot;&quot;
+=== END AC opts-usage-outranks-missing-file ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Never open the input file before all usage validation has passed.
+- A usage error never writes to standard output.
+- Do not assert on the wording of the diagnostic; only the exit status and empty standard output are contract.
+=== END ARTIFACT ===</pre></article>
+</main>
+</body>
+</html>

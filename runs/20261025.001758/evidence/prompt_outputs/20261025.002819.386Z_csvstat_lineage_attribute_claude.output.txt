@@ -1,0 +1,22 @@
+<requirement name="build-executable" stories="foundation,MOD-001">
+Builds ./cmd/csvstat with `go build`
+</requirement>
+<requirement name="profile-all-columns" stories="PRF-001,PRF-002,PRF-003,PRF-004,PRF-005,TYP-001,TYP-002,TYP-003,TYP-004,TYP-005,CSV-001,CSV-003,CLI-004">
+A. Every column of each data file
+</requirement>
+<requirement name="profile-one-column" stories="PRF-006">
+B. One column
+</requirement>
+<requirement name="frequencies" stories="FRQ-001,FRQ-002,FRQ-003">
+C. Frequencies
+</requirement>
+<requirement name="reject-input-and-failures" stories="CSV-002,CSV-004,CLI-003">
+E. Rejected input and operational failures
+</requirement>
+<requirement name="usage-errors" stories="CLI-001,CLI-002">
+U. Usage errors
+</requirement>
+<requirement name="grader-gate" stories="verification">
+Exit 0 only when the build succeeds and every check passes.
+</requirement>
+<unattached story="MOD-002"/>

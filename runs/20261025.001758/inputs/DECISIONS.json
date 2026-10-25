@@ -1,0 +1,201 @@
+[
+  {
+    "id": "Q-001",
+    "type": "choice",
+    "severity": "low",
+    "origin": "plan",
+    "blueprint": "VERIFICATION.md",
+    "story": "verification",
+    "status": "recommended",
+    "archived": false,
+    "title": "Where the supplied grader gates",
+    "description": "STORY_GUIDANCE.json lists sh sources/run.sh as the gate for CSV-002, CLI-002 and FRQ-001. run.sh runs all 22 checks and has no selector, so it fails by construction until every story is built. Only the terminal story runs it; the three stories keep their ids and gate on scoped criteria that run the built executable on the checks they own.",
+    "options": [
+      {
+        "value": "terminal-only",
+        "label": "Only the terminal verification story runs run.sh"
+      },
+      {
+        "value": "gate-each",
+        "label": "Run run.sh in the three named stories as well"
+      }
+    ],
+    "system_choice": "terminal-only"
+  },
+  {
+    "id": "Q-002",
+    "type": "choice",
+    "severity": "low",
+    "origin": "plan",
+    "blueprint": "FEATURE-Profile-Rows.md",
+    "story": "PRF-001",
+    "status": "recommended",
+    "archived": false,
+    "title": "Profile fields are filled incrementally",
+    "description": "Type, count, extreme and statistic fields are owned by separate stories, and each story's criteria observe its own field through the executable. PRF-001 emits column and rows; the other fields stay empty until their owner story is built. The terminal run.sh gate requires them all.",
+    "options": [
+      {
+        "value": "incremental",
+        "label": "Each story fills only its own fields"
+      },
+      {
+        "value": "stub-first",
+        "label": "Emit placeholder values in PRF-001"
+      }
+    ],
+    "system_choice": "incremental"
+  },
+  {
+    "id": "Q-003",
+    "type": "choice",
+    "severity": "low",
+    "origin": "plan",
+    "blueprint": "FEATURE-CSV-Rejection.md",
+    "story": "CSV-002",
+    "status": "recommended",
+    "archived": false,
+    "title": "CSV syntax errors map to exit 3",
+    "description": "The sources do not state the exit status for a record encoding/csv cannot parse, such as a bare quote. It is rejected content that was read, so the narrowest consistent choice is exit 3 rather than 1.",
+    "options": [
+      {
+        "value": "exit-3",
+        "label": "Exit 3, rejected"
+      },
+      {
+        "value": "exit-1",
+        "label": "Exit 1, operational failure"
+      }
+    ],
+    "system_choice": "exit-3"
+  },
+  {
+    "id": "Q-004",
+    "type": "choice",
+    "severity": "low",
+    "origin": "plan",
+    "blueprint": "FEATURE-Read-Failure.md",
+    "story": "CSV-004",
+    "status": "recommended",
+    "archived": false,
+    "title": "Split of exit codes 1 and 2 between stories",
+    "description": "CSV-004 names both read failures and usage errors. Exit 1 is owned by CSV-004; exit 2 is owned by CLI-001 and CLI-002, so no behavior has two owners. Usage validation runs before the file is opened.",
+    "options": [
+      {
+        "value": "split",
+        "label": "CSV-004 owns exit 1; CLI-001 and CLI-002 own exit 2"
+      },
+      {
+        "value": "merge",
+        "label": "CSV-004 owns both"
+      }
+    ],
+    "system_choice": "split"
+  },
+  {
+    "id": "Q-005",
+    "type": "choice",
+    "severity": "low",
+    "origin": "plan",
+    "blueprint": "FEATURE-Type-Date.md",
+    "story": "TYP-003",
+    "status": "recommended",
+    "archived": false,
+    "title": "Date-shaped column with an impossible date",
+    "description": "A column whose values all look like YYYY-MM-DD but include an impossible date, such as 2025-02-30, is not date. It falls through the ladder to text, which matches the supplied orders data.",
+    "options": [
+      {
+        "value": "text",
+        "label": "Falls through to text"
+      },
+      {
+        "value": "reject",
+        "label": "Reject the file"
+      }
+    ],
+    "system_choice": "text"
+  },
+  {
+    "id": "build-skip-feature-csv-reading.md-csv-reading-quoted-field",
+    "type": "text",
+    "severity": "low",
+    "origin": "build",
+    "blueprint": "FEATURE-CSV-Reading.md",
+    "story": "CSV-001",
+    "status": "recommended",
+    "archived": false,
+    "title": "Acceptance skipped: csv-reading-quoted-field",
+    "description": "excluded check: ERROR environment",
+    "options": [],
+    "system_choice": "Leave csv-reading-quoted-field untested until its acceptance setup is repaired; do not treat it as passed."
+  },
+  {
+    "id": "build-skip-feature-csv-reading.md-csv-reading-ragged-records-returned",
+    "type": "text",
+    "severity": "low",
+    "origin": "build",
+    "blueprint": "FEATURE-CSV-Reading.md",
+    "story": "CSV-001",
+    "status": "recommended",
+    "archived": false,
+    "title": "Acceptance skipped: csv-reading-ragged-records-returned",
+    "description": "excluded check: ERROR environment",
+    "options": [],
+    "system_choice": "Leave csv-reading-ragged-records-returned untested until its acceptance setup is repaired; do not treat it as passed."
+  },
+  {
+    "id": "build-skip-feature-csv-reading.md-csv-reading-trims-header-and-values",
+    "type": "text",
+    "severity": "low",
+    "origin": "build",
+    "blueprint": "FEATURE-CSV-Reading.md",
+    "story": "CSV-001",
+    "status": "recommended",
+    "archived": false,
+    "title": "Acceptance skipped: csv-reading-trims-header-and-values",
+    "description": "excluded check: ERROR environment",
+    "options": [],
+    "system_choice": "Leave csv-reading-trims-header-and-values untested until its acceptance setup is repaired; do not treat it as passed."
+  },
+  {
+    "id": "build-skip-feature-csv-rejection.md-csv-rejection-diagnostic-names-file-and-line",
+    "type": "text",
+    "severity": "low",
+    "origin": "build",
+    "blueprint": "FEATURE-CSV-Rejection.md",
+    "story": "CSV-002",
+    "status": "recommended",
+    "archived": false,
+    "title": "Acceptance skipped: csv-rejection-diagnostic-names-file-and-line",
+    "description": "excluded check: ERROR environment",
+    "options": [],
+    "system_choice": "Leave csv-rejection-diagnostic-names-file-and-line untested until its acceptance setup is repaired; do not treat it as passed."
+  },
+  {
+    "id": "build-skip-feature-null-values.md-null-values-lookalikes",
+    "type": "text",
+    "severity": "low",
+    "origin": "build",
+    "blueprint": "FEATURE-Null-Values.md",
+    "story": "CSV-003",
+    "status": "recommended",
+    "archived": false,
+    "title": "Acceptance skipped: null-values-lookalikes",
+    "description": "excluded check: ERROR environment",
+    "options": [],
+    "system_choice": "Leave null-values-lookalikes untested until its acceptance setup is repaired; do not treat it as passed."
+  },
+  {
+    "id": "build-skip-feature-null-values.md-null-values-sentinels",
+    "type": "text",
+    "severity": "low",
+    "origin": "build",
+    "blueprint": "FEATURE-Null-Values.md",
+    "story": "CSV-003",
+    "status": "recommended",
+    "archived": false,
+    "title": "Acceptance skipped: null-values-sentinels",
+    "description": "excluded check: ERROR environment",
+    "options": [],
+    "system_choice": "Leave null-values-sentinels untested until its acceptance setup is repaired; do not treat it as passed."
+  }
+]

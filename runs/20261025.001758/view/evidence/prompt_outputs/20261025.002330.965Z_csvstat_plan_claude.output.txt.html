@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/prompt_outputs/20261025.002330.965Z_csvstat_plan_claude.output.txt</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/prompt_outputs/20261025.002330.965Z_csvstat_plan_claude.output.txt</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/prompt_outputs/20261025.002330.965Z_csvstat_plan_claude.output.txt">Raw file</a></div></header>
+<article class="doc"><pre>=== BEGIN ARTIFACT FEATURE-Type-Text-Empty.md ===
+# FEATURE: Type Text and Empty
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Complete the column type ladder with the text fallback and the empty type for columns without non-null values. |
+| Depends On  | FEATURE-Type-Boolean.md, FEATURE-Null-Values.md |
+| Provides    | type text, type empty |
+| Consumes    | csvdata.IsNull |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Finish the first-match type ladder `integer`, `number`, `date`, `boolean`, `text`, and add `empty`. After this story every column of every readable file has a type token in the `type` field of the profile row.
+
+## Behavior
+
+- A column with no non-null value has type `empty`. This includes a column whose values are all null (empty, `NA`, `N/A`, `NULL` in any case) and every column of a file with a header and no data records.
+- Otherwise the column takes the first of `integer`, `number`, `date`, `boolean` that every non-null value satisfies; if none is satisfied the type is `text`.
+- Nulls never decide the type; they are removed before the ladder runs.
+- Values are trimmed before classification.
+- A date-shaped value that is not a real calendar date (`2025-02-30`) does not satisfy `date`; with no other match the column is `text`.
+- Forms such as `1.`, `1e3`, `yes`, and `no` satisfy no numeric or boolean rule and fall to `text`.
+
+## Suite Pattern
+
+The project&#x27;s own `go test` suite covers the ladder directly in `internal/infer` (one test per type, null-only column, empty slice, mixed columns, order of precedence).
+
+## Programmatic Acceptance
+
+=== AC typ005-ladder ===
+Intent: Each column resolves to the first matching type in the ladder, with text as the fallback.
+Suite: scoped
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+def run_profile(columns, *opts):
+    names = list(columns)
+    n = len(columns[names[0]])
+    buf = io.StringIO()
+    w = csv.writer(buf, lineterminator=&quot;\n&quot;)
+    w.writerow(names)
+    for i in range(n):
+        w.writerow([columns[c][i] for c in names])
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(buf.getvalue())
+        code, out, err = cli_runner(*opts, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+cases = {
+    &quot;ints&quot;: ([&quot;1&quot;, &quot;-2&quot;, &quot;30&quot;], &quot;integer&quot;),
+    &quot;nums&quot;: ([&quot;1&quot;, &quot;2.5&quot;, &quot;-3.25&quot;], &quot;number&quot;),
+    &quot;dates&quot;: ([&quot;2025-01-31&quot;, &quot;2024-02-29&quot;, &quot;2025-12-01&quot;], &quot;date&quot;),
+    &quot;bools&quot;: ([&quot;true&quot;, &quot;FALSE&quot;, &quot;False&quot;], &quot;boolean&quot;),
+    &quot;texts&quot;: ([&quot;abc&quot;, &quot;1&quot;, &quot;2025-01-01&quot;], &quot;text&quot;),
+}
+columns = {name: values for name, (values, _) in cases.items()}
+rows = run_profile(columns)
+for name, (values, expected) in cases.items():
+    assert rows[name][&quot;type&quot;] == expected, (name, rows[name])
+    assert rows[name][&quot;rows&quot;] == str(len(values)), (name, rows[name])
+=== END AC typ005-ladder ===
+
+=== AC typ005-nulls-do-not-decide ===
+Intent: Null values and padding are ignored when choosing the type, and an all-null column is empty.
+Suite: scoped
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+def run_profile(columns, *opts):
+    names = list(columns)
+    n = len(columns[names[0]])
+    buf = io.StringIO()
+    w = csv.writer(buf, lineterminator=&quot;\n&quot;)
+    w.writerow(names)
+    for i in range(n):
+        w.writerow([columns[c][i] for c in names])
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(buf.getvalue())
+        code, out, err = cli_runner(*opts, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+cases = {
+    &quot;allnull&quot;: ([&quot;&quot;, &quot;NA&quot;, &quot;n/a&quot;, &quot;NULL&quot;], &quot;empty&quot;),
+    &quot;ints_nulls&quot;: ([&quot;7&quot;, &quot;&quot;, &quot;NULL&quot;, &quot;8&quot;], &quot;integer&quot;),
+    &quot;bools_nulls&quot;: ([&quot;TRUE&quot;, &quot;na&quot;, &quot;&quot;, &quot;false&quot;], &quot;boolean&quot;),
+    &quot;padded&quot;: ([&quot; 5 &quot;, &quot;6 &quot;, &quot;  7&quot;, &quot;N/A&quot;], &quot;integer&quot;),
+    &quot;spaces_only&quot;: ([&quot;   &quot;, &quot; &quot;, &quot;&quot;, &quot;NA&quot;], &quot;empty&quot;),
+}
+columns = {name: values for name, (values, _) in cases.items()}
+rows = run_profile(columns)
+for name, (values, expected) in cases.items():
+    assert rows[name][&quot;type&quot;] == expected, (name, rows[name])
+=== END AC typ005-nulls-do-not-decide ===
+
+=== AC typ005-header-only-empty ===
+Intent: Every column of a file with a header and no data records has type empty and zero rows.
+Suite: scoped
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+names = [&quot;sku&quot;, &quot;price&quot;, &quot;in_stock&quot;]
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;in.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+        f.write(&quot;,&quot;.join(names) + &quot;\n&quot;)
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 0, code
+rows = list(csv.DictReader(io.StringIO(out)))
+assert [r[&quot;column&quot;] for r in rows] == names
+for r in rows:
+    assert r[&quot;type&quot;] == &quot;empty&quot;, r
+    assert r[&quot;rows&quot;] == str(0), r
+=== END AC typ005-header-only-empty ===
+
+=== AC typ005-text-fallback ===
+Intent: Values that look close to a typed form but do not satisfy it make the column text.
+Suite: scoped
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+def run_profile(columns, *opts):
+    names = list(columns)
+    n = len(columns[names[0]])
+    buf = io.StringIO()
+    w = csv.writer(buf, lineterminator=&quot;\n&quot;)
+    w.writerow(names)
+    for i in range(n):
+        w.writerow([columns[c][i] for c in names])
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(buf.getvalue())
+        code, out, err = cli_runner(*opts, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+columns = {
+    &quot;bad_date&quot;: [&quot;2025-02-30&quot;, &quot;2025-01-01&quot;],
+    &quot;trailing_dot&quot;: [&quot;1.&quot;, &quot;2&quot;],
+    &quot;exponent&quot;: [&quot;1e3&quot;, &quot;5&quot;],
+    &quot;yes_no&quot;: [&quot;yes&quot;, &quot;no&quot;],
+    &quot;bool_maybe&quot;: [&quot;true&quot;, &quot;maybe&quot;],
+    &quot;plus_sign&quot;: [&quot;+1&quot;, &quot;2&quot;],
+}
+rows = run_profile(columns)
+for name in columns:
+    assert rows[name][&quot;type&quot;] == &quot;text&quot;, (name, rows[name])
+=== END AC typ005-text-fallback ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Do not read `sources/run.sh` or any supplied data file from application code, and do not hardcode a type.
+- Typing uses only the standard library.
+- A column is `empty` only when it has no non-null value; a column with at least one non-null value is never `empty`.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-Profile-Counts.md ===
+# FEATURE: Profile Counts
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Compute the null count and the exact distinct count of non-null values for every profiled column. |
+| Depends On  | FEATURE-Profile-Rows.md, FEATURE-Null-Values.md |
+| Provides    | profile nulls, distinct |
+| Consumes    | csvdata.IsNull |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Fill the `nulls` and `distinct` fields of each profile row. The `rows` field is already produced by the profile rows story.
+
+## Behavior
+
+- `nulls` is the number of values in the column that are null: empty, or `NA`, `N/A`, `NULL` in any letter case, after trimming.
+- `distinct` is the number of different non-null values compared as exact strings after trimming. Case differences count as different values (`Abc` and `abc`), and so do `1`, `01`, and `1.0`.
+- `0`, `none`, and `nan` are not null.
+- A column with no non-null values has `distinct` 0; a header-only file reports `nulls` 0 and `distinct` 0 for every column.
+- Both counts are written as plain integers.
+
+## Programmatic Acceptance
+
+=== AC prf002-counts ===
+Intent: nulls and distinct match counts derived from the fixture values by the stated rules.
+Suite: scoped
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+def run_profile(columns, *opts):
+    names = list(columns)
+    n = len(columns[names[0]])
+    buf = io.StringIO()
+    w = csv.writer(buf, lineterminator=&quot;\n&quot;)
+    w.writerow(names)
+    for i in range(n):
+        w.writerow([columns[c][i] for c in names])
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(buf.getvalue())
+        code, out, err = cli_runner(*opts, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+def is_null(v):
+    return v.strip().lower() in (&quot;&quot;, &quot;na&quot;, &quot;n/a&quot;, &quot;null&quot;)
+
+columns = {
+    &quot;a&quot;: [&quot;x&quot;, &quot;x&quot;, &quot;y&quot;, &quot;&quot;, &quot;NA&quot;],
+    &quot;b&quot;: [&quot;Abc&quot;, &quot;abc&quot;, &quot;ABC&quot;, &quot;NULL&quot;, &quot;N/A&quot;],
+    &quot;c&quot;: [&quot; x &quot;, &quot;x&quot;, &quot;x &quot;, &quot;&quot;, &quot; &quot;],
+    &quot;d&quot;: [&quot;1&quot;, &quot;01&quot;, &quot;1.0&quot;, &quot;1&quot;, &quot;NULL&quot;],
+    &quot;allnull&quot;: [&quot;&quot;, &quot;&quot;, &quot;NA&quot;, &quot;null&quot;, &quot;n/A&quot;],
+}
+rows = run_profile(columns)
+for name, values in columns.items():
+    trimmed = [v.strip() for v in values]
+    expected_nulls = sum(1 for v in trimmed if is_null(v))
+    expected_distinct = len(set(v for v in trimmed if not is_null(v)))
+    assert rows[name][&quot;rows&quot;] == str(len(values)), (name, rows[name])
+    assert rows[name][&quot;nulls&quot;] == str(expected_nulls), (name, rows[name])
+    assert rows[name][&quot;distinct&quot;] == str(expected_distinct), (name, rows[name])
+=== END AC prf002-counts ===
+
+=== AC prf002-non-null-lookalikes ===
+Intent: Values such as 0, none, and nan are counted as distinct non-null values.
+Suite: scoped
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+def run_profile(columns, *opts):
+    names = list(columns)
+    n = len(columns[names[0]])
+    buf = io.StringIO()
+    w = csv.writer(buf, lineterminator=&quot;\n&quot;)
+    w.writerow(names)
+    for i in range(n):
+        w.writerow([columns[c][i] for c in names])
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(buf.getvalue())
+        code, out, err = cli_runner(*opts, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+values = [&quot;0&quot;, &quot;0&quot;, &quot;none&quot;, &quot;nan&quot;, &quot;&quot;]
+rows = run_profile({&quot;e&quot;: values})
+expected_nulls = sum(1 for v in values if v == &quot;&quot;)
+expected_distinct = len(set(v for v in values if v != &quot;&quot;))
+assert rows[&quot;e&quot;][&quot;nulls&quot;] == str(expected_nulls), rows[&quot;e&quot;]
+assert rows[&quot;e&quot;][&quot;distinct&quot;] == str(expected_distinct), rows[&quot;e&quot;]
+=== END AC prf002-non-null-lookalikes ===
+
+=== AC prf002-header-only ===
+Intent: A header-only file reports zero rows, nulls, and distinct for every column.
+Suite: scoped
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+names = [&quot;sku&quot;, &quot;price&quot;, &quot;in_stock&quot;]
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;in.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+        f.write(&quot;,&quot;.join(names) + &quot;\n&quot;)
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 0, code
+rows = list(csv.DictReader(io.StringIO(out)))
+assert len(rows) == len(names)
+for r in rows:
+    assert r[&quot;rows&quot;] == str(0), r
+    assert r[&quot;nulls&quot;] == str(0), r
+    assert r[&quot;distinct&quot;] == str(0), r
+=== END AC prf002-header-only ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Distinct compares exact trimmed strings; never normalize case or numeric form.
+- Null values are never counted as distinct values.
+- Do not hardcode any count; every value comes from the file examined.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-Profile-Numeric-Stats.md ===
+# FEATURE: Profile Numeric Stats
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Compute exact sum, mean, and median for integer and number columns using arbitrary-precision rational arithmetic. |
+| Depends On  | FEATURE-Type-Text-Empty.md, FEATURE-Profile-Counts.md |
+| Provides    | profile sum, mean, median |
+| Consumes    | infer types, internal/decimal |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Fill the `sum`, `mean`, and `median` fields for columns typed `integer` or `number`. All arithmetic is exact (`math/big`, `big.Rat`); rounding happens once, when the value is written.
+
+## Behavior
+
+- Only non-null values participate. The count used for the mean is the non-null count.
+- `sum`: integer columns write the integer total; number columns write the total with exactly two decimal places.
+- `mean`: sum divided by the non-null count, written with two decimal places for both integer and number columns.
+- `median`: the middle value of the numerically sorted non-null values, or the mean of the two middle values when the count is even; written with two decimal places for both types.
+- Sorting is numeric, never lexical (`9` sorts before `10`).
+- For every other type (`text`, `date`, `boolean`, `empty`) the three fields are empty.
+- `internal/decimal` provides the formatter that rounds a `big.Rat` once, half away from zero, to two decimals. Its exact contract is owned by the decimal rounding story.
+
+## Programmatic Acceptance
+
+=== AC prf004-integer-stats ===
+Intent: Integer columns report the exact integer sum and two-decimal mean and median over non-null values.
+Suite: scoped
+
+import csv
+import io
+import os
+import tempfile
+from fractions import Fraction
+from drydock_go import cli_runner
+
+def run_profile(columns, *opts):
+    names = list(columns)
+    n = len(columns[names[0]])
+    buf = io.StringIO()
+    w = csv.writer(buf, lineterminator=&quot;\n&quot;)
+    w.writerow(names)
+    for i in range(n):
+        w.writerow([columns[c][i] for c in names])
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(buf.getvalue())
+        code, out, err = cli_runner(*opts, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+def fmt2(fr):
+    scaled = fr * 100
+    n, d = scaled.numerator, scaled.denominator
+    r = (abs(n) * 2 + d) // (2 * d)
+    sign = &quot;-&quot; if (n &lt; 0 and r != 0) else &quot;&quot;
+    return sign + str(r // 100) + &quot;.&quot; + str(r % 100).zfill(2)
+
+def median(vals):
+    s = sorted(vals)
+    m = len(s)
+    return s[m // 2] if m % 2 else (s[m // 2 - 1] + s[m // 2]) / 2
+
+raw = [&quot;3&quot;, &quot;1&quot;, &quot;2&quot;, &quot;10&quot;, &quot;NA&quot;, &quot;&quot;]
+vals = [Fraction(v) for v in raw if v not in (&quot;NA&quot;, &quot;&quot;)]
+rows = run_profile({&quot;n&quot;: raw})
+expected_sum = str(int(sum(vals)))
+expected_mean = fmt2(sum(vals) / len(vals))
+expected_median = fmt2(median(vals))
+assert rows[&quot;n&quot;][&quot;type&quot;] == &quot;integer&quot;, rows[&quot;n&quot;]
+assert rows[&quot;n&quot;][&quot;sum&quot;] == expected_sum, rows[&quot;n&quot;]
+assert rows[&quot;n&quot;][&quot;mean&quot;] == expected_mean, rows[&quot;n&quot;]
+assert rows[&quot;n&quot;][&quot;median&quot;] == expected_median, rows[&quot;n&quot;]
+=== END AC prf004-integer-stats ===
+
+=== AC prf004-number-stats ===
+Intent: Number columns report exact two-decimal sum, mean, and median, including sums that binary floating point gets wrong.
+Suite: scoped
+
+import csv
+import io
+import os
+import tempfile
+from fractions import Fraction
+from drydock_go import cli_runner
+
+def run_profile(columns, *opts):
+    names = list(columns)
+    n = len(columns[names[0]])
+    buf = io.StringIO()
+    w = csv.writer(buf, lineterminator=&quot;\n&quot;)
+    w.writerow(names)
+    for i in range(n):
+        w.writerow([columns[c][i] for c in names])
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(buf.getvalue())
+        code, out, err = cli_runner(*opts, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+def fmt2(fr):
+    scaled = fr * 100
+    n, d = scaled.numerator, scaled.denominator
+    r = (abs(n) * 2 + d) // (2 * d)
+    sign = &quot;-&quot; if (n &lt; 0 and r != 0) else &quot;&quot;
+    return sign + str(r // 100) + &quot;.&quot; + str(r % 100).zfill(2)
+
+def median(vals):
+    s = sorted(vals)
+    m = len(s)
+    return s[m // 2] if m % 2 else (s[m // 2 - 1] + s[m // 2]) / 2
+
+columns = {
+    &quot;floaty&quot;: [&quot;0.1&quot;, &quot;0.2&quot;, &quot;0.3&quot;, &quot;0.7&quot;, &quot;0.6&quot;, &quot;NULL&quot;],
+    &quot;neg&quot;: [&quot;-1.5&quot;, &quot;-2.25&quot;, &quot;-0.75&quot;, &quot;&quot;, &quot;NA&quot;, &quot;N/A&quot;],
+    &quot;mixed&quot;: [&quot;1&quot;, &quot;2.5&quot;, &quot;-3.25&quot;, &quot;10.10&quot;, &quot;4&quot;, &quot;null&quot;],
+}
+rows = run_profile(columns)
+for name, raw in columns.items():
+    vals = [Fraction(v) for v in raw if v.lower() not in (&quot;&quot;, &quot;na&quot;, &quot;n/a&quot;, &quot;null&quot;)]
+    assert rows[name][&quot;type&quot;] == &quot;number&quot;, (name, rows[name])
+    expected_sum = fmt2(sum(vals))
+    expected_mean = fmt2(sum(vals) / len(vals))
+    expected_median = fmt2(median(vals))
+    assert rows[name][&quot;sum&quot;] == expected_sum, (name, rows[name])
+    assert rows[name][&quot;mean&quot;] == expected_mean, (name, rows[name])
+    assert rows[name][&quot;median&quot;] == expected_median, (name, rows[name])
+=== END AC prf004-number-stats ===
+
+=== AC prf004-median-parity-and-order ===
+Intent: Median uses numeric order and averages the two middle values for even counts.
+Suite: scoped
+
+import csv
+import io
+import os
+import tempfile
+from fractions import Fraction
+from drydock_go import cli_runner
+
+def run_profile(columns, *opts):
+    names = list(columns)
+    n = len(columns[names[0]])
+    buf = io.StringIO()
+    w = csv.writer(buf, lineterminator=&quot;\n&quot;)
+    w.writerow(names)
+    for i in range(n):
+        w.writerow([columns[c][i] for c in names])
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(buf.getvalue())
+        code, out, err = cli_runner(*opts, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+def fmt2(fr):
+    scaled = fr * 100
+    n, d = scaled.numerator, scaled.denominator
+    r = (abs(n) * 2 + d) // (2 * d)
+    sign = &quot;-&quot; if (n &lt; 0 and r != 0) else &quot;&quot;
+    return sign + str(r // 100) + &quot;.&quot; + str(r % 100).zfill(2)
+
+def median(vals):
+    s = sorted(vals)
+    m = len(s)
+    return s[m // 2] if m % 2 else (s[m // 2 - 1] + s[m // 2]) / 2
+
+cases = {
+    &quot;odd&quot;: [&quot;5&quot;, &quot;1&quot;, &quot;9&quot;, &quot;NA&quot;, &quot;&quot;, &quot;NULL&quot;],
+    &quot;even&quot;: [&quot;4&quot;, &quot;1&quot;, &quot;3&quot;, &quot;2&quot;],
+    &quot;lexical_trap&quot;: [&quot;10&quot;, &quot;9&quot;, &quot;100&quot;, &quot;2&quot;],
+}
+# every column in one file needs equal length; pad shorter ones with nulls
+width = max(len(v) for v in cases.values())
+columns = {k: v + [&quot;&quot;] * (width - len(v)) for k, v in cases.items()}
+rows = run_profile(columns)
+for name, raw in cases.items():
+    vals = [Fraction(v) for v in raw if v.lower() not in (&quot;&quot;, &quot;na&quot;, &quot;n/a&quot;, &quot;null&quot;)]
+    assert rows[name][&quot;median&quot;] == fmt2(median(vals)), (name, rows[name])
+=== END AC prf004-median-parity-and-order ===
+
+=== AC prf004-big-exact ===
+Intent: Sums beyond float precision stay exact for integer and number columns.
+Suite: scoped
+
+import csv
+import io
+import os
+import tempfile
+from fractions import Fraction
+from drydock_go import cli_runner
+
+def run_profile(columns, *opts):
+    names = list(columns)
+    n = len(columns[names[0]])
+    buf = io.StringIO()
+    w = csv.writer(buf, lineterminator=&quot;\n&quot;)
+    w.writerow(names)
+    for i in range(n):
+        w.writerow([columns[c][i] for c in names])
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(buf.getvalue())
+        code, out, err = cli_runner(*opts, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+def fmt2(fr):
+    scaled = fr * 100
+    n, d = scaled.numerator, scaled.denominator
+    r = (abs(n) * 2 + d) // (2 * d)
+    sign = &quot;-&quot; if (n &lt; 0 and r != 0) else &quot;&quot;
+    return sign + str(r // 100) + &quot;.&quot; + str(r % 100).zfill(2)
+
+big_ints = [&quot;9007199254740993&quot;, &quot;1&quot;]
+big_nums = [&quot;12345678901234567890.12&quot;, &quot;0.01&quot;]
+rows = run_profile({&quot;bi&quot;: big_ints, &quot;bn&quot;: big_nums})
+iv = [Fraction(v) for v in big_ints]
+nv = [Fraction(v) for v in big_nums]
+assert rows[&quot;bi&quot;][&quot;sum&quot;] == str(int(sum(iv))), rows[&quot;bi&quot;]
+assert rows[&quot;bi&quot;][&quot;mean&quot;] == fmt2(sum(iv) / len(iv)), rows[&quot;bi&quot;]
+assert rows[&quot;bn&quot;][&quot;sum&quot;] == fmt2(sum(nv)), rows[&quot;bn&quot;]
+assert rows[&quot;bn&quot;][&quot;mean&quot;] == fmt2(sum(nv) / len(nv)), rows[&quot;bn&quot;]
+=== END AC prf004-big-exact ===
+
+=== AC prf004-non-numeric-empty ===
+Intent: Text, date, boolean, and empty columns leave sum, mean, and median empty.
+Suite: scoped
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+def run_profile(columns, *opts):
+    names = list(columns)
+    n = len(columns[names[0]])
+    buf = io.StringIO()
+    w = csv.writer(buf, lineterminator=&quot;\n&quot;)
+    w.writerow(names)
+    for i in range(n):
+        w.writerow([columns[c][i] for c in names])
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(buf.getvalue())
+        code, out, err = cli_runner(*opts, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+columns = {
+    &quot;t&quot;: [&quot;abc&quot;, &quot;1&quot;, &quot;x&quot;],
+    &quot;d&quot;: [&quot;2025-01-01&quot;, &quot;2025-02-03&quot;, &quot;2024-12-31&quot;],
+    &quot;b&quot;: [&quot;true&quot;, &quot;false&quot;, &quot;TRUE&quot;],
+    &quot;e&quot;: [&quot;&quot;, &quot;NA&quot;, &quot;NULL&quot;],
+}
+expected_types = {&quot;t&quot;: &quot;text&quot;, &quot;d&quot;: &quot;date&quot;, &quot;b&quot;: &quot;boolean&quot;, &quot;e&quot;: &quot;empty&quot;}
+rows = run_profile(columns)
+for name in columns:
+    assert rows[name][&quot;type&quot;] == expected_types[name], (name, rows[name])
+    for field in (&quot;sum&quot;, &quot;mean&quot;, &quot;median&quot;):
+        assert rows[name][field] == &quot;&quot;, (name, field, rows[name])
+=== END AC prf004-non-numeric-empty ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Sums, means, and medians are computed exactly with `math/big`; never with `float64`.
+- Round once, at output; never round an intermediate value.
+- Do not hardcode any statistic; every value comes from the file examined.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-Decimal-Rounding.md ===
+# FEATURE: Decimal Rounding
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Define the exact two-decimal formatting contract that rounds once from the exact value, half away from zero. |
+| Depends On  | FEATURE-Profile-Numeric-Stats.md |
+| Provides    | decimal formatting contract |
+| Consumes    | internal/decimal |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Make `internal/decimal` exact and total. Every decimal the tool writes (number sum, every mean, every median, and later number min and max) goes through one formatter.
+
+## Behavior
+
+- Input is an exact `big.Rat`. The result is rounded once, half away from zero, to exactly two decimal places.
+- A tie rounds away from zero: `0.005` becomes `0.01`, `-0.005` becomes `-0.01`, `2.675` becomes `2.68`, `1.005` becomes `1.01`.
+- A leading `-` appears only when the rounded value is negative; a value that rounds to zero is written `0.00`, never `-0.00`.
+- No thousands separator, no exponent, always two digits after the point, at any magnitude.
+- Integer min, max, and sum remain plain integers and do not use this formatter.
+- Number min and max use this formatter; they are verified by the extremes story, which is built after this one.
+
+## Suite Pattern
+
+The project&#x27;s own `go test` suite exercises `internal/decimal` directly with table tests: ties in both signs, values just below and above a tie, zero, negative values that round to zero, and magnitudes beyond `float64`.
+
+## Programmatic Acceptance
+
+=== AC prf005-ties-and-sign ===
+Intent: Ties round away from zero in both signs, negative values rounding to zero lose the sign, and float-hostile values round from the exact value.
+Suite: scoped
+
+import csv
+import io
+import os
+import tempfile
+from fractions import Fraction
+from drydock_go import cli_runner
+
+def run_profile(columns, *opts):
+    names = list(columns)
+    n = len(columns[names[0]])
+    buf = io.StringIO()
+    w = csv.writer(buf, lineterminator=&quot;\n&quot;)
+    w.writerow(names)
+    for i in range(n):
+        w.writerow([columns[c][i] for c in names])
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(buf.getvalue())
+        code, out, err = cli_runner(*opts, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+def fmt2(fr):
+    scaled = fr * 100
+    n, d = scaled.numerator, scaled.denominator
+    r = (abs(n) * 2 + d) // (2 * d)
+    sign = &quot;-&quot; if (n &lt; 0 and r != 0) else &quot;&quot;
+    return sign + str(r // 100) + &quot;.&quot; + str(r % 100).zfill(2)
+
+singles = [&quot;0.005&quot;, &quot;-0.005&quot;, &quot;0.004&quot;, &quot;-0.004&quot;, &quot;1.005&quot;, &quot;2.675&quot;, &quot;-2.675&quot;, &quot;0.994&quot;, &quot;0.0&quot;, &quot;-0.0&quot;]
+columns = {&quot;c&quot; + str(i): [v] for i, v in enumerate(singles)}
+rows = run_profile(columns)
+for i, v in enumerate(singles):
+    name = &quot;c&quot; + str(i)
+    expected = fmt2(Fraction(v))
+    assert rows[name][&quot;type&quot;] == &quot;number&quot;, (name, rows[name])
+    assert rows[name][&quot;sum&quot;] == expected, (name, v, rows[name])
+    assert rows[name][&quot;mean&quot;] == expected, (name, v, rows[name])
+    assert rows[name][&quot;median&quot;] == expected, (name, v, rows[name])
+=== END AC prf005-ties-and-sign ===
+
+=== AC prf005-integer-mean-ties ===
+Intent: Integer column means that land on a tie round half away from zero while the integer sum stays plain.
+Suite: scoped
+
+import csv
+import io
+import os
+import tempfile
+from fractions import Fraction
+from drydock_go import cli_runner
+
+def run_profile(columns, *opts):
+    names = list(columns)
+    n = len(columns[names[0]])
+    buf = io.StringIO()
+    w = csv.writer(buf, lineterminator=&quot;\n&quot;)
+    w.writerow(names)
+    for i in range(n):
+        w.writerow([columns[c][i] for c in names])
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(buf.getvalue())
+        code, out, err = cli_runner(*opts, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+def fmt2(fr):
+    scaled = fr * 100
+    n, d = scaled.numerator, scaled.denominator
+    r = (abs(n) * 2 + d) // (2 * d)
+    sign = &quot;-&quot; if (n &lt; 0 and r != 0) else &quot;&quot;
+    return sign + str(r // 100) + &quot;.&quot; + str(r % 100).zfill(2)
+
+pos = [&quot;1&quot;, &quot;0&quot;, &quot;0&quot;, &quot;0&quot;, &quot;0&quot;, &quot;0&quot;, &quot;0&quot;, &quot;0&quot;]
+neg = [&quot;-1&quot;, &quot;0&quot;, &quot;0&quot;, &quot;0&quot;, &quot;0&quot;, &quot;0&quot;, &quot;0&quot;, &quot;0&quot;]
+rows = run_profile({&quot;pos&quot;: pos, &quot;neg&quot;: neg})
+for name, raw in ((&quot;pos&quot;, pos), (&quot;neg&quot;, neg)):
+    vals = [Fraction(v) for v in raw]
+    assert rows[name][&quot;type&quot;] == &quot;integer&quot;, (name, rows[name])
+    assert rows[name][&quot;sum&quot;] == str(int(sum(vals))), (name, rows[name])
+    assert rows[name][&quot;mean&quot;] == fmt2(sum(vals) / len(vals)), (name, rows[name])
+    assert rows[name][&quot;median&quot;] == fmt2(Fraction(0)), (name, rows[name])
+=== END AC prf005-integer-mean-ties ===
+
+=== AC prf005-median-ties ===
+Intent: A median that is the mean of two middle values and lands on a tie rounds half away from zero in both signs.
+Suite: scoped
+
+import csv
+import io
+import os
+import tempfile
+from fractions import Fraction
+from drydock_go import cli_runner
+
+def run_profile(columns, *opts):
+    names = list(columns)
+    n = len(columns[names[0]])
+    buf = io.StringIO()
+    w = csv.writer(buf, lineterminator=&quot;\n&quot;)
+    w.writerow(names)
+    for i in range(n):
+        w.writerow([columns[c][i] for c in names])
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(buf.getvalue())
+        code, out, err = cli_runner(*opts, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+def fmt2(fr):
+    scaled = fr * 100
+    n, d = scaled.numerator, scaled.denominator
+    r = (abs(n) * 2 + d) // (2 * d)
+    sign = &quot;-&quot; if (n &lt; 0 and r != 0) else &quot;&quot;
+    return sign + str(r // 100) + &quot;.&quot; + str(r % 100).zfill(2)
+
+columns = {&quot;up&quot;: [&quot;0.00&quot;, &quot;0.01&quot;], &quot;down&quot;: [&quot;-0.01&quot;, &quot;0.00&quot;]}
+rows = run_profile(columns)
+for name, raw in columns.items():
+    vals = sorted(Fraction(v) for v in raw)
+    expected_median = fmt2((vals[0] + vals[1]) / 2)
+    assert rows[name][&quot;median&quot;] == expected_median, (name, rows[name])
+    assert rows[name][&quot;mean&quot;] == expected_median, (name, rows[name])
+=== END AC prf005-median-ties ===
+
+=== AC prf005-large-no-separator ===
+Intent: Large values are written with two decimals, no thousands separator, and no exponent.
+Suite: scoped
+
+import csv
+import io
+import os
+import tempfile
+from fractions import Fraction
+from drydock_go import cli_runner
+
+def run_profile(columns, *opts):
+    names = list(columns)
+    n = len(columns[names[0]])
+    buf = io.StringIO()
+    w = csv.writer(buf, lineterminator=&quot;\n&quot;)
+    w.writerow(names)
+    for i in range(n):
+        w.writerow([columns[c][i] for c in names])
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(buf.getvalue())
+        code, out, err = cli_runner(*opts, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+def fmt2(fr):
+    scaled = fr * 100
+    n, d = scaled.numerator, scaled.denominator
+    r = (abs(n) * 2 + d) // (2 * d)
+    sign = &quot;-&quot; if (n &lt; 0 and r != 0) else &quot;&quot;
+    return sign + str(r // 100) + &quot;.&quot; + str(r % 100).zfill(2)
+
+ints = [&quot;1000000&quot;, &quot;2345678&quot;]
+nums = [&quot;1234567.891&quot;, &quot;123456789012345678.995&quot;]
+rows = run_profile({&quot;i&quot;: ints, &quot;n&quot;: nums})
+iv = [Fraction(v) for v in ints]
+nv = [Fraction(v) for v in nums]
+assert rows[&quot;i&quot;][&quot;sum&quot;] == str(int(sum(iv))), rows[&quot;i&quot;]
+assert rows[&quot;i&quot;][&quot;mean&quot;] == fmt2(sum(iv) / len(iv)), rows[&quot;i&quot;]
+assert rows[&quot;n&quot;][&quot;sum&quot;] == fmt2(sum(nv)), rows[&quot;n&quot;]
+assert rows[&quot;n&quot;][&quot;mean&quot;] == fmt2(sum(nv) / len(nv)), rows[&quot;n&quot;]
+assert rows[&quot;n&quot;][&quot;median&quot;] == fmt2((nv[0] + nv[1]) / 2), rows[&quot;n&quot;]
+=== END AC prf005-large-no-separator ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Round exactly once, from the exact rational value, half away from zero; never round through `float64`.
+- Never write `-0.00`, a thousands separator, or an exponent.
+- Integer min, max, and sum are never passed through the decimal formatter.
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT FEATURE-Profile-Extremes.md ===
+# FEATURE: Profile Extremes
+
+| Field       | Value |
+|-------------|-------|
+| Version     | 20261025 V1 |
+| Description | Compute the min and max of every column according to its inferred type. |
+| Depends On  | FEATURE-Decimal-Rounding.md, FEATURE-Profile-Counts.md |
+| Provides    | profile min, max |
+| Consumes    | infer types, internal/decimal |
+
+## Questions
+
+- None.
+
+## Purpose
+
+Fill the `min` and `max` fields of each profile row. Null values are ignored throughout.
+
+## Behavior
+
+- `integer`: smallest and largest compared numerically, written as plain integers.
+- `number`: smallest and largest compared exactly (`big.Rat`), written with the two-decimal formatter (`10.125` is written `10.13`).
+- `date`: earliest and latest.
+- `boolean`: `min` is `false` if any value is false (any letter case), else `true`; `max` is `true` if any value is true, else `false`. Output is lower case.
+- `text`: smallest and largest by byte value of the trimmed string (`B` sorts before `a`; `10` sorts before `9`).
+- `empty`: both fields are empty.
+- A value that needs quoting (a comma, quote, or newline) is quoted by the shared CSV writer.
+
+## Programmatic Acceptance
+
+=== AC prf003-integer-number ===
+Intent: Integer extremes compare numerically and number extremes compare exactly and are written with two decimals.
+Suite: scoped
+
+import csv
+import io
+import os
+import tempfile
+from fractions import Fraction
+from drydock_go import cli_runner
+
+def run_profile(columns, *opts):
+    names = list(columns)
+    n = len(columns[names[0]])
+    buf = io.StringIO()
+    w = csv.writer(buf, lineterminator=&quot;\n&quot;)
+    w.writerow(names)
+    for i in range(n):
+        w.writerow([columns[c][i] for c in names])
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(buf.getvalue())
+        code, out, err = cli_runner(*opts, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+def fmt2(fr):
+    scaled = fr * 100
+    n, d = scaled.numerator, scaled.denominator
+    r = (abs(n) * 2 + d) // (2 * d)
+    sign = &quot;-&quot; if (n &lt; 0 and r != 0) else &quot;&quot;
+    return sign + str(r // 100) + &quot;.&quot; + str(r % 100).zfill(2)
+
+def real(values):
+    return [Fraction(v) for v in values if v.lower() not in (&quot;&quot;, &quot;na&quot;, &quot;n/a&quot;, &quot;null&quot;)]
+
+columns = {
+    &quot;ints&quot;: [&quot;10&quot;, &quot;9&quot;, &quot;-3&quot;, &quot;NA&quot;, &quot;100&quot;],
+    &quot;nums&quot;: [&quot;1.5&quot;, &quot;-2.25&quot;, &quot;10.125&quot;, &quot;NULL&quot;, &quot;0.0&quot;],
+    &quot;trap&quot;: [&quot;9.5&quot;, &quot;10.25&quot;, &quot;&quot;, &quot;N/A&quot;, &quot;9.75&quot;],
+}
+rows = run_profile(columns)
+iv = real(columns[&quot;ints&quot;])
+assert rows[&quot;ints&quot;][&quot;type&quot;] == &quot;integer&quot;, rows[&quot;ints&quot;]
+assert rows[&quot;ints&quot;][&quot;min&quot;] == str(int(min(iv))), rows[&quot;ints&quot;]
+assert rows[&quot;ints&quot;][&quot;max&quot;] == str(int(max(iv))), rows[&quot;ints&quot;]
+for name in (&quot;nums&quot;, &quot;trap&quot;):
+    vals = real(columns[name])
+    assert rows[name][&quot;type&quot;] == &quot;number&quot;, (name, rows[name])
+    assert rows[name][&quot;min&quot;] == fmt2(min(vals)), (name, rows[name])
+    assert rows[name][&quot;max&quot;] == fmt2(max(vals)), (name, rows[name])
+=== END AC prf003-integer-number ===
+
+=== AC prf003-date ===
+Intent: Date columns report the earliest and latest date, ignoring nulls.
+Suite: scoped
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+def run_profile(columns, *opts):
+    names = list(columns)
+    n = len(columns[names[0]])
+    buf = io.StringIO()
+    w = csv.writer(buf, lineterminator=&quot;\n&quot;)
+    w.writerow(names)
+    for i in range(n):
+        w.writerow([columns[c][i] for c in names])
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(buf.getvalue())
+        code, out, err = cli_runner(*opts, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+raw = [&quot;2025-03-01&quot;, &quot;2024-12-31&quot;, &quot;2025-01-15&quot;, &quot;&quot;, &quot;NA&quot;]
+vals = [v for v in raw if v not in (&quot;&quot;, &quot;NA&quot;)]
+rows = run_profile({&quot;d&quot;: raw})
+assert rows[&quot;d&quot;][&quot;type&quot;] == &quot;date&quot;, rows[&quot;d&quot;]
+assert rows[&quot;d&quot;][&quot;min&quot;] == min(vals), rows[&quot;d&quot;]
+assert rows[&quot;d&quot;][&quot;max&quot;] == max(vals), rows[&quot;d&quot;]
+=== END AC prf003-date ===
+
+=== AC prf003-boolean ===
+Intent: Boolean min is false when any value is false and max is true when any value is true, in lower case.
+Suite: scoped
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+def run_profile(columns, *opts):
+    names = list(columns)
+    n = len(columns[names[0]])
+    buf = io.StringIO()
+    w = csv.writer(buf, lineterminator=&quot;\n&quot;)
+    w.writerow(names)
+    for i in range(n):
+        w.writerow([columns[c][i] for c in names])
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(buf.getvalue())
+        code, out, err = cli_runner(*opts, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+columns = {
+    &quot;all_true&quot;: [&quot;true&quot;, &quot;TRUE&quot;, &quot;True&quot;],
+    &quot;mixed&quot;: [&quot;true&quot;, &quot;False&quot;, &quot;NA&quot;],
+    &quot;all_false&quot;: [&quot;FALSE&quot;, &quot;false&quot;, &quot;&quot;],
+}
+rows = run_profile(columns)
+for name, raw in columns.items():
+    vals = [v.lower() for v in raw if v.lower() not in (&quot;&quot;, &quot;na&quot;, &quot;n/a&quot;, &quot;null&quot;)]
+    expected_min = &quot;false&quot; if &quot;false&quot; in vals else &quot;true&quot;
+    expected_max = &quot;true&quot; if &quot;true&quot; in vals else &quot;false&quot;
+    assert rows[name][&quot;type&quot;] == &quot;boolean&quot;, (name, rows[name])
+    assert rows[name][&quot;min&quot;] == expected_min, (name, rows[name])
+    assert rows[name][&quot;max&quot;] == expected_max, (name, rows[name])
+=== END AC prf003-boolean ===
+
+=== AC prf003-text-bytes ===
+Intent: Text extremes are compared by byte value of the trimmed strings and ignore nulls.
+Suite: scoped
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+def run_profile(columns, *opts):
+    names = list(columns)
+    n = len(columns[names[0]])
+    buf = io.StringIO()
+    w = csv.writer(buf, lineterminator=&quot;\n&quot;)
+    w.writerow(names)
+    for i in range(n):
+        w.writerow([columns[c][i] for c in names])
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, &quot;in.csv&quot;)
+        with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+            f.write(buf.getvalue())
+        code, out, err = cli_runner(*opts, path)
+    print(out)
+    print(err)
+    assert code == 0, code
+    return {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))}
+
+columns = {
+    &quot;cased&quot;: [&quot;b&quot;, &quot;B&quot;, &quot;a&quot;, &quot;Z&quot;, &quot;NA&quot;, &quot; pad &quot;],
+    &quot;digits&quot;: [&quot;10&quot;, &quot;9&quot;, &quot;x&quot;, &quot;&quot;, &quot;NULL&quot;, &quot;ab&quot;],
+    &quot;commas&quot;: [&quot;a,b&quot;, &quot;a&quot;, &quot;ab&quot;, &quot;NA&quot;, &quot;&quot;, &quot;b&quot;],
+}
+rows = run_profile(columns)
+for name, raw in columns.items():
+    vals = [v.strip() for v in raw if v.strip().lower() not in (&quot;&quot;, &quot;na&quot;, &quot;n/a&quot;, &quot;null&quot;)]
+    expected_min = min(vals, key=lambda s: s.encode())
+    expected_max = max(vals, key=lambda s: s.encode())
+    assert rows[name][&quot;type&quot;] == &quot;text&quot;, (name, rows[name])
+    assert rows[name][&quot;min&quot;] == expected_min, (name, rows[name])
+    assert rows[name][&quot;max&quot;] == expected_max, (name, rows[name])
+=== END AC prf003-text-bytes ===
+
+=== AC prf003-empty-and-header-only ===
+Intent: Empty columns, including every column of a header-only file, have empty min and max.
+Suite: scoped
+
+import csv
+import io
+import os
+import tempfile
+from drydock_go import cli_runner
+
+names = [&quot;sku&quot;, &quot;price&quot;, &quot;in_stock&quot;]
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;in.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+        f.write(&quot;,&quot;.join(names) + &quot;\n&quot;)
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 0, code
+rows = list(csv.DictReader(io.StringIO(out)))
+assert len(rows) == len(names)
+for r in rows:
+    assert r[&quot;type&quot;] == &quot;empty&quot;, r
+    assert r[&quot;min&quot;] == &quot;&quot;, r
+    assert r[&quot;max&quot;] == &quot;&quot;, r
+
+buf = io.StringIO()
+w = csv.writer(buf, lineterminator=&quot;\n&quot;)
+w.writerow([&quot;only_null&quot;])
+for v in [&quot;&quot;, &quot;NA&quot;, &quot;NULL&quot;]:
+    w.writerow([v])
+with tempfile.TemporaryDirectory() as d:
+    path = os.path.join(d, &quot;in2.csv&quot;)
+    with open(path, &quot;w&quot;, newline=&quot;&quot;) as f:
+        f.write(buf.getvalue())
+    code, out, err = cli_runner(path)
+print(out)
+print(err)
+assert code == 0, code
+row = list(csv.DictReader(io.StringIO(out)))[0]
+assert row[&quot;type&quot;] == &quot;empty&quot;, row
+assert row[&quot;min&quot;] == &quot;&quot;, row
+assert row[&quot;max&quot;] == &quot;&quot;, row
+=== END AC prf003-empty-and-header-only ===
+
+## User Acceptance
+
+- None.
+
+## Guardrails
+
+- Number extremes are compared exactly, never through `float64`, and are written only through `internal/decimal`.
+- Text comparison is by byte value; do not use locale or case-folding collation.
+- Do not hardcode any extreme; every value comes from the file examined.
+=== END ARTIFACT ===</pre></article>
+</main>
+</body>
+</html>

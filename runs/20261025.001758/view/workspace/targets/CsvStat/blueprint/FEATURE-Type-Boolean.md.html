@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-Type-Boolean.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-Type-Boolean.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-Type-Boolean.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Type Boolean</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Infer boolean columns whose non-null values are true or false in any letter case.</td></tr><tr><td>Depends On</td><td>FEATURE-Type-Date.md</td></tr><tr><td>Provides</td><td>type boolean</td></tr><tr><td>Consumes</td><td>csvdata.IsNull</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>Extend the type ladder so columns of true/false values are typed <code>boolean</code>.</p>
+<h2>Behavior</h2>
+<ul><li>A column that is not <code>integer</code>, <code>number</code>, or <code>date</code> is <code>boolean</code> when every non-null trimmed</li></ul>
+<p>value equals <code>true</code> or <code>false</code> ignoring case.</p>
+<ul><li><code>1</code>, <code>0</code>, <code>yes</code>, <code>no</code>, <code>t</code>, and <code>f</code> are not boolean. A column of <code>0</code> and <code>1</code> is <code>integer</code></li></ul>
+<p>because the ladder takes the first match.</p>
+<ul><li>Null values are ignored; a column with no non-null value is never <code>boolean</code>.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC typ004-boolean-detected ===<br>Intent: Columns of true/false in any letter case, with padding and nulls, are typed boolean.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>columns = { &quot;mixed_case&quot;: [&quot;true&quot;, &quot;FALSE&quot;, &quot;True&quot;, &quot;false&quot;], &quot;upper&quot;: [&quot;TRUE&quot;, &quot;FALSE&quot;, &quot;TRUE&quot;, &quot;FALSE&quot;], &quot;padded&quot;: [&quot; true &quot;, &quot;false&quot;, &quot;false&quot;, &quot;true&quot;], &quot;with_nulls&quot;: [&quot;true&quot;, &quot;&quot;, &quot;NA&quot;, &quot;N/A&quot;], &quot;single_value&quot;: [&quot;false&quot;, &quot;false&quot;, &quot;false&quot;, &quot;false&quot;], } names = list(columns) count = len(columns[names[0]]) body = io.StringIO() writer = csv.writer(body, lineterminator=&quot;\n&quot;) writer.writerow(names) for i in range(count): writer.writerow([columns[k][i] for k in names])</p>
+<p>with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;t.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as f: f.write(body.getvalue()) code, out, err = cli_runner(path) print(out) print(err) assert code == 0 rows = {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))} for name in names: assert rows[name][&quot;type&quot;] == &quot;boolean&quot;, name === END AC typ004-boolean-detected ===</p>
+<p>=== AC typ004-non-boolean-rejected ===<br>Intent: Yes/no words, a stray word among booleans, and short forms are not boolean, and a 0/1 column stays integer.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>columns = { &quot;zero_one&quot;: [&quot;0&quot;, &quot;1&quot;, &quot;1&quot;, &quot;0&quot;], &quot;yes_no&quot;: [&quot;yes&quot;, &quot;no&quot;, &quot;yes&quot;, &quot;no&quot;], &quot;stray&quot;: [&quot;true&quot;, &quot;false&quot;, &quot;maybe&quot;, &quot;true&quot;], &quot;short&quot;: [&quot;t&quot;, &quot;f&quot;, &quot;t&quot;, &quot;f&quot;], } names = list(columns) count = len(columns[names[0]]) body = io.StringIO() writer = csv.writer(body, lineterminator=&quot;\n&quot;) writer.writerow(names) for i in range(count): writer.writerow([columns[k][i] for k in names])</p>
+<p>with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;t.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as f: f.write(body.getvalue()) code, out, err = cli_runner(path) print(out) print(err) assert code == 0 rows = {r[&quot;column&quot;]: r for r in csv.DictReader(io.StringIO(out))} assert rows[&quot;zero_one&quot;][&quot;type&quot;] == &quot;integer&quot; for name in names[1:]: assert rows[name][&quot;type&quot;] != &quot;boolean&quot;, name === END AC typ004-non-boolean-rejected ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Inference uses only the values of the file examined.</li><li>Integer, number, and date take precedence over boolean whenever their patterns are satisfied.</li></ul></article>
+</main>
+</body>
+</html>

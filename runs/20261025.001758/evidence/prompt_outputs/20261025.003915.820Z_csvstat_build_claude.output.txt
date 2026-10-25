@@ -1,0 +1,40 @@
+Existing stubs and Go tests are clear. I'll now write the implementation, starting with the lookup in `csvdata` and the decimal formatter.Decimal and lookup pass. Next, the type ladder in `internal/infer`.The one failure is my test's mistake: `20250115` is all digits, so the ladder correctly types it `integer` (the AC only asserts "not date"). I'll fix the expectation.Now the profile computation: counts, types, extremes, and exact numeric stats.Tidying one unclear comment, then wiring the CLI.Builds and vets clean. Running the existing suite to see which old expectations the new behavior invalidates.Both failures are expected: the old stub test asserted empty stdout, and the parse test doesn't know the new set flags. I'll update those and add tests for the profile package and the CLI output.Two test-side mistakes, not code bugs: `true`, `FALSE`, `True` are three distinct exact strings (the spec counts case differences as distinct), and my CR test put a CR inside a quoted value, which the writer correctly preserves. Fixing both expectations.CLI tests pass. Now the profile package's own unit tests, covering extremes, medians, and exact sums at the edges.Both are test errors again: −1/8 = −0.125 rounds half away to −0.13 (the code is right), and my table bypassed `csvdata.Read`'s trimming, so the padded value was never trimmed. Fixing the expectations and the input.All Go tests pass. Next I'll run the declared Python acceptance assertions for this block's specs. They aren't on disk, so I'll reproduce each assertion into a scratch runner outside the build directory, using the real `drydock_go.py` helper.No output at all, so the runner itself probably failed to start. Checking stderr.A typo in my harness (`""" "` should be `"", " "`). Correcting and rerunning.All 42 declared assertions for this block's specs pass through the real `drydock_go` helper (the count matches: 5+2+2+2+2+4+3+4+5+4+5+4). Final checks: the project gate script, gofmt, and the changed-file list.Block 3 is implemented. All 42 declared acceptance assertions for its specs pass, and the project gate (`sh bin/test.sh`: `go vet` plus `go test ./...`) exits 0.
+
+**What changed**
+- `internal/infer/infer.go`: the first-match ladder (integer, number, date, boolean, then text; empty when no non-null values). Dates are shape-checked and then calendar-checked with `time.Parse`.
+- `internal/decimal/decimal.go`: one `Format(*big.Rat)` that rounds once, half away from zero, to two places, with no `-0.00`.
+- `internal/profile/profile.go`: the header and one row per column in file order. It computes rows, nulls, distinct, type, min/max, and for integer and number columns sum, mean, and median, all exact with `big.Rat`.
+- `internal/csvdata/column.go`: exact, case-sensitive header lookup.
+- `internal/cli/cli.go`: `--column` writes the header plus that column's row. An unknown `--column` or `--freq` name exits 3 with nothing on stdout, checked after the file is read and validated. CSV output goes through `encoding/csv` with `\n` endings and is written only after validation.
+- Tests: new tests for each package, plus updated CLI tests. The old stub test that asserted empty stdout now checks the real output, and the parse test now expects the two new `columnSet`/`freqSet` fields.
+
+**Choices I made**
+- `--freq` with a column that exists still exits 0 with no output. Frequency listing isn't in this block's stories, so I left it for the block that owns it.
+- I added `columnSet`/`freqSet` to the options struct so an explicit empty `--column ""` exits 3 instead of being treated as "no option".
+- Integer min/max/sum are written as plain integers, so a value like `007` appears as `7`.
+
+**Not run:** `sources/run.sh` is the terminal grader and belongs to the last step, so I didn't run it. Its sections for frequencies (C) and some other checks depend on later blocks.
+
+<blueprint-decisions>
+[{"spec":"FEATURE-CLI-Unknown-Column.md","severity":"Low","subject":"--freq with a present column","decision":"The name is validated against the header and then the command exits 0 with no stdout, since frequency listing belongs to a later block. Alternative: exit 2 or print a placeholder. Revisit when the frequency story is built."}]
+</blueprint-decisions>
+
+RESULT: SUCCESS
+
+FILES CHANGED:
+- internal/cli/cli.go
+- internal/cli/cli_test.go
+- internal/csvdata/column.go
+- internal/csvdata/column_test.go
+- internal/decimal/decimal.go
+- internal/decimal/decimal_test.go
+- internal/infer/infer.go
+- internal/infer/infer_test.go
+- internal/profile/profile.go
+- internal/profile/profile_test.go
+
+SUMMARY:
+Implemented the profile header and rows, the type ladder, rows/nulls/distinct, exact sum/mean/median, the single half-away-from-zero decimal formatter, min/max for every type, and `--column` with exit-3 rejection for unknown names. `sh bin/test.sh` exits 0 (go vet + go test ./...). The 42 Python acceptance assertions for this block's specs were reproduced in a scratch runner outside the build directory and run through the real `drydock_go` helper: 42/42 passed. `sources/run.sh` was not run, as it is the terminal grader.
+
+BLOCKERS:
+- None for this block. `sources/run.sh` will still fail on frequency checks (C1–C5) until the frequency block is built.

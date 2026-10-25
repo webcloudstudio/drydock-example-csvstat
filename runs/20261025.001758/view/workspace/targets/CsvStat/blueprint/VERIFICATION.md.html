@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/VERIFICATION.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/VERIFICATION.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/VERIFICATION.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: Release Verification</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Terminal assembly gate that runs the supplied grader and the project test entry point over the finished csvstat application.</td></tr><tr><td>Depends On</td><td>FEATURE-Test-Entry.md, FEATURE-Read-Failure.md, FEATURE-Frequency-Top.md, FEATURE-Frequency-Empty.md, FEATURE-CLI-CSV-Output.md, FEATURE-Profile-Column-Option.md</td></tr><tr><td>Provides</td><td>release verification</td></tr><tr><td>Consumes</td><td>csvstat executable, bin/test.sh</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>This is the terminal story. Every implementation story has closed before it runs. It adds no application behavior. It confirms that the assembled <code>./cmd/csvstat</code> builds and that the supplied grader <code>sources/run.sh</code> passes all 22 checks, which are the sole acceptance verdict. It also confirms that <code>bin/test.sh</code> exits zero. The grader is read-only and is executed, never edited. Application code never reads <code>sources/run.sh</code> or the supplied data files.</p>
+<h2>Assembly</h2>
+<ul><li><code>sh sources/run.sh</code> is run from the application root. It builds <code>./cmd/csvstat</code> with <code>go build</code></li></ul>
+<p>and compares exit code and standard output for 22 commands (A1-A4, B1-B3, C1-C5, E1-E4, U1-U6).</p>
+<ul><li><code>sh bin/test.sh</code> runs <code>go vet ./...</code> and <code>go test ./...</code>.</li><li>The built executable is exercised directly through <code>drydock_go.cli_runner</code> for one usage error</li></ul>
+<p>and one profile of a staged data file.</p>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC verification-grader ===<br>Intent: The supplied grader builds csvstat and passes every one of its 22 checks, so it exits zero.<br>Suite: full<br>Requires: executable=go; scope=test<br>Requires: executable=sh; scope=test</p>
+<p>import os import subprocess import sys</p>
+<p>result = subprocess.run( [&quot;sh&quot;, &quot;sources/run.sh&quot;], capture_output=True, text=True, env={**os.environ}, ) print(result.stdout) print(result.stderr, file=sys.stderr) assert result.returncode == 0, result.returncode === END AC verification-grader ===</p>
+<p>=== AC verification-test-entry ===<br>Intent: The project test entry point runs go vet and go test and exits zero.<br>Requires: executable=go; scope=test<br>Requires: executable=sh; scope=test</p>
+<p>import os import subprocess import sys</p>
+<p>result = subprocess.run( [&quot;sh&quot;, &quot;bin/test.sh&quot;], capture_output=True, text=True, env={**os.environ}, ) print(result.stdout) print(result.stderr, file=sys.stderr) assert result.returncode == 0, result.returncode === END AC verification-test-entry ===</p>
+<p>=== AC verification-usage-error ===<br>Intent: The built executable exits 2 with nothing on standard output when no file is given.<br>Requires: executable=go; scope=test</p>
+<p>from drydock_go import cli_runner</p>
+<p>code, out, err = cli_runner() print(out) print(err) assert code == 2, code assert out == &quot;&quot;, out === END AC verification-usage-error ===</p>
+<p>=== AC verification-profile-header-only ===<br>Intent: The built executable profiles a header-only file with one parsed row per header column, each reporting zero rows.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os</p>
+<p>from drydock_go import cli_runner</p>
+<p>data = os.path.abspath(&quot;sources/header_only.csv&quot;) with open(data, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as handle: header = next(csv.reader(handle))</p>
+<p>code, out, err = cli_runner(data) print(out) print(err) assert code == 0, code</p>
+<p>records = list(csv.DictReader(io.StringIO(out))) assert [r[&quot;column&quot;] for r in records] == header assert all(r[&quot;rows&quot;] == str(0) for r in records) assert all(r[&quot;nulls&quot;] == str(0) for r in records) === END AC verification-profile-header-only ===</p>
+<p>=== AC verification-rejected-input ===<br>Intent: The built executable exits 3 with nothing on standard output for the supplied ragged file.<br>Requires: executable=go; scope=test</p>
+<p>import os</p>
+<p>from drydock_go import cli_runner</p>
+<p>data = os.path.abspath(&quot;sources/ragged.csv&quot;) code, out, err = cli_runner(data) print(out) print(err) assert code == 3, code assert out == &quot;&quot;, out === END AC verification-rejected-input ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Do not modify, rewrite, regenerate, or substitute any file under <code>sources/</code>.</li><li>Application code never reads <code>sources/run.sh</code> or any supplied data file, and never hardcodes a statistic, a type, or a value list.</li><li>Only this terminal story runs the whole grader; no other story invokes <code>sh sources/run.sh</code>.</li><li>The story adds no application behavior; a failure here is repaired in the story that owns the behavior.</li></ul></article>
+</main>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/FEATURE-CLI-Unknown-Column.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/FEATURE-CLI-Unknown-Column.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/FEATURE-CLI-Unknown-Column.md">Raw file</a></div></header>
+<article class="doc"><h1>FEATURE: CLI Unknown Column</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Look up a named column by exact trimmed header name and reject a name absent from the header with exit 3.</td></tr><tr><td>Depends On</td><td>FEATURE-Profile-Rows.md</td></tr><tr><td>Provides</td><td>column lookup, exit 3 for unknown column</td></tr><tr><td>Consumes</td><td>csvdata.Read</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p><code>--column &lt;name&gt;</code> and <code>--freq &lt;name&gt;</code> each name a column. This feature provides the single lookup both options share and the rejection when the name is not a header column.</p>
+<h2>Behavior</h2>
+<ul><li>The lookup compares the requested name with the trimmed header names by exact string equality.</li></ul>
+<p>It is case-sensitive.</p>
+<ul><li>When the name is absent, the command exits 3, writes nothing to standard output, and writes one</li></ul>
+<p>diagnostic line to standard error naming the file and the column.</p>
+<ul><li>The lookup runs after the file has been read and validated, so a file rejected for another</li></ul>
+<p>reason (empty, bad header, ragged record) reports that rejection first.</p>
+<ul><li>A name that is present proceeds to the normal profile or frequency path with exit 0.</li><li>Usage validation (exit 2) completes before the file is opened and therefore before this lookup.</li></ul>
+<h2>Interfaces</h2>
+<ul><li>Package <code>internal/csvdata</code> (or <code>internal/cli</code>) exposes a lookup returning the column index and a</li></ul>
+<p>found flag; <code>internal/cli.Run</code> maps &quot;not found&quot; to exit 3.</p>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC cli003-column-unknown ===<br>Intent: A --column name absent from the header exits 3 with nothing on standard output.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>names = [&quot;id&quot;, &quot;qty&quot;] body = io.StringIO() writer = csv.writer(body, lineterminator=&quot;\n&quot;) writer.writerow(names) writer.writerow([&quot;1&quot;, &quot;10&quot;]) writer.writerow([&quot;2&quot;, &quot;20&quot;])</p>
+<p>missing = &quot;nosuch&quot; assert missing not in names</p>
+<p>with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;t.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as f: f.write(body.getvalue()) code, out, err = cli_runner(&quot;--column&quot;, missing, path) print(out) print(err) assert code == 3 assert out == &quot;&quot; === END AC cli003-column-unknown ===</p>
+<p>=== AC cli003-freq-unknown ===<br>Intent: A --freq name absent from the header exits 3 with nothing on standard output.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>names = [&quot;id&quot;, &quot;qty&quot;] body = io.StringIO() writer = csv.writer(body, lineterminator=&quot;\n&quot;) writer.writerow(names) writer.writerow([&quot;1&quot;, &quot;10&quot;])</p>
+<p>missing = &quot;nosuch&quot; assert missing not in names</p>
+<p>with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;t.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as f: f.write(body.getvalue()) code, out, err = cli_runner(&quot;--freq&quot;, missing, path) print(out) print(err) assert code == 3 assert out == &quot;&quot; === END AC cli003-freq-unknown ===</p>
+<p>=== AC cli003-lookup-exact ===<br>Intent: The lookup is exact and case-sensitive, and matches trimmed header names.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>present = &quot;qty&quot; wrong_case = present.upper() assert wrong_case != present</p>
+<p>body = io.StringIO() writer = csv.writer(body, lineterminator=&quot;\n&quot;) writer.writerow([&quot;id&quot;, &quot; &quot; + present + &quot; &quot;]) writer.writerow([&quot;1&quot;, &quot;10&quot;])</p>
+<p>with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;t.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as f: f.write(body.getvalue()) code_ok, out_ok, err_ok = cli_runner(&quot;--column&quot;, present, path) code_bad, out_bad, err_bad = cli_runner(&quot;--column&quot;, wrong_case, path) print(out_ok) print(err_ok) print(err_bad) assert code_ok == 0 columns = [r[&quot;column&quot;] for r in csv.DictReader(io.StringIO(out_ok))] assert present in columns assert code_bad == 3 assert out_bad == &quot;&quot; === END AC cli003-lookup-exact ===</p>
+<p>=== AC cli003-rejection-precedes-lookup ===<br>Intent: A ragged file reports its own rejection (exit 3) and writes nothing even when the column name is valid.<br>Requires: executable=go; scope=test</p>
+<p>import csv import io import os import tempfile</p>
+<p>from drydock_go import cli_runner</p>
+<p>header = [&quot;a&quot;, &quot;b&quot;] body = io.StringIO() writer = csv.writer(body, lineterminator=&quot;\n&quot;) writer.writerow(header) writer.writerow([&quot;1&quot;, &quot;2&quot;]) writer.writerow([&quot;3&quot;, &quot;4&quot;, &quot;5&quot;])</p>
+<p>with tempfile.TemporaryDirectory() as d: path = os.path.join(d, &quot;t.csv&quot;) with open(path, &quot;w&quot;, newline=&quot;&quot;) as f: f.write(body.getvalue()) code, out, err = cli_runner(&quot;--column&quot;, header[0], path) print(out) print(err) assert code == 3 assert out == &quot;&quot; === END AC cli003-rejection-precedes-lookup ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>An unknown column is exit 3 (rejected), never exit 2 and never exit 1.</li><li>A failing command writes nothing to standard output.</li><li>Application code never reads <code>sources/run.sh</code> or any supplied data file.</li></ul></article>
+</main>
+</body>
+</html>

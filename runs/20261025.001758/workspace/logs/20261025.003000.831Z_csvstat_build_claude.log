@@ -49,3 +49,5 @@ BLOCK block-3  name="Block 3 · Service"  calls_max=7
   story=PRF-006  "Profile a single named column with --column."
 
   [call 1/7]  kind=initial  llm=claude/claude-haiku-5-5
+    result=ok  rc=0  execution=20261025.003915.820Z-0e1e5451
+    acceptance=42/42

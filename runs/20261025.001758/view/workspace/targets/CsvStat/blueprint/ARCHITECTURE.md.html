@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>workspace/targets/CsvStat/blueprint/ARCHITECTURE.md</title>
+<link rel="stylesheet" href="../../../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>workspace/targets/CsvStat/blueprint/ARCHITECTURE.md</h1><div class="filenav"><a href="../../../../../index.html">&larr; Report</a><a href="../../../../../workspace/targets/CsvStat/blueprint/ARCHITECTURE.md">Raw file</a></div></header>
+<article class="doc"><h1>ARCHITECTURE: CsvStat</h1>
+<div class="scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>20261025 V1</td></tr><tr><td>Description</td><td>Module layout, package boundaries, exit-code contract, and technical decisions for the csvstat command-line CSV profiler.</td></tr><tr><td>Depends On</td><td>—</td></tr><tr><td>Provides</td><td>go.mod, internal/cli.Run</td></tr><tr><td>Consumes</td><td>—</td></tr></tbody></table></div>
+<h2>Purpose</h2>
+<p>CsvStat is a single Go executable, <code>./cmd/csvstat</code>, that profiles one CSV file. It infers each column&#x27;s type, reports counts, extremes, and for numeric columns sum, mean, and median, and lists the most frequent values of one column. There is no database, no network, and no persistent state.</p>
+<h2>Technology Stack</h2>
+<p>Derived from <code>TECHNOLOGY_STACK.md</code>, which remains the decision of record.</p>
+<div class="scroll"><table><thead><tr><th>Technology</th><th>Where it applies</th></tr></thead><tbody><tr><td>Go 1.22 or newer, standard library only</td><td>All application code; <code>go.mod</code> declares no <code>require</code> entries</td></tr><tr><td>go test and go vet</td><td>Test runner behind <code>bin/test.sh</code></td></tr><tr><td>CSV via <code>encoding/csv</code></td><td>Reading input (RFC 4180) and writing every output form</td></tr><tr><td>POSIX sh</td><td><code>bin/test.sh</code> and the supplied grader <code>sources/run.sh</code></td></tr></tbody></table></div>
+<h2>Module Layout</h2>
+<pre><code>go.mod
+cmd/csvstat/main.go        package main; calls cli.Run and passes the result to os.Exit
+internal/cli/              Run(args []string, stdout, stderr io.Writer) int; option parsing, dispatch, exit codes
+internal/csvdata/          reading, trimming, null classification, structural validation
+internal/infer/            type inference ladder
+internal/profile/          rows, nulls, distinct, min, max, sum, mean, median
+internal/freq/             frequency listing
+internal/decimal/          exact big.Rat formatting, one rounding, half away from zero
+bin/test.sh                POSIX launcher: go vet ./... then go test ./...</code></pre>
+<h2>Module Ownership</h2>
+<div class="scroll"><table><thead><tr><th>Boundary</th><th>Owning module</th><th>May access</th></tr></thead><tbody><tr><td>Process start and exit</td><td><code>cmd/csvstat</code></td><td><code>os.Args</code>, <code>os.Stdout</code>, <code>os.Stderr</code>, <code>os.Exit</code> (the only caller of <code>os.Exit</code>)</td></tr><tr><td>Option parsing, exit codes, diagnostics</td><td><code>internal/cli</code></td><td>A local <code>flag.FlagSet</code> with <code>flag.ContinueOnError</code>, the injected writers</td></tr><tr><td>File access and CSV decoding</td><td><code>internal/csvdata</code></td><td><code>os.Open</code>, <code>encoding/csv</code> reader</td></tr><tr><td>Type rules</td><td><code>internal/infer</code></td><td>Trimmed non-null values only</td></tr><tr><td>Statistics</td><td><code>internal/profile</code>, <code>internal/decimal</code></td><td><code>math/big</code>; no floating point for sums, means, or medians</td></tr><tr><td>Output encoding</td><td><code>internal/cli</code> with <code>encoding/csv</code> writer</td><td>The injected stdout writer</td></tr><tr><td>Persistence, configuration, external services</td><td>None</td><td>The product has none</td></tr></tbody></table></div>
+<h2>Exit-Code Contract</h2>
+<div class="scroll"><table><thead><tr><th>Code</th><th>Meaning</th></tr></thead><tbody><tr><td>0</td><td>Success</td></tr><tr><td>1</td><td>Operational failure: the file cannot be opened or read</td></tr><tr><td>2</td><td>Usage error: missing or extra file, unknown option, missing option value, <code>--top</code> not a positive integer, <code>--top</code> without <code>--freq</code>, <code>--column</code> with <code>--freq</code></td></tr><tr><td>3</td><td>Rejected input: empty file, empty or repeated header name, ragged record, or a column name absent from the header</td></tr></tbody></table></div>
+<p>A failing command writes nothing to standard output and exactly one diagnostic line to standard error naming the file and, for a rejected record, its line number. Standard error is never compared by the grader.</p>
+<h2>Technical Decisions</h2>
+<ul><li>Application code never reads <code>sources/run.sh</code> or any supplied data file and never embeds a statistic, type, or value list. Every value is computed from the file it is given.</li><li>Sums, means, and medians are exact (<code>math/big</code>) and rounded once, half away from zero, when written.</li><li>All output goes through one <code>encoding/csv</code> writer, so quoting follows RFC 4180 and lines end with <code>\n</code>.</li><li>Usage validation completes before the file is opened, so a usage error outranks a missing file.</li><li>Only <code>main</code> calls <code>os.Exit</code>; <code>cli.Run</code> returns the exit code so tests drive it with <code>bytes.Buffer</code>.</li></ul>
+<h2>Programmatic Acceptance</h2>
+<p>=== AC arch-go-mod-stdlib-only ===<br>Intent: The application root is a Go module that declares no third-party requirements.<br>Requires: executable=go; scope=test</p>
+<p>import pathlib</p>
+<p>gomod = pathlib.Path(&quot;go.mod&quot;) assert gomod.is_file() lines = [ln.strip() for ln in gomod.read_text().splitlines()] assert any(ln.startswith(&quot;module &quot;) for ln in lines) assert any(ln.startswith(&quot;go &quot;) for ln in lines) assert not any(ln.startswith(&quot;require&quot;) for ln in lines) assert not pathlib.Path(&quot;go.sum&quot;).exists() or pathlib.Path(&quot;go.sum&quot;).stat().st_size == 0 === END AC arch-go-mod-stdlib-only ===</p>
+<p>=== AC arch-package-layout ===<br>Intent: Each internal package named by the architecture exists and holds Go source.</p>
+<p>import pathlib</p>
+<p>packages = [&quot;cli&quot;, &quot;csvdata&quot;, &quot;infer&quot;, &quot;profile&quot;, &quot;freq&quot;, &quot;decimal&quot;] for name in packages: directory = pathlib.Path(&quot;internal&quot;) / name assert directory.is_dir(), name sources = [p for p in directory.glob(&quot;*.go&quot;) if not p.name.endswith(&quot;_test.go&quot;)] assert sources, name assert pathlib.Path(&quot;bin&quot;).is_dir() === END AC arch-package-layout ===</p>
+<p>=== AC arch-cli-run-compiles ===<br>Intent: The internal packages, including the cli.Run entry contract, compile and vet cleanly.<br>Requires: executable=go; scope=test</p>
+<p>import subprocess</p>
+<p>result = subprocess.run([&quot;go&quot;, &quot;build&quot;, &quot;./internal/...&quot;], capture_output=True, text=True) print(result.stdout) print(result.stderr) assert result.returncode == 0 === END AC arch-cli-run-compiles ===</p>
+<p>=== AC arch-run-signature ===<br>Intent: internal/cli exposes Run taking args and two writers and returning an int exit code.</p>
+<p>import pathlib</p>
+<p>text = &quot;\n&quot;.join( p.read_text() for p in pathlib.Path(&quot;internal/cli&quot;).glob(&quot;*.go&quot;) if not p.name.endswith(&quot;_test.go&quot;) ) assert &quot;func Run(&quot; in text assert &quot;io.Writer&quot; in text === END AC arch-run-signature ===</p>
+<h2>User Acceptance</h2>
+<ul><li>None.</li></ul>
+<h2>Guardrails</h2>
+<ul><li>Standard library only; no third-party module may appear in <code>go.mod</code>.</li><li>Do not modify, rewrite, regenerate, or substitute any file under <code>sources/</code>.</li><li>Application code must not read <code>sources/run.sh</code> or any supplied data file, and must not hardcode a statistic, type, or value list.</li><li>Only <code>cmd/csvstat</code> calls <code>os.Exit</code>.</li><li>Sums, means, and medians are never computed with floating point.</li></ul></article>
+</main>
+</body>
+</html>

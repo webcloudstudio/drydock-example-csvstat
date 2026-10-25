@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence/prompt_outputs/20261025.001835.673Z_csvstat_plan_claude.output.txt</title>
+<link rel="stylesheet" href="../../../assets/kit.css">
+</head>
+<body>
+<main>
+<header class="fileheader"><div class="kind">Run artifact</div><h1>evidence/prompt_outputs/20261025.001835.673Z_csvstat_plan_claude.output.txt</h1><div class="filenav"><a href="../../../index.html">&larr; Report</a><a href="../../../evidence/prompt_outputs/20261025.001835.673Z_csvstat_plan_claude.output.txt">Raw file</a></div></header>
+<article class="doc"><pre>=== BEGIN ARTIFACT TOPOLOGY.md ===
+## Declarations
+
+## story foundation
+summary:      Stand up the Go module, package layout, and the CLI entry contract everything else builds into.
+type:         foundational
+kind:         capability
+phase:        1
+implements:   ARCHITECTURE.md
+stack:        common.md, go.md
+provides:     go.mod, internal/cli.Run
+consumes:
+instructions: |
+  Create the root go.mod (Go 1.22 or newer, no third-party requirements) and the package layout:
+  cmd/csvstat (package main), internal/cli (Run(args []string, stdout, stderr io.Writer) int),
+  internal/csvdata (reading, trimming, nulls, validation), internal/infer (type inference),
+  internal/profile (statistics), internal/freq (frequency listing), internal/decimal (exact
+  rounding). Only main calls os.Exit. Document the exit-code table (0, 1, 2, 3) and the rule that
+  a failing command writes nothing to stdout and one diagnostic line to stderr. Create bin/ for
+  launchers. Do not read sources/run.sh or any data file from application code.
+acceptance:   yes
+depends:
+
+## story MOD-001
+summary:      Build the csvstat executable from the application root with the standard library only.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-Executable-Build.md
+covers:       MOD-001
+accepts:      st-003
+stack:        go.md
+provides:     csvstat executable
+consumes:     internal/cli.Run
+instructions: |
+  Add cmd/csvstat/main.go that calls cli.Run(os.Args[1:], os.Stdout, os.Stderr) and passes the
+  result to os.Exit. Provide a minimal Run so that go build -o &lt;path&gt; ./cmd/csvstat succeeds from
+  the module root. Verify that go.mod has no require lines.
+acceptance:   yes
+depends:      foundation
+
+## story MOD-002
+summary:      Provide the POSIX bin/test.sh that runs go vet and go test.
+type:         service
+kind:         test harness
+phase:        1
+implements:   FEATURE-Test-Entry.md
+covers:       MOD-002
+accepts:      st-002
+stack:        common.md, go.md
+provides:     bin/test.sh
+consumes:
+instructions: |
+  Write bin/test.sh in POSIX sh. It changes to the application root, runs go vet ./... and then
+  go test ./..., and exits non-zero if either fails. Add at least one Go test so the suite is
+  non-empty. Later stories add their own tests beside their code.
+acceptance:   yes
+depends:      MOD-001
+
+## story CLI-001
+summary:      Parse options that precede exactly one file argument.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-CLI-Arguments.md
+covers:       CLI-001
+stack:        go.md
+provides:     csvstat [--column &lt;name&gt;] &lt;file&gt;
+consumes:     internal/cli.Run
+instructions: |
+  In internal/cli use a local flag.FlagSet with flag.ContinueOnError and its output sent to the
+  stderr writer. Define --column, --freq, and --top. Exactly one positional file is required: no
+  file or more than one file exits 2 with nothing on stdout and one stderr diagnostic line.
+acceptance:   yes
+depends:      MOD-001
+
+## story CLI-002
+summary:      Reject unknown options, missing option values, and invalid option combinations with exit 2.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-CLI-Option-Validation.md
+covers:       CLI-002
+accepts:      st-008
+stack:        go.md
+provides:     usage-error exit 2
+consumes:     internal/cli.Run
+instructions: |
+  Exit 2, nothing on stdout, one stderr line, for: unknown option, an option missing its value,
+  --top that is not a positive integer (zero, negative, non-numeric), --top without --freq, and
+  --column together with --freq. Validation completes before the file is opened, so a usage error
+  wins over a missing file. --top defaults to 5 when --freq is given.
+acceptance:   yes
+depends:      CLI-001
+
+## story CSV-001
+summary:      Read a UTF-8 RFC 4180 CSV file with encoding/csv and trim header names and values.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-CSV-Reading.md
+covers:       CSV-001
+stack:        go.md
+provides:     csvdata.Read
+consumes:     internal/cli.Run
+instructions: |
+  Implement csvdata.Read returning the trimmed header and the trimmed records. Use encoding/csv
+  with FieldsPerRecord set to -1 so the record width can be checked by the next story with line
+  numbers. Trim leading and trailing spaces from every header name and value before any other
+  rule. Quoted fields containing commas and quotes decode as RFC 4180 specifies.
+acceptance:   yes
+depends:      CLI-001
+
+## story CSV-003
+summary:      Classify null values: empty, NA, N/A, NULL ignoring case.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-Null-Values.md
+covers:       CSV-003
+stack:        go.md
+provides:     csvdata.IsNull
+consumes:     csvdata.Read
+instructions: |
+  Implement csvdata.IsNull on trimmed values: true for the empty string and for NA, N/A, NULL in
+  any letter case; false for everything else, including 0, nan, and none. The helper is the single
+  null rule used by every statistic.
+acceptance:   yes
+depends:      CSV-001
+
+## story CSV-002
+summary:      Reject an empty file, an empty or repeated header name, or a ragged record with exit 3.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-CSV-Rejection.md
+covers:       CSV-002
+accepts:      st-007
+stack:        go.md
+provides:     rejected-input exit 3
+consumes:     csvdata.Read
+instructions: |
+  Reject with exit 3, nothing on stdout, and exactly one stderr line naming the file (and the line
+  number of the offending record when a record is ragged): an empty file (no records), an empty
+  header name after trimming, a repeated header name, any record whose field count differs from the
+  header, and a CSV syntax error reported by encoding/csv. A header with no data records is valid.
+acceptance:   yes
+depends:      CSV-001
+
+## story CSV-004
+summary:      Exit 1 with no stdout when the file cannot be opened or read.
+type:         service
+kind:         capability
+phase:        1
+implements:   FEATURE-Read-Failure.md
+covers:       CSV-004
+accepts:      st-008
+stack:        go.md
+provides:     operational-failure exit 1
+consumes:     csvdata.Read
+instructions: |
+  When the file cannot be opened or read (missing path, a directory, no permission) exit 1 with
+  nothing on stdout and one stderr line naming the file. This is distinct from exit 3, which is
+  reserved for content that was read but rejected. Usage errors (exit 2) are owned by CLI-001 and
+  CLI-002.
+acceptance:   yes
+depends:      CSV-002
+
+## story PRF-001
+summary:      Emit the profile header and one row per column in file order.
+type:         service
+kind:         capability
+phase:        2
+implements:   FEATURE-Profile-Rows.md
+covers:       PRF-001
+stack:        go.md
+provides:     profile output header
+consumes:     csvdata.Read, csvdata.IsNull
+instructions: |
+  Write the header column,type,rows,nulls,distinct,min,max,sum,mean,median and then one row per
+  header column in file order, using encoding/csv&#x27;s writer so output uses \n line endings. This
+  story fills column and rows (the count of data records); later stories fill the remaining fields,
+  which stay empty until their owner story is built. A header-only file yields one row per column
+  with rows 0.
+acceptance:   yes
+depends:      CSV-002, CSV-003, CLI-002
+
+## story CLI-003
+summary:      Reject a named column that is absent from the header with exit 3.
+type:         service
+kind:         capability
+phase:        2
+implements:   FEATURE-CLI-Unknown-Column.md
+covers:       CLI-003
+accepts:      st-007
+stack:        go.md
+provides:     column lookup, exit 3 for unknown column
+consumes:     csvdata.Read
+instructions: |
+  Provide a column lookup by exact trimmed header name. When --column or --freq names a column that
+  is not in the header, exit 3 with nothing on stdout and one stderr line naming the file and the
+  column. The check runs after the file has been read and validated, so a ragged file still
+  reports its own rejection.
+acceptance:   yes
+depends:      PRF-001
+
+## story TYP-001
+summary:      Infer integer columns.
+type:         service
+kind:         capability
+phase:        2
+implements:   FEATURE-Type-Integer.md
+covers:       TYP-001
+stack:        go.md
+provides:     type integer
+consumes:     csvdata.IsNull
+instructions: |
+  Add internal/infer with a first-match type ladder and fill the type field of the profile row.
+  A column is integer when every non-null value matches -?[0-9]+. Columns this story does not yet
+  classify leave the type field empty until the later type stories are built.
+acceptance:   yes
+depends:      PRF-001
+
+## story TYP-002
+summary:      Infer number columns.
+type:         service
+kind:         capability
+phase:        2
+implements:   FEATURE-Type-Number.md
+covers:       TYP-002
+stack:        go.md
+provides:     type number
+consumes:     csvdata.IsNull
+instructions: |
+  Extend the ladder: a column that is not integer is number when every non-null value matches
+  -?[0-9]+(\.[0-9]+)?. Forms such as 1., .5, +1, and 1e3 are not numbers.
+acceptance:   yes
+depends:      TYP-001
+
+## story TYP-003
+summary:      Infer date columns.
+type:         service
+kind:         capability
+phase:        2
+implements:   FEATURE-Type-Date.md
+covers:       TYP-003
+stack:        go.md
+provides:     type date
+consumes:     csvdata.IsNull
+instructions: |
+  Extend the ladder: a column is date when every non-null value matches YYYY-MM-DD and is a real
+  calendar date (validate with time.Parse on the 2006-01-02 layout after the shape check). A column
+  with one impossible date such as 2025-02-30 is not date and falls through to later types.
+acceptance:   yes
+depends:      TYP-002
+
+## story TYP-004
+summary:      Infer boolean columns.
+type:         service
+kind:         capability
+phase:        2
+implements:   FEATURE-Type-Boolean.md
+covers:       TYP-004
+stack:        go.md
+provides:     type boolean
+consumes:     csvdata.IsNull
+instructions: |
+  Extend the ladder: a column is boolean when every non-null value equals true or false ignoring
+  case. 1, 0, yes, and no are not boolean.
+acceptance:   yes
+depends:      TYP-003
+
+## story TYP-005
+summary:      Fall back to text and report columns with no non-null values as empty.
+type:         service
+kind:         capability
+phase:        2
+implements:   FEATURE-Type-Text-Empty.md
+covers:       TYP-005
+accepts:      st-004
+stack:        go.md
+provides:     type text, type empty
+consumes:     csvdata.IsNull
+instructions: |
+  Complete the ladder in the order integer, number, date, boolean, text. A column with no non-null
+  value is empty (this includes a header-only file). A column that is all integer and also
+  date-shaped resolves to the first match in the ladder. Every other column is text.
+acceptance:   yes
+depends:      TYP-004
+
+## story PRF-002
+summary:      Compute rows, nulls, and distinct counts.
+type:         service
+kind:         capability
+phase:        2
+implements:   FEATURE-Profile-Counts.md
+covers:       PRF-002
+stack:        go.md
+provides:     profile nulls, distinct
+consumes:     csvdata.IsNull
+instructions: |
+  Fill nulls (the count of null values) and distinct (the number of different non-null trimmed
+  values, compared as exact strings, so case differences count as different).
+acceptance:   yes
+depends:      PRF-001, CSV-003
+
+## story PRF-004
+summary:      Compute exact sum, mean, and median for integer and number columns.
+type:         service
+kind:         capability
+phase:        2
+implements:   FEATURE-Profile-Numeric-Stats.md
+covers:       PRF-004
+stack:        go.md
+provides:     profile sum, mean, median
+consumes:     infer types, internal/decimal
+instructions: |
+  For integer and number columns only, compute sum, mean (sum over the non-null count), and median
+  (middle value of the sorted non-null values, or the mean of the two middle values when the count
+  is even) exactly with math/big (big.Rat), over non-null values only. Other types leave the three
+  fields empty. Introduce internal/decimal with a formatter that rounds a big.Rat once, half away
+  from zero, to two decimal places; mean and median use it for both integer and number columns.
+  Integer sum is a plain integer; number sum uses two decimals.
+acceptance:   yes
+depends:      TYP-005, PRF-002
+
+## story PRF-005
+summary:      Format decimals to two places with a single half-away-from-zero rounding.
+type:         service
+kind:         capability
+phase:        2
+implements:   FEATURE-Decimal-Rounding.md
+covers:       PRF-005
+accepts:      st-005
+stack:        go.md
+provides:     decimal formatting contract
+consumes:     internal/decimal
+instructions: |
+  Make the decimal contract exact and total: round once from the exact value, half away from zero
+  (a tie of 0.005 becomes 0.01, -0.005 becomes -0.01), always two decimal places, a leading minus
+  only when the rounded value is negative (never -0.00), no thousands separator. Cover values that
+  binary floating point rounds wrongly. Number min and max use the same formatter; integer min,
+  max, and sum stay plain integers.
+acceptance:   yes
+depends:      PRF-004
+
+## story PRF-003
+summary:      Compute min and max for every column type.
+type:         service
+kind:         capability
+phase:        2
+implements:   FEATURE-Profile-Extremes.md
+covers:       PRF-003
+stack:        go.md
+provides:     profile min, max
+consumes:     infer types, internal/decimal
+instructions: |
+  integer: smallest and largest as integers compared numerically. number: compared exactly and
+  written with the two-decimal formatter. date: earliest and latest. boolean: min is false if any
+  value is false, else true; max is true if any value is true, else false (case-insensitive,
+  written lower case). text: smallest and largest by byte value. empty: both fields empty. Nulls
+  are ignored.
+acceptance:   yes
+depends:      PRF-005, PRF-002
+
+## story PRF-006
+summary:      Profile a single named column with --column.
+type:         service
+kind:         capability
+phase:        2
+implements:   FEATURE-Profile-Column-Option.md
+covers:       PRF-006
+stack:        go.md
+provides:     csvstat --column &lt;name&gt; &lt;file&gt;
+consumes:     column lookup, profile rows
+instructions: |
+  With --column write the header and only the named column&#x27;s row, identical to that column&#x27;s row
+  in the full profile. An unknown column is owned by CLI-003.
+acceptance:   yes
+depends:      PRF-003, CLI-003
+
+## story FRQ-001
+summary:      List the most frequent non-null values with --freq.
+type:         service
+kind:         capability
+phase:        3
+implements:   FEATURE-Frequency-List.md
+covers:       FRQ-001
+stack:        go.md
+provides:     csvstat --freq &lt;name&gt; &lt;file&gt;
+consumes:     column lookup, csvdata.IsNull
+instructions: |
+  With --freq write the header value,count and one row per distinct non-null trimmed value of the
+  named column, ordered by count descending then value ascending by byte value. Null values are
+  never listed. Apply the default limit of 5 rows. An unknown column exits 3 through the shared
+  lookup.
+acceptance:   yes
+depends:      CLI-003, CSV-003
+
+## story FRQ-002
+summary:      Limit frequency rows with --top.
+type:         service
+kind:         capability
+phase:        3
+implements:   FEATURE-Frequency-Top.md
+covers:       FRQ-002
+accepts:      st-006
+stack:        go.md
+provides:     csvstat --freq &lt;name&gt; --top &lt;n&gt; &lt;file&gt;
+consumes:     frequency list
+instructions: |
+  Write at most --top rows, where --top is a positive integer, default 5. A value larger than the
+  number of distinct values writes all of them. Invalid values are rejected by CLI-002.
+acceptance:   yes
+depends:      FRQ-001
+
+## story FRQ-003
+summary:      Write only the header for a column with no non-null values.
+type:         service
+kind:         capability
+phase:        3
+implements:   FEATURE-Frequency-Empty.md
+covers:       FRQ-003
+stack:        go.md
+provides:     empty frequency output
+consumes:     frequency list
+instructions: |
+  When every value of the column is null, or the file has no data records, write exactly the
+  header value,count and exit 0.
+acceptance:   yes
+depends:      FRQ-001
+
+## story CLI-004
+summary:      Write CSV output with RFC 4180 quoting and \n line endings.
+type:         service
+kind:         capability
+phase:        3
+implements:   FEATURE-CLI-CSV-Output.md
+covers:       CLI-004
+stack:        go.md
+provides:     CSV output format
+consumes:     profile output, frequency output
+instructions: |
+  Every output path (profile, --column, --freq) goes through one encoding/csv writer. Fields that
+  contain a comma, a double quote, or a newline are quoted, quotes are doubled, and lines end with
+  \n, never \r\n. Confirm with values such as &quot;remote, part-time&quot; appearing as profile min or max
+  and as a frequency value.
+acceptance:   yes
+depends:      PRF-003, FRQ-001
+
+## story verification
+summary:      Run the supplied grader over the finished application as the terminal gate.
+type:         feature
+kind:         test harness
+phase:        4
+implements:   VERIFICATION.md
+accepts:      st-001
+stack:        common.md, go.md
+provides:     release verification
+consumes:     csvstat executable
+instructions: |
+  Assembly and intent only. Confirm that sh sources/run.sh builds ./cmd/csvstat and passes all 22
+  checks, and that bin/test.sh exits zero. Do not edit anything under sources/. No application
+  code reads run.sh or the supplied data files.
+acceptance:   yes
+depends:      MOD-002, CSV-004, FRQ-002, FRQ-003, CLI-004, PRF-006
+=== END ARTIFACT ===
+=== BEGIN ARTIFACT DECISIONS.json ===
+[
+  {
+    &quot;id&quot;: &quot;Q-001&quot;,
+    &quot;type&quot;: &quot;choice&quot;,
+    &quot;severity&quot;: &quot;low&quot;,
+    &quot;blueprint&quot;: &quot;VERIFICATION.md&quot;,
+    &quot;story&quot;: &quot;verification&quot;,
+    &quot;title&quot;: &quot;Where the supplied grader gates&quot;,
+    &quot;description&quot;: &quot;STORY_GUIDANCE.json lists sh sources/run.sh as the gate for CSV-002, CLI-002 and FRQ-001. run.sh runs all 22 checks and has no selector, so it fails by construction until every story is built. Only the terminal story runs it; the three stories keep their ids and gate on scoped criteria that run the built executable on the checks they own.&quot;,
+    &quot;options&quot;: [
+      { &quot;value&quot;: &quot;terminal-only&quot;, &quot;label&quot;: &quot;Only the terminal verification story runs run.sh&quot; },
+      { &quot;value&quot;: &quot;gate-each&quot;, &quot;label&quot;: &quot;Run run.sh in the three named stories as well&quot; }
+    ],
+    &quot;system_choice&quot;: &quot;terminal-only&quot;
+  },
+  {
+    &quot;id&quot;: &quot;Q-002&quot;,
+    &quot;type&quot;: &quot;choice&quot;,
+    &quot;severity&quot;: &quot;low&quot;,
+    &quot;blueprint&quot;: &quot;FEATURE-Profile-Rows.md&quot;,
+    &quot;story&quot;: &quot;PRF-001&quot;,
+    &quot;title&quot;: &quot;Profile fields are filled incrementally&quot;,
+    &quot;description&quot;: &quot;Type, count, extreme and statistic fields are owned by separate stories, and each story&#x27;s criteria observe its own field through the executable. PRF-001 emits column and rows; the other fields stay empty until their owner story is built. The terminal run.sh gate requires them all.&quot;,
+    &quot;options&quot;: [
+      { &quot;value&quot;: &quot;incremental&quot;, &quot;label&quot;: &quot;Each story fills only its own fields&quot; },
+      { &quot;value&quot;: &quot;stub-first&quot;, &quot;label&quot;: &quot;Emit placeholder values in PRF-001&quot; }
+    ],
+    &quot;system_choice&quot;: &quot;incremental&quot;
+  },
+  {
+    &quot;id&quot;: &quot;Q-003&quot;,
+    &quot;type&quot;: &quot;choice&quot;,
+    &quot;severity&quot;: &quot;low&quot;,
+    &quot;blueprint&quot;: &quot;FEATURE-CSV-Rejection.md&quot;,
+    &quot;story&quot;: &quot;CSV-002&quot;,
+    &quot;title&quot;: &quot;CSV syntax errors map to exit 3&quot;,
+    &quot;description&quot;: &quot;The sources do not state the exit status for a record encoding/csv cannot parse, such as a bare quote. It is rejected content that was read, so the narrowest consistent choice is exit 3 rather than 1.&quot;,
+    &quot;options&quot;: [
+      { &quot;value&quot;: &quot;exit-3&quot;, &quot;label&quot;: &quot;Exit 3, rejected&quot; },
+      { &quot;value&quot;: &quot;exit-1&quot;, &quot;label&quot;: &quot;Exit 1, operational failure&quot; }
+    ],
+    &quot;system_choice&quot;: &quot;exit-3&quot;
+  },
+  {
+    &quot;id&quot;: &quot;Q-004&quot;,
+    &quot;type&quot;: &quot;choice&quot;,
+    &quot;severity&quot;: &quot;low&quot;,
+    &quot;blueprint&quot;: &quot;FEATURE-Read-Failure.md&quot;,
+    &quot;story&quot;: &quot;CSV-004&quot;,
+    &quot;title&quot;: &quot;Split of exit codes 1 and 2 between stories&quot;,
+    &quot;description&quot;: &quot;CSV-004 names both read failures and usage errors. Exit 1 is owned by CSV-004; exit 2 is owned by CLI-001 and CLI-002, so no behavior has two owners. Usage validation runs before the file is opened.&quot;,
+    &quot;options&quot;: [
+      { &quot;value&quot;: &quot;split&quot;, &quot;label&quot;: &quot;CSV-004 owns exit 1; CLI-001 and CLI-002 own exit 2&quot; },
+      { &quot;value&quot;: &quot;merge&quot;, &quot;label&quot;: &quot;CSV-004 owns both&quot; }
+    ],
+    &quot;system_choice&quot;: &quot;split&quot;
+  },
+  {
+    &quot;id&quot;: &quot;Q-005&quot;,
+    &quot;type&quot;: &quot;choice&quot;,
+    &quot;severity&quot;: &quot;low&quot;,
+    &quot;blueprint&quot;: &quot;FEATURE-Type-Date.md&quot;,
+    &quot;story&quot;: &quot;TYP-003&quot;,
+    &quot;title&quot;: &quot;Date-shaped column with an impossible date&quot;,
+    &quot;description&quot;: &quot;A column whose values all look like YYYY-MM-DD but include an impossible date, such as 2025-02-30, is not date. It falls through the ladder to text, which matches the supplied orders data.&quot;,
+    &quot;options&quot;: [
+      { &quot;value&quot;: &quot;text&quot;, &quot;label&quot;: &quot;Falls through to text&quot; },
+      { &quot;value&quot;: &quot;reject&quot;, &quot;label&quot;: &quot;Reject the file&quot; }
+    ],
+    &quot;system_choice&quot;: &quot;text&quot;
+  }
+]
+=== END ARTIFACT ===</pre></article>
+</main>
+</body>
+</html>

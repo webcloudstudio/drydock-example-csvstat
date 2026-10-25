@@ -3,12 +3,14 @@
 package cli
 
 import (
+	"encoding/csv"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
 
 	"csvstat/internal/csvdata"
+	"csvstat/internal/profile"
 )
 
 // Exit codes returned by Run. Only cmd/csvstat passes them to os.Exit.
@@ -24,10 +26,12 @@ const defaultTop = 5
 
 // options holds the validated command line.
 type options struct {
-	file   string
-	freq   string
-	column string
-	top    int
+	file      string
+	freq      string
+	column    string
+	top       int
+	columnSet bool // --column was given, even when its value is empty
+	freqSet   bool // --freq was given, even when its value is empty
 }
 
 // Run executes the csvstat command with args (excluding the program name) and
@@ -42,7 +46,7 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "csvstat: %v\n", err)
 		return ExitUsage
 	}
-	return profile(opts, stderr)
+	return report(opts, stdout, stderr)
 }
 
 // parse reads and validates the command line. Help requests are written to help.
@@ -64,6 +68,8 @@ func parse(args []string, help io.Writer) (options, error) {
 		return options{}, fmt.Errorf("expected exactly one FILE argument, got %d", fs.NArg())
 	}
 	opts.file = fs.Arg(0)
+	opts.columnSet = set["column"]
+	opts.freqSet = set["freq"]
 	if err := validate(opts, set); err != nil {
 		return options{}, err
 	}
@@ -100,10 +106,11 @@ func validate(opts options, set map[string]bool) error {
 	return nil
 }
 
-// profile reads and validates the file. Profiling the table is a stub until the
-// profiling stories are built, so a file that passes validation exits 0 with
-// nothing on stdout.
-func profile(opts options, stderr io.Writer) int {
+// report reads and validates the file, then writes the profile. The named column
+// of --column or --freq must be in the header, checked after validation. Frequency
+// listing is built by a later story, so --freq exits 0 with nothing on stdout once
+// its column is found.
+func report(opts options, stdout, stderr io.Writer) int {
 	table, err := csvdata.Read(opts.file)
 	if err != nil {
 		return fail(stderr, opts.file, err)
@@ -111,7 +118,35 @@ func profile(opts options, stderr io.Writer) int {
 	if err := csvdata.Validate(table); err != nil {
 		return fail(stderr, opts.file, err)
 	}
+
+	rows := profile.Rows(table)
+	if opts.columnSet || opts.freqSet {
+		name := opts.column
+		if opts.freqSet {
+			name = opts.freq
+		}
+		index, found := csvdata.Column(table, name)
+		if !found {
+			return fail(stderr, opts.file, &csvdata.RejectError{
+				Reason: fmt.Sprintf("column %q is not in the header", name),
+			})
+		}
+		if opts.freqSet {
+			return ExitOK
+		}
+		rows = rows[index : index+1]
+	}
+
+	if err := writeCSV(stdout, rows); err != nil {
+		return fail(stderr, opts.file, err)
+	}
 	return ExitOK
+}
+
+// writeCSV writes the profile header and rows as CSV with \n line endings.
+func writeCSV(stdout io.Writer, rows [][]string) error {
+	w := csv.NewWriter(stdout)
+	return w.WriteAll(append([][]string{profile.Header}, rows...))
 }
 
 // fail writes the single diagnostic line for a file that cannot be profiled and
