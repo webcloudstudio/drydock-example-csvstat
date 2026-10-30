@@ -1,2 +1,0 @@
-{"at": "2026-10-25T18:44:47.877Z", "cli_version": "2.1.310", "first_request_tokens": 33142, "mode": "text", "model": "claude-haiku-5-5", "probe": false, "prompt_bytes": 76998, "provider": "claude", "resolved_model": "claude-haiku-5-5", "resumed": false}
-{"at": "2026-10-25T18:46:13.381Z", "cli_version": "2.1.310", "first_request_tokens": 71341, "mode": "text", "model": "sonnet", "probe": false, "prompt_bytes": 186553, "provider": "claude", "resolved_model": "claude-sonnet-5-5", "resumed": false}

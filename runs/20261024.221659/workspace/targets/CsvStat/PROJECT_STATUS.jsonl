@@ -1,5 +1,0 @@
-{"label": "INITIALIZED", "result": "pass", "at": "2026-10-24T22:17:01.410+00:00", "detail": "", "command": "drydock init CsvStat", "attempts": 1}
-{"label": "IMPORTED", "result": "pass", "at": "2026-10-24T22:17:07.188+00:00", "detail": "", "command": "drydock import CsvStat", "attempts": 1}
-{"label": "ANALYZED", "result": "pass", "at": "2026-10-24T22:17:33.775+00:00", "detail": "", "command": "drydock analyze CsvStat", "attempts": 1}
-{"label": "PLAN CREATED", "result": "fail", "at": "2026-10-24T22:22:15.561+00:00", "detail": "plan generation stalled", "command": "drydock plan CsvStat", "attempts": 1}
-{"state": "PLAN CREATED", "result": "fail", "at": "2026-10-24T22:22:15.561+00:00", "attempts": 1}

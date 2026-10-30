@@ -1,6 +1,0 @@
-# Runtime
-data/
-*.log
-
-# Built executable at the application root
-/csvstat

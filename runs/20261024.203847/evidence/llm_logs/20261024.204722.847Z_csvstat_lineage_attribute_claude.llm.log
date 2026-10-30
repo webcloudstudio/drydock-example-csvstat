@@ -1,3 +1,0 @@
-2026-10-24 16:47:22 EDT  Calling CLAUDE/sonnet (lineage_attribute)...
-  Completed CLAUDE/claude-sonnet-5-5 (lineage_attribute)  rc=0
-    elapsed=12.0s   provider=10.4s   turns=1   cached=1,568 (100% hit)   uncached=2   write 5,041   out=2,050   cost=$0.0408   tps=170.5

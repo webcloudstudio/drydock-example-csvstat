@@ -1,0 +1,27 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/mnt/c/Users/barlo/projects/drydock/src/drydock/__main__.py", line 5, in <module>
+    main()
+  File "/mnt/c/Users/barlo/projects/drydock/src/drydock/cli.py", line 6092, in main
+    exit_code = _dispatch(args, parser)
+                ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/c/Users/barlo/projects/drydock/src/drydock/cli.py", line 4638, in _dispatch
+    return cmd_init(args)
+           ^^^^^^^^^^^^^^
+  File "/mnt/c/Users/barlo/projects/drydock/src/drydock/cli.py", line 771, in cmd_init
+    _sync_workspace_skills(get_workspace())
+  File "/mnt/c/Users/barlo/projects/drydock/src/drydock/cli.py", line 725, in _sync_workspace_skills
+    outcomes = sync_skills(workspace)
+               ^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/c/Users/barlo/projects/drydock/src/drydock/skills.py", line 125, in sync_skills
+    agent: _sync_one(source, project_root / relative)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/c/Users/barlo/projects/drydock/src/drydock/skills.py", line 100, in _sync_one
+    _copy_skill(source_dir, dest_dir)
+  File "/mnt/c/Users/barlo/projects/drydock/src/drydock/skills.py", line 72, in _copy_skill
+    shutil.copytree(source_dir, dest_dir)
+  File "/home/barlo/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/shutil.py", line 598, in copytree
+    with os.scandir(src) as itr:
+         ^^^^^^^^^^^^^^^
+KeyboardInterrupt
